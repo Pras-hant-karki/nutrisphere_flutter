@@ -44,9 +44,16 @@ class _LoginScreenState extends State<LoginScreen> {
                 decoration: InputDecoration(
                   labelText: "Username",
                   prefixIcon: const Icon(Icons.person_outline),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(
+                      color: Colors.grey.shade400,
+                      width: 0.2,
+                    ),
                   ),
+                  
+                  filled: true,
+                  fillColor: const Color.fromARGB(255, 234, 236, 236),
                 ),
               ),
 
@@ -56,11 +63,18 @@ class _LoginScreenState extends State<LoginScreen> {
               TextField(
                 obscureText: true,
                 decoration: InputDecoration(
-                  labelText: "Password",
-                  prefixIcon: const Icon(Icons.lock_outline),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
+                  // labelText: "Password",
+                  prefixIcon: const Icon(Icons.person_outline),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(
+                      color: Colors.grey.shade400,
+                      width: 0.2,
+                    ),
                   ),
+                  
+                  filled: true,
+                  fillColor: const Color.fromARGB(255, 234, 236, 236),
                 ),
               ),
 
@@ -114,7 +128,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   onPressed: () {},
                   child: const Text(
                     "Log in",
-                    style: TextStyle(fontSize: 18, color: Colors.white),
+                    style: TextStyle(fontSize: 19, color: Colors.black),
                   ),
                 ),
               ),
