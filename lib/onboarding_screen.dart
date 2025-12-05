@@ -58,11 +58,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                           ),
                         ),
                         const SizedBox(height: 20),
-                        // Back arrow 
-                            IconButton(
-                              onPressed: () => Navigator.pop(context),
-                              icon: const Icon(Icons.arrow_back),
-                            ),
+                        
                         Text(
                           onboardingData[index]["title"]!,
                           style: const TextStyle(
@@ -71,11 +67,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                           ),
                         ),
                         const SizedBox(height: 10),
-                        // Back arrow 
-                            IconButton(
-                              onPressed: () => Navigator.pop(context),
-                              icon: const Icon(Icons.arrow_back),
-                            ),
+                        
                         Text(
                           onboardingData[index]["subtitle"]!,
                           textAlign: TextAlign.center,
@@ -147,12 +139,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             ),
 
             const SizedBox(height: 10),
-            // Back arrow 
-              IconButton(
-                onPressed: () => Navigator.pop(context),
-                icon: const Icon(Icons.arrow_back),
-              ),
-
+            
             // Skip Button
             GestureDetector(
               onTap: () {
