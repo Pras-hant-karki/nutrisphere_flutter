@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:nutrisphere_flutter/login_screen.dart';
+import 'package:nutrisphere_flutter/onboarding_screen.dart';
 import 'package:nutrisphere_flutter/splash_screen.dart';
 
 class App extends StatelessWidget {
@@ -13,6 +14,7 @@ class App extends StatelessWidget {
       routes: {
         '/': (context) => const SplashScreen(),
         '/login': (context) => const LoginScreen(),
+        '/onboarding': (context) => const OnboardingScreen(),
       },
     );
   }
