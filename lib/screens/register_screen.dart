@@ -8,19 +8,25 @@ class RegisterScreen extends StatefulWidget {
 }
 
 class _RegisterScreenState extends State<RegisterScreen> {
-  DateTime? selectedDate;
+  // Gender selection variable
+  String? selectedGender;
 
+  // Date picker text controller
+  TextEditingController dobController = TextEditingController();
+
+  // Date picker 
   Future<void> pickDate() async {
     DateTime? date = await showDatePicker(
       context: context,
-      initialDate: DateTime(2000),
-      firstDate: DateTime(1950),
+      initialDate: DateTime(2025),
+      firstDate: DateTime(1940),
       lastDate: DateTime.now(),
     );
 
     if (date != null) {
       setState(() {
-        selectedDate = date;
+        dobController.text =
+            "${date.day}/${date.month}/${date.year}"; // show date in textfield
       });
     }
   }
@@ -35,7 +41,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-
                 const SizedBox(height: 20),
 
                 // Back arrow
@@ -98,23 +103,33 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
                 const SizedBox(height: 20),
 
-                // Gender
+                // Gender section
                 const Text(
                   "Gender",
                   style: TextStyle(fontSize: 15),
                 ),
+
                 Row(
                   children: [
                     Radio(
                       value: "Male",
-                      groupValue: "Male",
-                      onChanged: (_) {},
+                      groupValue: selectedGender,
+                      onChanged: (value) {
+                        setState(() {
+                          selectedGender = value.toString();
+                        });
+                      },
                     ),
                     const Text("Male"),
+
                     Radio(
                       value: "Female",
-                      groupValue: "Male",
-                      onChanged: (_) {},
+                      groupValue: selectedGender,
+                      onChanged: (value) {
+                        setState(() {
+                          selectedGender = value.toString();
+                        });
+                      },
                     ),
                     const Text("Female"),
                   ],
@@ -127,12 +142,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   onTap: pickDate,
                   child: AbsorbPointer(
                     child: TextField(
-                      decoration: InputDecoration(
+                      controller: dobController,
+                      decoration: const InputDecoration(
                         labelText: "Date of birth",
-                        suffixIcon: const Icon(Icons.calendar_today),
-                        hintText: selectedDate == null
-                            ? "Enter date of birth"
-                            : "${selectedDate!.day}/${selectedDate!.month}/${selectedDate!.year}",
+                        suffixIcon: Icon(Icons.calendar_today),
                       ),
                     ),
                   ),
