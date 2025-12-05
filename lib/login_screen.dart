@@ -15,7 +15,7 @@ class _LoginScreenState extends State<LoginScreen> {
     return Scaffold(
       body: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24),
+          padding: const EdgeInsets.symmetric(horizontal: 25),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -63,7 +63,7 @@ class _LoginScreenState extends State<LoginScreen> {
               TextField(
                 obscureText: true,
                 decoration: InputDecoration(
-                  // labelText: "Password",
+                  labelText: "Password",
                   prefixIcon: const Icon(Icons.person_outline),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
