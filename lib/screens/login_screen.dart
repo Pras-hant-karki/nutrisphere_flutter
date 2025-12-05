@@ -13,11 +13,11 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      resizeToAvoidBottomInset: true,   // IMPORTANT
+      resizeToAvoidBottomInset: true,   
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 24),
-          child: SingleChildScrollView(          // ← SAME FIX AS REGISTRATION PAGE
+          child: SingleChildScrollView(          
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
