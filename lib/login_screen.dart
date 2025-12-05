@@ -21,9 +21,11 @@ class _LoginScreenState extends State<LoginScreen> {
             children: [
               const SizedBox(height: 30),
 
-              // Back arrow (if needed)
+              // Back to Onboarding Screen
               IconButton(
-                onPressed: () => Navigator.pop(context),
+                onPressed: () {
+                  Navigator.pushReplacementNamed(context, "/onboarding");
+                },
                 icon: const Icon(Icons.arrow_back),
               ),
 
@@ -51,7 +53,6 @@ class _LoginScreenState extends State<LoginScreen> {
                       width: 0.2,
                     ),
                   ),
-                  
                   filled: true,
                   fillColor: const Color.fromARGB(255, 234, 236, 236),
                 ),
@@ -64,7 +65,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 obscureText: true,
                 decoration: InputDecoration(
                   labelText: "Password",
-                  prefixIcon: const Icon(Icons.person_outline),
+                  prefixIcon: const Icon(Icons.lock_outline),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
                     borderSide: BorderSide(
@@ -72,7 +73,6 @@ class _LoginScreenState extends State<LoginScreen> {
                       width: 0.2,
                     ),
                   ),
-                  
                   filled: true,
                   fillColor: const Color.fromARGB(255, 234, 236, 236),
                 ),
@@ -97,6 +97,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       const Text("Remember me"),
                     ],
                   ),
+
                   GestureDetector(
                     onTap: () {
                       Navigator.pushNamed(context, "/forgot");
@@ -114,7 +115,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
               const SizedBox(height: 25),
 
-              // Login button
+              // Login button -> Go to dashboard
               SizedBox(
                 width: double.infinity,
                 height: 52,
@@ -125,7 +126,9 @@ class _LoginScreenState extends State<LoginScreen> {
                       borderRadius: BorderRadius.circular(10),
                     ),
                   ),
-                  onPressed: () {},
+                  onPressed: () {
+                    Navigator.pushReplacementNamed(context, "/dashboard");
+                  },
                   child: const Text(
                     "Log in",
                     style: TextStyle(fontSize: 19, color: Colors.black),
