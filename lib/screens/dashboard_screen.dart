@@ -1,4 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:nutrisphere_flutter/screens/bottom_screens/appointment_screen.dart';
+import 'package:nutrisphere_flutter/screens/bottom_screens/fitness_guide_screen.dart';
+import 'package:nutrisphere_flutter/screens/bottom_screens/home_screen.dart';
+import 'package:nutrisphere_flutter/screens/bottom_screens/profile_screen.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -9,6 +13,13 @@ class DashboardScreen extends StatefulWidget {
 
 class _DashboardScreenState extends State<DashboardScreen> {
   int selectedIndex = 0;
+
+  final List<Widget> lstBottomScreen = [
+    const HomeScreen(),
+    const FitnessGuideScreen(),
+    const AppointmentScreen(),
+    const ProfileScreen(),
+  ];
 
   @override
   Widget build(BuildContext context) {
@@ -77,7 +88,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             ),
 
             
-            // DASHBOARD CARDS
+            // cards
             
             Expanded(
               child: SingleChildScrollView(
@@ -85,36 +96,32 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   children: [
                     const SizedBox(height: 10),
 
-                    // Card 1 – Today's Workout
                     dashboardCard(
                       title: "Today's workout",
                       subtitle: "Lets crush it !",
                       onTap: () {},
-                      icon: Icons.fitness_center, // We will replace this later
+                      icon: Icons.fitness_center, 
                     ),
 
-                    // Card 2 – Sessions
                     dashboardCard(
                       title: "Sessions",
                       subtitle: "Circuit workout\n(Starts at 8 AM, 11/23/025)",
                       onTap: () {},
-                      icon: Icons.event_note, // We will Replace this later
+                      icon: Icons.event_note, 
                     ),
 
-                    // Card 3 – Workout Records
                     dashboardCard(
                       title: "Workout Records",
                       subtitle: "Track your workouts here everyday",
                       onTap: () {},
-                      icon: Icons.bar_chart, // We will Replace this later
+                      icon: Icons.bar_chart, 
                     ),
 
-                    // Card 4 – Trainer Details
                     dashboardCard(
                       title: "Trainer Details",
                       subtitle: "Know your Trainer !",
                       onTap: () {},
-                      icon: Icons.person_outline, // We will Replace this later
+                      icon: Icons.person_outline, 
                     ),
 
                     const SizedBox(height: 20),
@@ -127,7 +134,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       ),
 
       
-      // BOTTOM NAVIGATION BAR
+      // bottom navigation bar
       
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: selectedIndex,
@@ -161,13 +168,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   
-  // REUSABLE DASHBOARD CARD WIDGET
-  
   Widget dashboardCard({
     required String title,
     required String subtitle,
     required VoidCallback onTap,
-    required IconData icon, // Placeholder icon
+    required IconData icon, 
   }) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -189,7 +194,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ),
           child: Row(
             children: [
-              // LEFT ICON
+              // left icon
               Icon(
                 icon,
                 size: 30,
@@ -198,7 +203,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
               const SizedBox(width: 18),
 
-              // TITLE + SUBTITLE
+              // title + subtitle
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -222,7 +227,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 ),
               ),
 
-              // RIGHT ARROW
               const Icon(Icons.arrow_forward_ios, size: 18),
             ],
           ),
