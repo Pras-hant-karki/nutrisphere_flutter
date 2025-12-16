@@ -7,7 +7,7 @@ ThemeData getApplicationTheme() {
 
     // color scheme
     colorScheme: ColorScheme.fromSeed(
-      seedColor: const Color.fromARGB(255, 236, 235, 238),
+      seedColor: const Color.fromARGB(255, 248, 248, 249),
     ),
 
     // app bar theme
@@ -42,7 +42,7 @@ ThemeData getApplicationTheme() {
       ),
       errorBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(8),
-        borderSide: const BorderSide(color: Color.fromARGB(255, 21, 15, 15), width: 1.5),
+        borderSide: const BorderSide(color: Colors.red, width: 1.5),
       ),
       focusedErrorBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(8),
@@ -61,7 +61,7 @@ ThemeData getApplicationTheme() {
 
     // bottom navigation theme
     bottomNavigationBarTheme: const BottomNavigationBarThemeData(
-      backgroundColor: Color.fromARGB(255, 248, 234, 234),
+      backgroundColor: Color.fromARGB(255, 86, 6, 6),
       selectedItemColor: Colors.deepPurple,
       unselectedItemColor: Colors.black54,
       showSelectedLabels: true,
@@ -76,7 +76,7 @@ ThemeData getApplicationTheme() {
         backgroundColor: const Color(0xFFDFF300),
         textStyle: const TextStyle(
           fontSize: 18,
-          color: Colors.white,
+          color: Colors.black12,
           fontWeight: FontWeight.bold,
           fontFamily: 'Montserrat Bold', // Use Bold here too
         ),
