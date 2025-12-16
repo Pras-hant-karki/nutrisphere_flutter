@@ -5,26 +5,26 @@ ThemeData getApplicationTheme() {
     useMaterial3: true,
     fontFamily: "Open Sans Regular",
 
-    
+    // color scheme
     colorScheme: ColorScheme.fromSeed(
       seedColor: const Color.fromARGB(255, 236, 235, 238),
     ),
 
-    
+    // app bar theme
     appBarTheme: const AppBarTheme(
       backgroundColor: Colors.lightBlueAccent,
       elevation: 2,
-      centerTitle: true,
+      centerTitle: true, // Center the title
       iconTheme: IconThemeData(color: Colors.black),
       titleTextStyle: TextStyle(
         fontSize: 20,
-        fontWeight: FontWeight.w600,
+        fontWeight: FontWeight.bold, // Bold
         color: Colors.black,
-        fontFamily: "Montserrat Bold",
+        fontFamily: "Montserrat Bold", // Montserrat Bold
       ),
     ),
 
-    
+    // text field theme
     inputDecorationTheme: InputDecorationTheme(
       filled: true,
       fillColor: Colors.white,
@@ -32,8 +32,6 @@ ThemeData getApplicationTheme() {
         horizontal: 14,
         vertical: 12,
       ),
-
-      
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(8),
         borderSide: const BorderSide(color: Colors.grey),
@@ -44,14 +42,12 @@ ThemeData getApplicationTheme() {
       ),
       errorBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(8),
-        borderSide: const BorderSide(color: Colors.red, width: 1.5),
+        borderSide: const BorderSide(color: Color.fromARGB(255, 21, 15, 15), width: 1.5),
       ),
       focusedErrorBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(8),
         borderSide: const BorderSide(color: Colors.red, width: 2),
       ),
-
-     
       hintStyle: const TextStyle(
         fontSize: 14,
         color: Colors.black54,
@@ -63,9 +59,9 @@ ThemeData getApplicationTheme() {
       ),
     ),
 
-    
+    // bottom navigation theme
     bottomNavigationBarTheme: const BottomNavigationBarThemeData(
-      backgroundColor: Colors.white,
+      backgroundColor: Color.fromARGB(255, 248, 234, 234),
       selectedItemColor: Colors.deepPurple,
       unselectedItemColor: Colors.black54,
       showSelectedLabels: true,
@@ -74,15 +70,15 @@ ThemeData getApplicationTheme() {
       elevation: 10,
     ),
 
-    
+    // elevated button
     elevatedButtonTheme: ElevatedButtonThemeData(
       style: ElevatedButton.styleFrom(
         backgroundColor: const Color(0xFFDFF300),
         textStyle: const TextStyle(
           fontSize: 18,
           color: Colors.white,
-          fontWeight: FontWeight.w500,
-          fontFamily: 'Montserrat Regular',
+          fontWeight: FontWeight.bold,
+          fontFamily: 'Montserrat Bold', // Use Bold here too
         ),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(5),

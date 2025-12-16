@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:nutrisphere_flutter/screens/dashboard_screen.dart';
+import 'package:nutrisphere_flutter/screens/bottom_navigation_screen.dart';
 import 'package:nutrisphere_flutter/screens/forgot_password_screen.dart';
 import 'package:nutrisphere_flutter/screens/login_screen.dart';
 import 'package:nutrisphere_flutter/screens/onboarding_screen.dart';
@@ -20,7 +20,7 @@ class App extends StatelessWidget {
         '/login': (context) => const LoginScreen(),
         '/forgot': (context) => const ForgotPasswordScreen(),
         '/register': (context) => const RegisterScreen(),
-        '/dashboard': (context) => const DashboardScreen(),
+        '/dashboard': (context) => const BottomNavigationScreen(),
       },
     );
   }
