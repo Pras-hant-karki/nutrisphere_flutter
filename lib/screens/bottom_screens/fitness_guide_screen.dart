@@ -6,7 +6,7 @@ class FitnessGuideScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox.expand(
-      child: Center(child: Text("Fitness Guide Screen")),
+      child: Center(child: Text("Fitness guide Screen")),
     );
   }
 }

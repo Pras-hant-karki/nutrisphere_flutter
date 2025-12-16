@@ -1,8 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:nutrisphere_flutter/screens/bottom_screens/appointment_screen.dart';
-import 'package:nutrisphere_flutter/screens/bottom_screens/fitness_guide_screen.dart';
-import 'package:nutrisphere_flutter/screens/bottom_screens/home_screen.dart';
-import 'package:nutrisphere_flutter/screens/bottom_screens/profile_screen.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -12,39 +8,28 @@ class DashboardScreen extends StatefulWidget {
 }
 
 class _DashboardScreenState extends State<DashboardScreen> {
-  int selectedIndex = 0;
-
-  final List<Widget> lstBottomScreen = [
-    const HomeScreen(),
-    const FitnessGuideScreen(),
-    const AppointmentScreen(),
-    const ProfileScreen(),
-  ];
 
   @override
   Widget build(BuildContext context) {
+    return _buildDashboardUI(context);
+  }
+
+  // dashboard UI
+  Widget _buildDashboardUI(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF5F5F5),
-
-      
-      // TOP APP BAR SECTION
-      
       body: SafeArea(
         child: Column(
           children: [
-            // Top Row (Avatar + Text + Notification)
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  
-                  // Back arrow
-                IconButton(
-                  onPressed: () => Navigator.pushReplacementNamed(context, "/login"),
-                icon: const Icon(Icons.arrow_back),
-                ),
-
+                  IconButton(
+                    onPressed: () => Navigator.pushReplacementNamed(context, "/login"),
+                    icon: const Icon(Icons.arrow_back),
+                  ),
                   const Text(
                     "Hi User!",
                     style: TextStyle(
@@ -52,17 +37,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       fontWeight: FontWeight.w600,
                     ),
                   ),
-
-                  // Notification Icon
                   Stack(
                     children: [
-                      // Notification Icon
                       IconButton(
                         onPressed: () {},
                         icon: const Icon(Icons.notifications_none),
                       ),
-
-                      // Small red dot
                       Positioned(
                         right: 10,
                         top: 10,
@@ -73,12 +53,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             color: Colors.red,
                             shape: BoxShape.circle,
                           ),
-                          child: const Center(
-                            child: Text(
-                              "",
-                              style: TextStyle(fontSize: 8, color: Colors.white),
-                            ),
-                          ),
                         ),
                       ),
                     ],
@@ -87,9 +61,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
               ),
             ),
 
-            
-            // cards
-            
             Expanded(
               child: SingleChildScrollView(
                 child: Column(
@@ -97,31 +68,24 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     const SizedBox(height: 10),
 
                     dashboardCard(
-                      title: "Today's workout",
-                      subtitle: "Lets crush it !",
-                      onTap: () {},
-                      icon: Icons.fitness_center, 
-                    ),
-
-                    dashboardCard(
                       title: "Sessions",
                       subtitle: "Circuit workout\n(Starts at 8 AM, 11/23/025)",
                       onTap: () {},
-                      icon: Icons.event_note, 
+                      icon: Icons.event_note,
                     ),
 
                     dashboardCard(
                       title: "Workout Records",
                       subtitle: "Track your workouts here everyday",
                       onTap: () {},
-                      icon: Icons.bar_chart, 
+                      icon: Icons.bar_chart,
                     ),
 
                     dashboardCard(
                       title: "Trainer Details",
                       subtitle: "Know your Trainer !",
                       onTap: () {},
-                      icon: Icons.person_outline, 
+                      icon: Icons.person_outline,
                     ),
 
                     const SizedBox(height: 20),
@@ -132,47 +96,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ],
         ),
       ),
-
-      
-      // bottom navigation bar
-      
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: selectedIndex,
-        onTap: (index) {
-          setState(() {
-            selectedIndex = index;
-          });
-        },
-        selectedItemColor: Colors.orange,
-        unselectedItemColor: Colors.black,
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.home),
-            label: "Home",
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.menu_book_outlined),
-            label: "Fitness guide",
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.receipt_long),
-            label: "App/Req",
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.person_outline),
-            label: "Profile",
-          ),
-        ],
-      ),
     );
   }
 
-  
   Widget dashboardCard({
     required String title,
     required String subtitle,
     required VoidCallback onTap,
-    required IconData icon, 
+    required IconData icon,
   }) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -194,16 +125,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ),
           child: Row(
             children: [
-              // left icon
               Icon(
                 icon,
                 size: 30,
-                color: Colors.blue, 
+                color: Colors.blue,
               ),
-
               const SizedBox(width: 18),
 
-              // title + subtitle
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
