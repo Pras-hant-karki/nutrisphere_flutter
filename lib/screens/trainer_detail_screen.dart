@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-class SessionViewScreen extends StatelessWidget {
-  const SessionViewScreen({super.key});
+class TrainerDetailScreen extends StatelessWidget {
+  const TrainerDetailScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -23,7 +23,7 @@ class SessionViewScreen extends StatelessWidget {
                   ),
                   const SizedBox(width: 8),
                   const Text(
-                    "Sessions",
+                    "Trainer Detail",
                     style: TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.w600,
@@ -40,7 +40,7 @@ class SessionViewScreen extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Column(
                 children: [
-                  // Group Session card
+                  // trainer detail card
                   Container(
                     width: double.infinity,
                     padding: const EdgeInsets.all(16),
@@ -48,16 +48,9 @@ class SessionViewScreen extends StatelessWidget {
                     child: const Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          "Group Session",
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
                         SizedBox(height: 4),
                         Text(
-                          "more details",
+                          "Know your Trainer !",
                           style: TextStyle(color: Colors.black54),
                         ),
                       ],
@@ -66,7 +59,7 @@ class SessionViewScreen extends StatelessWidget {
 
                   const SizedBox(height: 16),
 
-                  // Workout details card
+                  // trainer details card
                   Container(
                     width: double.infinity,
                     padding: const EdgeInsets.all(16),
@@ -74,18 +67,12 @@ class SessionViewScreen extends StatelessWidget {
                     child: const Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          "Circuit Workout (Starts at 8 AM, 11/23/2025)",
-                          style: TextStyle(
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
                         SizedBox(height: 10),
-                        Text("1. Devils Press"),
-                        Text("2. Air Bike"),
-                        Text("3. Bodyweight Squats"),
-                        Text("4. Pushup"),
-                        Text("5. Farmer walk"),
+                        Text("Trainer details"),
+                        Text("gets updated"),
+                        Text("when trainer"),
+                        Text("updates his"),
+                        Text("profile"),
                       ],
                     ),
                   ),
