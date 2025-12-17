@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 ThemeData getApplicationTheme() {
   return ThemeData(
     useMaterial3: true,
-    fontFamily: "Open Sans Regular",
+    fontFamily: "OpenSans Regular",
 
     // color scheme
     colorScheme: ColorScheme.fromSeed(
@@ -58,6 +58,24 @@ ThemeData getApplicationTheme() {
         fontWeight: FontWeight.w600,
       ),
     ),
+
+    // text theme
+    textTheme: const TextTheme(
+    bodyMedium: TextStyle(
+      fontSize: 14,
+      fontFamily: 'OpenSans Regular',
+    ),
+    bodyLarge: TextStyle(
+      fontSize: 16,
+      fontFamily: 'OpenSans Regular',
+    ),
+    titleLarge: TextStyle(
+      fontSize: 22,
+      fontWeight: FontWeight.w700,
+      fontFamily: 'Montserrat Bold',
+    ),
+  ),
+
 
     // bottom navigation theme
     bottomNavigationBarTheme: const BottomNavigationBarThemeData(

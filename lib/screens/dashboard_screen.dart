@@ -5,6 +5,8 @@ class HomeScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+
     return Scaffold(
       backgroundColor: const Color(0xFFF5F5F5),
       body: SafeArea(
@@ -16,22 +18,17 @@ class HomeScreen extends StatelessWidget {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  
                   CircleAvatar(
                     radius: 18,
                     backgroundColor: Colors.grey.shade300,
                     child: const Icon(Icons.person),
                   ),
 
-                  const Text(
+                  Text(
                     "Hi User!",
-                    style: TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.w600,
-                    ),
+                    style: textTheme.titleLarge,
                   ),
 
-                  // notification icon
                   Stack(
                     children: [
                       IconButton(
@@ -56,7 +53,7 @@ class HomeScreen extends StatelessWidget {
               ),
             ),
 
-            // DASHBOARD CARDS
+            // DASHBOARD CONTENT
             Expanded(
               child: SingleChildScrollView(
                 child: Column(
@@ -64,19 +61,22 @@ class HomeScreen extends StatelessWidget {
                     const SizedBox(height: 10),
 
                     dashboardCard(
+                      context,
                       title: "Sessions",
                       subtitle:
-                          "Circuit workout\n(Starts at 8 AM, 11/23/025)",
+                          "Circuit workout\n(Starts at 8 AM, 11/23/2025)",
                       icon: Icons.event_note,
                     ),
 
                     dashboardCard(
+                      context,
                       title: "Workout Records",
                       subtitle: "Track your workouts here everyday",
                       icon: Icons.bar_chart,
                     ),
 
                     dashboardCard(
+                      context,
                       title: "Trainer Details",
                       subtitle: "Know your Trainer!",
                       icon: Icons.person_outline,
@@ -93,12 +93,14 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
-  // REUSABLE CARD
-  Widget dashboardCard({
+  Widget dashboardCard(
+    BuildContext context, {
     required String title,
     required String subtitle,
     required IconData icon,
   }) {
+    final textTheme = Theme.of(context).textTheme;
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Container(
@@ -110,7 +112,6 @@ class HomeScreen extends StatelessWidget {
             BoxShadow(
               color: Colors.grey.shade300,
               blurRadius: 8,
-              spreadRadius: 1,
               offset: const Offset(0, 2),
             ),
           ],
@@ -124,18 +125,11 @@ class HomeScreen extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    title,
-                    style: const TextStyle(
-                      fontSize: 17,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
+                  Text(title, style: textTheme.bodyLarge),
                   const SizedBox(height: 4),
                   Text(
                     subtitle,
-                    style: const TextStyle(
-                      fontSize: 13,
+                    style: textTheme.bodyMedium?.copyWith(
                       color: Colors.black54,
                     ),
                   ),

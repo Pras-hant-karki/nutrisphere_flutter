@@ -26,21 +26,17 @@ class _BottomNavigationScreenState extends State<BottomNavigationScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text(
+        title: Text(
           "Dashboard",
-          style: TextStyle(
-            fontFamily: "OpenSans Bold", 
-          ),
+          style: Theme.of(context).textTheme.titleLarge,
         ),
-        backgroundColor: Colors.amber,
-        centerTitle: true, 
       ),
+
       body: IndexedStack(
         index: _selectedIndex,
         children: lstBottomScreen,
       ),
       bottomNavigationBar: BottomNavigationBar(
-        backgroundColor: Colors.amber,
         currentIndex: _selectedIndex,
         onTap: (index) {
           setState(() {
