@@ -48,7 +48,7 @@ class FitnessGuideScreen extends StatelessWidget {
               ),
             ),
 
-            // SCROLLABLE CONTENT
+            // scrollable
             Expanded(
               child: SingleChildScrollView(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -61,13 +61,21 @@ class FitnessGuideScreen extends StatelessWidget {
                     _imageCard(
                       imagePath: 'assets/images/test.png',
                     ),
-
                     const SizedBox(height: 20),
 
                     _imageCard(
                       imagePath: 'assets/images/dose.png',
                     ),
+                    const SizedBox(height: 30),
 
+                    _imageCard(
+                      imagePath: 'assets/images/dose.png',
+                    ),
+                    const SizedBox(height: 30),
+
+                    _imageCard(
+                      imagePath: 'assets/images/dose.png',
+                    ),
                     const SizedBox(height: 30),
                   ],
                 ),
