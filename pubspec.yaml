@@ -65,6 +65,8 @@ flutter:
     - assets/images/plan.png
     - assets/images/pt.png
     - assets/images/track.png
+    - assets/images/test.png
+    - assets/images/dose.png
     - assets/icons/
     # - images/a_dot_ham.jpeg
 
