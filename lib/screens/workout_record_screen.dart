@@ -64,16 +64,15 @@ class _WorkoutRecordScreenState extends State<WorkoutRecordScreen> {
                     maxLines: null, // unlimited lines
                     expands: true, // fills available space
                     keyboardType: TextInputType.multiline,
-                    decoration: const InputDecoration(
+                    decoration: InputDecoration(
                       border: InputBorder.none,
                       hintText:
                           "Week-1\nFriday:\n1. Leg Press - 200kg 4x12\n2. Hack Squat - 60kg 4x12\n3. Romanian Deadlift - 60kg 4x12\n\nWeek-2\nSunday:\n",
-                      hintStyle: TextStyle(
-                      fontFamily: 'Montserrat LightItalic',
-                      fontWeight: FontWeight.w900, 
-                      fontSize: 14,
-                      color: Colors.grey,
-                    ),
+                      hintStyle: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                            fontFamily: 'Montserrat',
+                            fontStyle: FontStyle.italic,
+                            color: Colors.grey,
+                          ),
                     ),
                   ),
                 ),

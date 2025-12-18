@@ -135,19 +135,20 @@ class HomeScreen extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+
+                  //title
                   Text(
-                    title, //box title
-                    style: const TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: Color.fromARGB(255, 22, 22, 22),
-                    ),
+                    title,
+                    style: Theme.of(context).textTheme.bodyLarge,
                   ),
                   const SizedBox(height: 5),
+
+                  //subtitle
                   Text(
-                    subtitle, //box subtitle
-                    style: const TextStyle(fontSize: 14, color: Color.fromARGB(179, 55, 54, 54)),
+                    subtitle,
+                    style: Theme.of(context).textTheme.bodyMedium,
                   ),
+
                 ],
               ),
             ),

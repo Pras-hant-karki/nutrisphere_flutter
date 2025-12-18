@@ -22,13 +22,11 @@ class SessionViewScreen extends StatelessWidget {
                     },
                   ),
                   const SizedBox(width: 8),
-                  const Text(
+                  Text(
                     "Sessions",
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.w600,
-                    ),
+                    style: Theme.of(context).textTheme.titleLarge,
                   ),
+
                 ],
               ),
             ),
@@ -45,21 +43,21 @@ class SessionViewScreen extends StatelessWidget {
                     width: double.infinity,
                     padding: const EdgeInsets.all(16),
                     decoration: _cardDecoration(),
-                    child: const Column(
+                    child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
                           "Group Session",
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                          ),
+                          style: Theme.of(context).textTheme.bodyLarge,
                         ),
-                        SizedBox(height: 4),
                         Text(
                           "more details",
-                          style: TextStyle(color: Colors.black54),
+                          style: Theme.of(context)
+                              .textTheme
+                              .bodyMedium
+                              ?.copyWith(color: Colors.black54),
                         ),
+
                       ],
                     ),
                   ),

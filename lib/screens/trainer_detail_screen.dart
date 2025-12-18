@@ -22,12 +22,9 @@ class TrainerDetailScreen extends StatelessWidget {
                     },
                   ),
                   const SizedBox(width: 8),
-                  const Text(
+                  Text(
                     "Trainer Detail",
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.w600,
-                    ),
+                    style: Theme.of(context).textTheme.titleLarge,
                   ),
                 ],
               ),
@@ -45,13 +42,16 @@ class TrainerDetailScreen extends StatelessWidget {
                     width: double.infinity,
                     padding: const EdgeInsets.all(16),
                     decoration: _cardDecoration(),
-                    child: const Column(
+                    child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         SizedBox(height: 4),
                         Text(
                           "Know your Trainer !",
-                          style: TextStyle(color: Colors.black54),
+                          style: Theme.of(context)
+                              .textTheme
+                              .bodyMedium
+                              ?.copyWith(color: Colors.black54),
                         ),
                       ],
                     ),
