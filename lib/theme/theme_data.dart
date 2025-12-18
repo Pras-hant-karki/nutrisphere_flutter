@@ -12,7 +12,7 @@ ThemeData getApplicationTheme() {
 
     // app bar theme
     appBarTheme: const AppBarTheme(
-      backgroundColor: Colors.lightBlueAccent,
+      backgroundColor:  Color.fromARGB(255, 244, 227, 169),
       elevation: 2,
       centerTitle: true, // Center the title
       iconTheme: IconThemeData(color: Colors.black),
@@ -96,7 +96,7 @@ ThemeData getApplicationTheme() {
           fontSize: 18,
           color: Colors.black12,
           fontWeight: FontWeight.bold,
-          fontFamily: 'Montserrat Bold', // Use Bold here too
+          fontFamily: 'Montserrat Bold', 
         ),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(5),

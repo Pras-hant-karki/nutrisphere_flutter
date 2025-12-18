@@ -1,7 +1,17 @@
 import 'package:flutter/material.dart';
 
-class ProfileScreen extends StatelessWidget {
+class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
+
+  @override
+  State<ProfileScreen> createState() => _ProfileScreenState();
+}
+
+class _ProfileScreenState extends State<ProfileScreen> {
+  final _nameCtrl = TextEditingController(text: "Sanyukta Ghimire");
+  final _usernameCtrl = TextEditingController(text: "User");
+  final _emailCtrl = TextEditingController(text: "piggy69@gmail.com");
+  final _phoneCtrl = TextEditingController(text: "+977 9912631770");
 
   @override
   Widget build(BuildContext context) {
@@ -13,33 +23,80 @@ class ProfileScreen extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text("Edit Profile", style: Theme.of(context).textTheme.titleLarge),
+              // TOP BAR
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    "Edit Profile",
+                    style: Theme.of(context).textTheme.titleLarge,
+                  ),
+                  Stack(
+                    children: [
+                      IconButton(
+                        icon: const Icon(Icons.notifications_none),
+                        onPressed: () {},
+                      ),
+                      Positioned(
+                        right: 10,
+                        top: 10,
+                        child: Container(
+                          height: 10,
+                          width: 10,
+                          decoration: const BoxDecoration(
+                            color: Colors.red,
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
 
               const SizedBox(height: 20),
 
               Center(
                 child: CircleAvatar(
                   radius: 45,
-                  backgroundImage: AssetImage(
-                    "assets/images/logo.png", // keep placeholder
-                  ),
+                  backgroundImage:
+                      const AssetImage("assets/images/logo.png"),
                 ),
               ),
 
               const SizedBox(height: 20),
 
-              _info("Full name", "Sanyukta Ghimire"),
-              _info("Username", "User"),
-              _info("Email address", "shooy69@gmail.com"),
-              _info("Phone number", "+977 9912631770"),
+              _editableField("Full name", _nameCtrl),
+              _editableField("Username", _usernameCtrl),
+              _editableField("Email address", _emailCtrl),
+              _editableField("Phone number", _phoneCtrl),
+
+              const SizedBox(height: 10),
+
+              // SAVE BUTTON
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () {},
+                  child: const Text("Save Changes"),
+                ),
+              ),
 
               const Spacer(),
 
+              // LOGOUT BUTTON
               SizedBox(
                 width: double.infinity,
-                child: OutlinedButton(
-                  onPressed: () {},
-                  child: const Text("Log Out"),
+                child: OutlinedButton.icon(
+                  onPressed: () {
+                    Navigator.pushNamedAndRemoveUntil(
+                      context,
+                      "/login",
+                      (route) => false,
+                    );
+                  },
+                  icon: const Icon(Icons.logout),
+                  label: const Text("Log Out"),
                 ),
               ),
             ],
@@ -49,17 +106,12 @@ class ProfileScreen extends StatelessWidget {
     );
   }
 
-  Widget _info(String label, String value) {
+  Widget _editableField(String label, TextEditingController controller) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(label, style: const TextStyle(color: Colors.grey)),
-          const SizedBox(height: 4),
-          Text(value),
-          const Divider(),
-        ],
+      padding: const EdgeInsets.only(bottom: 14),
+      child: TextField(
+        controller: controller,
+        decoration: InputDecoration(labelText: label),
       ),
     );
   }

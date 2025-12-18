@@ -27,6 +27,7 @@ class HomeScreen extends StatelessWidget {
                     horizontal: 20.0,
                     vertical: 10.0,
                   ),
+                  
                   child: Column(
                     children: [
                       _buildDashboardCard(
@@ -163,3 +164,29 @@ class HomeScreen extends StatelessWidget {
     );
   }
 }
+
+// Text(
+//                     "High quality fitness\n guidance below !",
+//                     style: textTheme.titleMedium,
+//                   ),
+
+//                   Stack(
+//                     children: [
+//                       IconButton(
+//                         icon: const Icon(Icons.notifications_none),
+//                         onPressed: () {},
+//                       ),
+//                       Positioned(
+//                         right: 10,
+//                         top: 10,
+//                         child: Container(
+//                           height: 10,
+//                           width: 10,
+//                           decoration: const BoxDecoration(
+//                             color: Colors.red,
+//                             shape: BoxShape.circle,
+//                           ),
+//                         ),
+//                       ),
+
+// add these in 

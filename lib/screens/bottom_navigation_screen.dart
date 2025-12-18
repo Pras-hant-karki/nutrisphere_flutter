@@ -26,9 +26,13 @@ class _BottomNavigationScreenState extends State<BottomNavigationScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        backgroundColor: const Color.fromARGB(255, 244, 227, 169),
+        centerTitle: true,
         title: Text(
           "Dashboard",
-          style: Theme.of(context).textTheme.titleLarge,
+          style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                fontSize: 26, 
+              ),
         ),
       ),
 
@@ -43,7 +47,9 @@ class _BottomNavigationScreenState extends State<BottomNavigationScreen> {
             _selectedIndex = index;
           });
         },
+
         type: BottomNavigationBarType.fixed,
+        backgroundColor: const Color.fromARGB(255, 244, 227, 169),
         items: const [
           BottomNavigationBarItem(
             icon: Icon(Icons.home),

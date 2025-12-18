@@ -69,7 +69,12 @@ class FitnessGuideScreen extends StatelessWidget {
                     const SizedBox(height: 30),
 
                     _imageCard(
-                      imagePath: 'assets/images/dose.png',
+                      imagePath: 'assets/images/plan.png',
+                    ),
+                    const SizedBox(height: 30),
+
+                    _imageCard(
+                      imagePath: 'assets/images/pt.png',
                     ),
                     const SizedBox(height: 30),
 

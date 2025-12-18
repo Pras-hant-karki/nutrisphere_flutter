@@ -1,7 +1,15 @@
 import 'package:flutter/material.dart';
 
-class RequestPlanScreen extends StatelessWidget {
+class RequestPlanScreen extends StatefulWidget {
   const RequestPlanScreen({super.key});
+
+  @override
+  State<RequestPlanScreen> createState() => _RequestPlanScreenState();
+}
+
+class _RequestPlanScreenState extends State<RequestPlanScreen> {
+  int dietType = 2; 
+  int medical = 1; 
 
   @override
   Widget build(BuildContext context) {
@@ -14,14 +22,49 @@ class RequestPlanScreen extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               _header(context, "Request Plan"),
-
               const SizedBox(height: 20),
 
               _textField("Height"),
               _rowFields("Weight", "Job"),
               _textField("Any food allergy"),
-              _dietType(),
-              _medicalCondition(),
+
+              const SizedBox(height: 10),
+              const Text("Diet Type"),
+              Row(
+                children: [
+                  Radio(
+                    value: 1,
+                    groupValue: dietType,
+                    onChanged: (v) => setState(() => dietType = v!),
+                  ),
+                  const Text("Veg"),
+                  Radio(
+                    value: 2,
+                    groupValue: dietType,
+                    onChanged: (v) => setState(() => dietType = v!),
+                  ),
+                  const Text("Non-Veg"),
+                ],
+              ),
+
+              const Text("Any Medical Condition"),
+              Row(
+                children: [
+                  Radio(
+                    value: 1,
+                    groupValue: medical,
+                    onChanged: (v) => setState(() => medical = v!),
+                  ),
+                  const Text("No"),
+                  Radio(
+                    value: 2,
+                    groupValue: medical,
+                    onChanged: (v) => setState(() => medical = v!),
+                  ),
+                  const Text("Yes"),
+                ],
+              ),
+
               _textField("Your Goal"),
               _textField("Any special request or suggestions ?"),
 
@@ -68,32 +111,6 @@ class RequestPlanScreen extends StatelessWidget {
         Expanded(child: _textField(h1)),
         const SizedBox(width: 12),
         Expanded(child: _textField(h2)),
-      ],
-    );
-  }
-
-  Widget _dietType() {
-    return Row(
-      children: const [
-        Text("Diet Type"),
-        SizedBox(width: 12),
-        Radio(value: 1, groupValue: 1, onChanged: null),
-        Text("Veg"),
-        Radio(value: 2, groupValue: 1, onChanged: null),
-        Text("Non-Veg"),
-      ],
-    );
-  }
-
-  Widget _medicalCondition() {
-    return Row(
-      children: const [
-        Text("Any Medical Condition"),
-        SizedBox(width: 12),
-        Radio(value: 1, groupValue: 1, onChanged: null),
-        Text("No"),
-        Radio(value: 2, groupValue: 1, onChanged: null),
-        Text("Yes"),
       ],
     );
   }

@@ -16,11 +16,14 @@ class AppointmentScreen extends StatelessWidget {
           padding: const EdgeInsets.all(16),
           child: Column(
             children: [
-              Text(
+              // HEADER
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
                     "Choose any service below !",
                     style: textTheme.titleMedium,
                   ),
-
                   Stack(
                     children: [
                       IconButton(
@@ -41,34 +44,33 @@ class AppointmentScreen extends StatelessWidget {
                       ),
                     ],
                   ),
-              const SizedBox(height: 20),
+                ],
+              ),
 
-              _bigActionButton(
+              const SizedBox(height: 30),
+
+              _actionButton(
                 context,
                 title: "Request Diet &\nWorkout Plan",
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => const RequestPlanScreen(),
-                    ),
-                  );
-                },
+                onTap: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const RequestPlanScreen(),
+                  ),
+                ),
               ),
 
               const SizedBox(height: 20),
 
-              _bigActionButton(
+              _actionButton(
                 context,
                 title: "Book PT\nAppointment",
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => const AppointmentBookingScreen(),
-                    ),
-                  );
-                },
+                onTap: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const AppointmentBookingScreen(),
+                  ),
+                ),
               ),
             ],
           ),
@@ -77,27 +79,26 @@ class AppointmentScreen extends StatelessWidget {
     );
   }
 
-  Widget _bigActionButton(
+  Widget _actionButton(
     BuildContext context, {
     required String title,
     required VoidCallback onTap,
   }) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(16),
-      child: Container(
-        width: double.infinity,
-        height: 140,
-        decoration: BoxDecoration(
-          color: const Color(0xFFD6F0D4),
-          borderRadius: BorderRadius.circular(16),
-        ),
-        child: Center(
-          child: Text(
-            title,
-            textAlign: TextAlign.center,
-            style: Theme.of(context).textTheme.titleLarge,
+    return SizedBox(
+      width: double.infinity,
+      height: 130,
+      child: ElevatedButton(
+        onPressed: onTap,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: const Color(0xFFD6F0D4),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
           ),
+        ),
+        child: Text(
+          title,
+          textAlign: TextAlign.center,
+          style: Theme.of(context).textTheme.titleLarge,
         ),
       ),
     );

@@ -166,6 +166,33 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                 ),
 
+                const SizedBox(height: 10),
+
+                SizedBox(
+                  width: double.infinity,
+                  height: 52,
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.black,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                    onPressed: () {},
+                    child: const Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.apple, color: Colors.white),
+                        SizedBox(width: 8),
+                        Text(
+                          "Continue with Apple",
+                          style: TextStyle(color: Colors.white, fontSize: 16),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+
                 const SizedBox(height: 20),
 
                 // Register link
