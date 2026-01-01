@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:nutrisphere_flutter/screens/bottom_screens/appointment_screen.dart';
-import 'package:nutrisphere_flutter/screens/bottom_screens/fitness_guide_screen.dart';
-import 'package:nutrisphere_flutter/screens/bottom_screens/home_screen.dart';
-import 'package:nutrisphere_flutter/screens/bottom_screens/profile_screen.dart';
+import 'package:nutrisphere_flutter/features/appointment/presentation/pages/appointment_page.dart';
+import 'package:nutrisphere_flutter/features/fitness/presentation/pages/fitness_guide_page.dart';
+import 'package:nutrisphere_flutter/features/home/presentation/pages/home_page.dart';
+import 'package:nutrisphere_flutter/features/profile/presentation/pages/profile_page.dart';
 
 class BottomNavigationScreen extends StatefulWidget {
   const BottomNavigationScreen({super.key});

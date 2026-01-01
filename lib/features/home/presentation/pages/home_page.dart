@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:nutrisphere_flutter/screens/session_view_screen.dart';
-import 'package:nutrisphere_flutter/screens/trainer_detail_screen.dart';
-import 'package:nutrisphere_flutter/screens/workout_record_screen.dart';
+import 'package:nutrisphere_flutter/features/home/presentation/pages/session_view_page.dart';
+import 'package:nutrisphere_flutter/features/home/presentation/pages/trainer_detail_page.dart';
+import 'package:nutrisphere_flutter/features/home/presentation/pages/workout_record_page.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -165,28 +165,3 @@ class HomeScreen extends StatelessWidget {
   }
 }
 
-// Text(
-//                     "High quality fitness\n guidance below !",
-//                     style: textTheme.titleMedium,
-//                   ),
-
-//                   Stack(
-//                     children: [
-//                       IconButton(
-//                         icon: const Icon(Icons.notifications_none),
-//                         onPressed: () {},
-//                       ),
-//                       Positioned(
-//                         right: 10,
-//                         top: 10,
-//                         child: Container(
-//                           height: 10,
-//                           width: 10,
-//                           decoration: const BoxDecoration(
-//                             color: Colors.red,
-//                             shape: BoxShape.circle,
-//                           ),
-//                         ),
-//                       ),
-
-// add these in 

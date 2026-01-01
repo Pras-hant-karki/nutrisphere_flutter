@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:nutrisphere_flutter/screens/appointment_booking_screen.dart';
-import 'package:nutrisphere_flutter/screens/request_plan_screen.dart';
+import 'package:nutrisphere_flutter/features/appointment/presentation/pages/appointment_booking_page.dart';
+import 'package:nutrisphere_flutter/features/appointment/presentation/pages/request_plan_page.dart';
 
 class AppointmentScreen extends StatelessWidget {
   const AppointmentScreen({super.key});

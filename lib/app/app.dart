@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:nutrisphere_flutter/screens/bottom_navigation_screen.dart';
-import 'package:nutrisphere_flutter/screens/forgot_password_screen.dart';
-import 'package:nutrisphere_flutter/screens/login_screen.dart';
-import 'package:nutrisphere_flutter/screens/onboarding_screen.dart';
-import 'package:nutrisphere_flutter/screens/register_screen.dart';
-import 'package:nutrisphere_flutter/screens/splash_screen.dart';
+import 'package:nutrisphere_flutter/features/dashboard/presentation/pages/bottom_navigation_page.dart';
+import 'package:nutrisphere_flutter/features/auth/presentation/pages/forgot_password_page.dart';
+import 'package:nutrisphere_flutter/features/auth/presentation/pages/login_page.dart';
+import 'package:nutrisphere_flutter/features/onboarding/presentation/pages/onboarding_page.dart';
+import 'package:nutrisphere_flutter/features/auth/presentation/pages/register_page.dart';
+import 'package:nutrisphere_flutter/features/splash/presentation/pages/splash_page.dart';
 
 class App extends StatelessWidget {
   const App({super.key});
