@@ -1,27 +1,63 @@
-import 'package:hive/hive.dart';
-import '../../models/auth_hive_model.dart';
-import '../auth_datasource.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:nutrisphere_flutter/core/services/hive/hive_service.dart';
+import 'package:nutrisphere_flutter/features/auth/data/datasources/auth_datasource.dart';
+import 'package:nutrisphere_flutter/features/auth/data/models/auth_hive_model.dart';
 
-class AuthLocalDataSource implements AuthDataSource {
-  final Box<AuthHiveModel> _userBox;
+//Provider
+final AuthLocalDatasourceProvider = Provider<AuthLocalDatasource>((ref) {
+  final hiveService = ref.watch(hiveServiceProvider);
+  return AuthLocalDatasource(hiveService: hiveService);  // dependency injection
+});
 
-  AuthLocalDataSource(this._userBox);
+class AuthLocalDatasource implements IAuthDatasource {
+  final HiveService _hiveService;
+
+  AuthLocalDatasource({required HiveService hiveService})
+      : _hiveService = hiveService;
 
   @override
-  Future<void> registerUser(AuthHiveModel user) async {
-    await _userBox.put(user.username, user);
+  Future<AuthHiveModel?> getCurrentUser() {
+    // TODO: implement getCurrentUser
+    throw UnimplementedError();
   }
 
   @override
-  Future<AuthHiveModel?> loginUser(
-    String username,
-    String password,
-  ) async {
-    final user = _userBox.get(username);
+  Future<bool> isEmailExists(String email) {
+    try {
+      final exists = _hiveService.isEmailExists(email);
+      return Future.value(exists);
+    } catch (e) {
+      return Future.value(false);
+    }
+  }
 
-    if (user == null) return null;
-    if (user.password != password) return null;
+  @override
+  Future<AuthHiveModel?> login(String email, String password) async{
+    try{
+      final user = await _hiveService.loginUser(email, password);
+      return Future.value(null);
+    } catch (e) {
+      return Future.value(null);
+    }
+  }
 
-    return user;
+  @override
+  Future<bool> logout() async{
+    try{
+      await _hiveService.logoutUser();
+      return Future.value(true);
+    } catch (e) {
+      return Future.value(false);
+    }
+  }
+
+  @override
+  Future<bool> register(AuthHiveModel model) async {
+    try{
+      await _hiveService.registerUser(model);
+      return Future.value(true);
+    } catch (e) {
+      return Future.value(false);
+    }
   }
 }
