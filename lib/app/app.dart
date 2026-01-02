@@ -17,9 +17,9 @@ class App extends StatelessWidget {
       routes: {
         '/': (context) => const SplashScreen(),
         '/onboarding': (context) => const OnboardingScreen(),
-        '/login': (context) => const LoginScreen(),
+        '/login': (context) => const LoginPage(),
         '/forgot': (context) => const ForgotPasswordScreen(),
-        '/register': (context) => const RegisterScreen(),
+        '/register': (context) => const RegisterPage(),
         '/dashboard': (context) => const BottomNavigationScreen(),
       },
     );

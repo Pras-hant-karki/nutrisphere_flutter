@@ -1,33 +1,52 @@
 import 'package:flutter/material.dart';
 
-class LoginScreen extends StatefulWidget {
-  const LoginScreen({super.key});
+class LoginPage extends StatefulWidget {
+  const LoginPage({super.key});
 
   @override
-  State<LoginScreen> createState() => _LoginScreenState();
+  State<LoginPage> createState() => _LoginPageState();
 }
 
-class _LoginScreenState extends State<LoginScreen> {
+class _LoginPageState extends State<LoginPage> {
+  final _formKey = GlobalKey<FormState>();
+  final _usernameCtrl = TextEditingController();
+  final _passwordCtrl = TextEditingController();
+  bool _obscure = true;
   bool rememberMe = false;
+
+  @override
+  void dispose() {
+    _usernameCtrl.dispose();
+    _passwordCtrl.dispose();
+    super.dispose();
+  }
+
+  void _login() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    // TODO (Sprint 3): Call AuthRepository.login()
+    // final result = await authRepo.login(...);
+
+    Navigator.pushReplacementNamed(context, "/dashboard");
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      resizeToAvoidBottomInset: true,   
+      resizeToAvoidBottomInset: true,
       body: SafeArea(
-        child: Padding(
+        child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 24),
-          child: SingleChildScrollView(          
+          child: Form(
+            key: _formKey,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const SizedBox(height: 30),
 
-                // Back button
                 IconButton(
-                  onPressed: () {
-                    Navigator.pushReplacementNamed(context, "/onboarding");
-                  },
+                  onPressed: () =>
+                      Navigator.pushReplacementNamed(context, "/onboarding"),
                   icon: const Icon(Icons.arrow_back),
                 ),
 
@@ -35,54 +54,43 @@ class _LoginScreenState extends State<LoginScreen> {
 
                 const Text(
                   "Log in",
-                  style: TextStyle(
-                    fontSize: 28,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
                 ),
 
                 const SizedBox(height: 30),
 
-                // Username
-                TextField(
-                  decoration: InputDecoration(
+                TextFormField(
+                  controller: _usernameCtrl,
+                  decoration: const InputDecoration(
                     labelText: "Username",
-                    prefixIcon: const Icon(Icons.person_outline),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(
-                        color: Colors.grey.shade400,
-                        width: 0.2,
-                      ),
-                    ),
-                    filled: true,
-                    fillColor: const Color.fromARGB(255, 234, 236, 236),
+                    prefixIcon: Icon(Icons.person_outline),
                   ),
+                  validator: (v) =>
+                      v == null || v.isEmpty ? "Enter username" : null,
                 ),
 
                 const SizedBox(height: 20),
 
-                // Password
-                TextField(
-                  obscureText: true,
+                TextFormField(
+                  controller: _passwordCtrl,
+                  obscureText: _obscure,
                   decoration: InputDecoration(
                     labelText: "Password",
                     prefixIcon: const Icon(Icons.lock_outline),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(
-                        color: Colors.grey.shade400,
-                        width: 0.2,
+                    suffixIcon: IconButton(
+                      icon: Icon(
+                        _obscure ? Icons.visibility : Icons.visibility_off,
                       ),
+                      onPressed: () =>
+                          setState(() => _obscure = !_obscure),
                     ),
-                    filled: true,
-                    fillColor: const Color.fromARGB(255, 234, 236, 236),
                   ),
+                  validator: (v) =>
+                      v == null || v.length < 6 ? "Min 6 characters" : null,
                 ),
 
                 const SizedBox(height: 10),
 
-                // Remember me + Forgot password
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -90,26 +98,18 @@ class _LoginScreenState extends State<LoginScreen> {
                       children: [
                         Checkbox(
                           value: rememberMe,
-                          onChanged: (value) {
-                            setState(() {
-                              rememberMe = value!;
-                            });
-                          },
+                          onChanged: (v) =>
+                              setState(() => rememberMe = v!),
                         ),
                         const Text("Remember me"),
                       ],
                     ),
-
                     GestureDetector(
-                      onTap: () {
-                        Navigator.pushNamed(context, "/forgot");
-                      },
+                      onTap: () =>
+                          Navigator.pushNamed(context, "/forgot"),
                       child: const Text(
                         "Forgot password?",
-                        style: TextStyle(
-                          color: Colors.blue,
-                          fontWeight: FontWeight.w500,
-                        ),
+                        style: TextStyle(color: Colors.blue),
                       ),
                     ),
                   ],
@@ -117,93 +117,36 @@ class _LoginScreenState extends State<LoginScreen> {
 
                 const SizedBox(height: 25),
 
-                // Login button
                 SizedBox(
                   width: double.infinity,
                   height: 52,
                   child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.orange,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                    ),
-                    onPressed: () {
-                      Navigator.pushReplacementNamed(context, "/dashboard");
-                    },
-                    child: const Text(
-                      "Log in",
-                      style: TextStyle(fontSize: 19, color: Colors.black),
-                    ),
+                    onPressed: _login,
+                    child: const Text("Log in", style: TextStyle(fontSize: 18)),
                   ),
                 ),
 
                 const SizedBox(height: 15),
 
-                // Google login
-                SizedBox(
-                  width: double.infinity,
-                  height: 52,
-                  child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.black,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                    ),
-                    onPressed: () {},
-                    child: const Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Icons.g_mobiledata, color: Colors.white, size: 30),
-                        SizedBox(width: 8),
-                        Text(
-                          "Continue with Google",
-                          style: TextStyle(color: Colors.white, fontSize: 16),
-                        ),
-                      ],
-                    ),
-                  ),
+                _socialButton(
+                  icon: Icons.g_mobiledata,
+                  label: "Continue with Google",
                 ),
-
                 const SizedBox(height: 10),
-
-                SizedBox(
-                  width: double.infinity,
-                  height: 52,
-                  child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.black,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                    ),
-                    onPressed: () {},
-                    child: const Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Icons.apple, color: Colors.white),
-                        SizedBox(width: 8),
-                        Text(
-                          "Continue with Apple",
-                          style: TextStyle(color: Colors.white, fontSize: 16),
-                        ),
-                      ],
-                    ),
-                  ),
+                _socialButton(
+                  icon: Icons.apple,
+                  label: "Continue with Apple",
                 ),
 
                 const SizedBox(height: 20),
 
-                // Register link
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     const Text("Don't have an account? "),
                     GestureDetector(
-                      onTap: () {
-                        Navigator.pushNamed(context, "/register");
-                      },
+                      onTap: () =>
+                          Navigator.pushNamed(context, "/register"),
                       child: const Text(
                         "Register!",
                         style: TextStyle(
@@ -214,11 +157,28 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                   ],
                 ),
-
-                const SizedBox(height: 30),
               ],
             ),
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _socialButton({required IconData icon, required String label}) {
+    return SizedBox(
+      width: double.infinity,
+      height: 52,
+      child: ElevatedButton(
+        style: ElevatedButton.styleFrom(backgroundColor: Colors.black),
+        onPressed: () {},
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, color: Colors.white),
+            const SizedBox(width: 8),
+            Text(label, style: const TextStyle(color: Colors.white)),
+          ],
         ),
       ),
     );

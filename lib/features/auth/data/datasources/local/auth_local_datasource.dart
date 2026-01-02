@@ -4,7 +4,7 @@ import 'package:nutrisphere_flutter/features/auth/data/datasources/auth_datasour
 import 'package:nutrisphere_flutter/features/auth/data/models/auth_hive_model.dart';
 
 //Provider
-final AuthLocalDatasourceProvider = Provider<AuthLocalDatasource>((ref) {
+final authLocalDatasourceProvider = Provider<AuthLocalDatasource>((ref) {
   final hiveService = ref.watch(hiveServiceProvider);
   return AuthLocalDatasource(hiveService: hiveService);  // dependency injection
 });
@@ -35,7 +35,7 @@ class AuthLocalDatasource implements IAuthDatasource {
   Future<AuthHiveModel?> login(String email, String password) async{
     try{
       final user = await _hiveService.loginUser(email, password);
-      return Future.value(null);
+      return Future.value(user);
     } catch (e) {
       return Future.value(null);
     }

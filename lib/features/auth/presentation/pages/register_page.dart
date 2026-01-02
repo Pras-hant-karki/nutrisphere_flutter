@@ -1,56 +1,60 @@
 import 'package:flutter/material.dart';
 
-class RegisterScreen extends StatefulWidget {
-  const RegisterScreen({super.key});
+class RegisterPage extends StatefulWidget {
+  const RegisterPage({super.key});
 
   @override
-  State<RegisterScreen> createState() => _RegisterScreenState();
+  State<RegisterPage> createState() => _RegisterPageState();
 }
 
-class _RegisterScreenState extends State<RegisterScreen> {
-  // Gender selection variable
-  String? selectedGender;
+class _RegisterPageState extends State<RegisterPage> {
+  final _formKey = GlobalKey<FormState>();
+  final _usernameCtrl = TextEditingController();
+  final _emailCtrl = TextEditingController();
+  final _passwordCtrl = TextEditingController();
+  final _confirmCtrl = TextEditingController();
+  final _dobCtrl = TextEditingController();
 
-  // Date picker text controller
-  TextEditingController dobController = TextEditingController();
+  String? gender;
 
-  // Date picker 
   Future<void> pickDate() async {
-    DateTime? date = await showDatePicker(
+    final date = await showDatePicker(
       context: context,
-      initialDate: DateTime(2025),
+      initialDate: DateTime(2000),
       firstDate: DateTime(1950),
       lastDate: DateTime.now(),
     );
-
     if (date != null) {
-      setState(() {
-        dobController.text =
-            "${date.day}/${date.month}/${date.year}"; // show date in textfield
-      });
+      _dobCtrl.text = "${date.day}/${date.month}/${date.year}";
     }
+  }
+
+  void _register() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    // TODO (Sprint 3): Call AuthRepository.register()
+
+    Navigator.pushReplacementNamed(context, "/login");
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: SafeArea(
-        child: Padding(
+        child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 24),
-          child: SingleChildScrollView(
+          child: Form(
+            key: _formKey,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const SizedBox(height: 20),
 
-                // Back arrow
                 IconButton(
                   onPressed: () =>
                       Navigator.pushReplacementNamed(context, "/login"),
                   icon: const Icon(Icons.arrow_back),
                 ),
-
-                const SizedBox(height: 10),
 
                 const Center(
                   child: Text(
@@ -64,145 +68,82 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
                 const SizedBox(height: 30),
 
-                // Username
-                const TextField(
-                  decoration: InputDecoration(
-                    labelText: "Username *",
-                  ),
-                ),
+                _field("Username", _usernameCtrl),
+                _field("Email", _emailCtrl,
+                    validator: (v) =>
+                        v!.contains("@") ? null : "Invalid email"),
 
-                const SizedBox(height: 20),
-
-                Row(
-                  children: [
-                    Expanded(
-                      child: TextField(
-                        decoration: const InputDecoration(
-                          labelText: "Country *",
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: TextField(
-                        decoration: const InputDecoration(
-                          labelText: "Phone number *",
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-
-                const SizedBox(height: 20),
-
-                const TextField(
-                  decoration: InputDecoration(
-                    labelText: "Email *",
-                  ),
-                ),
-
-                const SizedBox(height: 20),
-
-                // Gender section
-                const Text(
-                  "Gender",
-                  style: TextStyle(fontSize: 15),
-                ),
+                const SizedBox(height: 10),
+                const Text("Gender"),
 
                 Row(
                   children: [
                     Radio(
                       value: "Male",
-                      groupValue: selectedGender,
-                      onChanged: (value) {
-                        setState(() {
-                          selectedGender = value.toString();
-                        });
-                      },
+                      groupValue: gender,
+                      onChanged: (v) => setState(() => gender = v),
                     ),
                     const Text("Male"),
-
                     Radio(
                       value: "Female",
-                      groupValue: selectedGender,
-                      onChanged: (value) {
-                        setState(() {
-                          selectedGender = value.toString();
-                        });
-                      },
+                      groupValue: gender,
+                      onChanged: (v) => setState(() => gender = v),
                     ),
                     const Text("Female"),
                   ],
                 ),
 
-                const SizedBox(height: 10),
-
-                // Date of birth
                 GestureDetector(
                   onTap: pickDate,
                   child: AbsorbPointer(
-                    child: TextField(
-                      controller: dobController,
-                      decoration: const InputDecoration(
-                        labelText: "Date of birth",
-                        suffixIcon: Icon(Icons.calendar_today),
-                      ),
-                    ),
+                    child: _field("Date of Birth", _dobCtrl,
+                        suffix: const Icon(Icons.calendar_today)),
                   ),
                 ),
 
-                const SizedBox(height: 20),
+                _field("Password", _passwordCtrl, obscure: true),
+                _field("Confirm Password", _confirmCtrl,
+                    obscure: true,
+                    validator: (v) => v != _passwordCtrl.text
+                        ? "Passwords do not match"
+                        : null),
 
-                const TextField(
-                  decoration: InputDecoration(
-                    labelText: "Password",
-                  ),
-                  obscureText: true,
-                ),
+                const SizedBox(height: 30),
 
-                const SizedBox(height: 20),
-
-                const TextField(
-                  decoration: InputDecoration(
-                    labelText: "Re-enter Password",
-                  ),
-                  obscureText: true,
-                ),
-
-                const SizedBox(height: 20),
-
-                const TextField(
-                  decoration: InputDecoration(
-                    labelText: "Address",
-                  ),
-                ),
-
-                const SizedBox(height: 40),
-
-                // Register button
                 SizedBox(
                   width: double.infinity,
                   height: 52,
                   child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.orange,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(30),
-                      ),
-                    ),
-                    onPressed: () =>
-                        Navigator.pushReplacementNamed(context, "/login"),
-                    child: const Text(
-                      "Register",
-                      style: TextStyle(fontSize: 18, color: Colors.white),
-                    ),
+                    onPressed: _register,
+                    child: const Text("Register",
+                        style: TextStyle(fontSize: 18)),
                   ),
                 ),
-
-                const SizedBox(height: 30),
               ],
             ),
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _field(
+    String label,
+    TextEditingController ctrl, {
+    bool obscure = false,
+    String? Function(String?)? validator,
+    Widget? suffix,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 20),
+      child: TextFormField(
+        controller: ctrl,
+        obscureText: obscure,
+        validator: validator ??
+            (v) => v == null || v.isEmpty ? "Required" : null,
+        decoration: InputDecoration(
+          labelText: label,
+          suffixIcon: suffix,
         ),
       ),
     );

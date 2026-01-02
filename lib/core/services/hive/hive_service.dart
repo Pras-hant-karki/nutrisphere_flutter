@@ -60,8 +60,9 @@ class HiveService {
   }
 
   // Logout (local)
-  Future<void> logoutUser(String authId) async {
-    await _authBox.delete(authId);
+  Future<void> logoutUser() async {
+    // await _authBox.delete(authId);
+    return;
   }
 
   /// Get user by username
