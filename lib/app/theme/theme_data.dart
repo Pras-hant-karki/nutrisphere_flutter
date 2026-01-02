@@ -12,7 +12,7 @@ ThemeData getApplicationTheme() {
 
     // app bar theme
     appBarTheme: const AppBarTheme(
-      backgroundColor:  Color.fromARGB(255, 244, 227, 169),
+      backgroundColor:  Color.fromARGB(255, 246, 228, 169),
       elevation: 2,
       centerTitle: true, // Center the title
       iconTheme: IconThemeData(color: Colors.black),

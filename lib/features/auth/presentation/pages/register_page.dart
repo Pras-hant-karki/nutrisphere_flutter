@@ -1,149 +1,137 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:nutrisphere_flutter/core/utils/snackbar_utils.dart';
+import 'package:nutrisphere_flutter/features/auth/presentation/state/auth_state.dart';
+import 'package:nutrisphere_flutter/features/auth/presentation/view_model/auth_view_model.dart';
 
-class RegisterPage extends StatefulWidget {
+class RegisterPage extends ConsumerStatefulWidget {
   const RegisterPage({super.key});
 
   @override
-  State<RegisterPage> createState() => _RegisterPageState();
+  ConsumerState<RegisterPage> createState() => _RegisterPageState();
 }
 
-class _RegisterPageState extends State<RegisterPage> {
+class _RegisterPageState extends ConsumerState<RegisterPage> {
   final _formKey = GlobalKey<FormState>();
-  final _usernameCtrl = TextEditingController();
-  final _emailCtrl = TextEditingController();
-  final _passwordCtrl = TextEditingController();
-  final _confirmCtrl = TextEditingController();
-  final _dobCtrl = TextEditingController();
+  final _nameController = TextEditingController();
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
+  final _confirmPasswordController = TextEditingController();
 
-  String? gender;
+  bool _obscurePassword = true;
+  bool _obscureConfirmPassword = true;
+  bool _agreedToTerms = false;
 
-  Future<void> pickDate() async {
-    final date = await showDatePicker(
-      context: context,
-      initialDate: DateTime(2000),
-      firstDate: DateTime(1950),
-      lastDate: DateTime.now(),
-    );
-    if (date != null) {
-      _dobCtrl.text = "${date.day}/${date.month}/${date.year}";
-    }
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _emailController.dispose();
+    _passwordController.dispose();
+    _confirmPasswordController.dispose();
+    super.dispose();
   }
 
-  void _register() async {
+  Future<void> _handleSignup() async {
+    if (!_agreedToTerms) {
+      SnackbarUtils.showError(
+        context,
+        'Please agree to Terms & Conditions',
+      );
+      return;
+    }
+
     if (!_formKey.currentState!.validate()) return;
 
-    // TODO (Sprint 3): Call AuthRepository.register()
-
-    Navigator.pushReplacementNamed(context, "/login");
+    await ref.read(authViewModelProvider.notifier).register(
+          fullName: _nameController.text.trim(),
+          email: _emailController.text.trim(),
+          username: _emailController.text.trim().split('@').first,
+          password: _passwordController.text.trim(),
+        );
   }
 
   @override
   Widget build(BuildContext context) {
+    final authState = ref.watch(authViewModelProvider);
+
+    ref.listen<AuthState>(authViewModelProvider, (prev, next) {
+      if (next.status == AuthStatus.registered) {
+        SnackbarUtils.showSuccess(context, 'Registration successful');
+        Navigator.pop(context);
+      } else if (next.status == AuthStatus.error) {
+        SnackbarUtils.showError(context, next.errorMessage!);
+      }
+    });
+
     return Scaffold(
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 24),
-          child: Form(
-            key: _formKey,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const SizedBox(height: 20),
+      appBar: AppBar(),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(24),
+        child: Form(
+          key: _formKey,
+          child: Column(
+            children: [
+              TextFormField(
+                controller: _nameController,
+                decoration:
+                    const InputDecoration(labelText: 'Full Name'),
+                validator: (v) =>
+                    v != null && v.length >= 3 ? null : 'Invalid name',
+              ),
 
-                IconButton(
-                  onPressed: () =>
-                      Navigator.pushReplacementNamed(context, "/login"),
-                  icon: const Icon(Icons.arrow_back),
-                ),
+              const SizedBox(height: 16),
 
-                const Center(
-                  child: Text(
-                    "Registration",
-                    style: TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
+              TextFormField(
+                controller: _emailController,
+                decoration:
+                    const InputDecoration(labelText: 'Email'),
+                validator: (v) =>
+                    v != null && v.contains('@') ? null : 'Invalid email',
+              ),
 
-                const SizedBox(height: 30),
+              const SizedBox(height: 16),
 
-                _field("Username", _usernameCtrl),
-                _field("Email", _emailCtrl,
-                    validator: (v) =>
-                        v!.contains("@") ? null : "Invalid email"),
+              TextFormField(
+                controller: _passwordController,
+                obscureText: _obscurePassword,
+                decoration: const InputDecoration(labelText: 'Password'),
+                validator: (v) =>
+                    v != null && v.length >= 6 ? null : 'Min 6 chars',
+              ),
 
-                const SizedBox(height: 10),
-                const Text("Gender"),
+              const SizedBox(height: 16),
 
-                Row(
-                  children: [
-                    Radio(
-                      value: "Male",
-                      groupValue: gender,
-                      onChanged: (v) => setState(() => gender = v),
-                    ),
-                    const Text("Male"),
-                    Radio(
-                      value: "Female",
-                      groupValue: gender,
-                      onChanged: (v) => setState(() => gender = v),
-                    ),
-                    const Text("Female"),
-                  ],
-                ),
+              TextFormField(
+                controller: _confirmPasswordController,
+                obscureText: _obscureConfirmPassword,
+                decoration:
+                    const InputDecoration(labelText: 'Confirm Password'),
+                validator: (v) => v == _passwordController.text
+                    ? null
+                    : 'Passwords do not match',
+              ),
 
-                GestureDetector(
-                  onTap: pickDate,
-                  child: AbsorbPointer(
-                    child: _field("Date of Birth", _dobCtrl,
-                        suffix: const Icon(Icons.calendar_today)),
-                  ),
-                ),
+              const SizedBox(height: 20),
 
-                _field("Password", _passwordCtrl, obscure: true),
-                _field("Confirm Password", _confirmCtrl,
-                    obscure: true,
-                    validator: (v) => v != _passwordCtrl.text
-                        ? "Passwords do not match"
-                        : null),
+              CheckboxListTile(
+                value: _agreedToTerms,
+                onChanged: (v) =>
+                    setState(() => _agreedToTerms = v ?? false),
+                title: const Text('I agree to Terms & Conditions'),
+              ),
 
-                const SizedBox(height: 30),
+              const SizedBox(height: 24),
 
-                SizedBox(
-                  width: double.infinity,
-                  height: 52,
-                  child: ElevatedButton(
-                    onPressed: _register,
-                    child: const Text("Register",
-                        style: TextStyle(fontSize: 18)),
-                  ),
-                ),
-              ],
-            ),
+              ElevatedButton(
+                onPressed: authState.status == AuthStatus.loading
+                    ? null
+                    : _handleSignup,
+                child: authState.status == AuthStatus.loading
+                    ? const CircularProgressIndicator()
+                    : const Text('Create Account'),
+              ),
+            ],
           ),
-        ),
-      ),
-    );
-  }
-
-  Widget _field(
-    String label,
-    TextEditingController ctrl, {
-    bool obscure = false,
-    String? Function(String?)? validator,
-    Widget? suffix,
-  }) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 20),
-      child: TextFormField(
-        controller: ctrl,
-        obscureText: obscure,
-        validator: validator ??
-            (v) => v == null || v.isEmpty ? "Required" : null,
-        decoration: InputDecoration(
-          labelText: label,
-          suffixIcon: suffix,
         ),
       ),
     );

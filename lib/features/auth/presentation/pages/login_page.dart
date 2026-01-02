@@ -1,184 +1,129 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_svg/svg.dart';
+import 'package:nutrisphere_flutter/app/routes/app_routes.dart';
+import 'package:nutrisphere_flutter/app/theme/app_colors.dart';
+import 'package:nutrisphere_flutter/core/utils/snackbar_utils.dart';
+import 'package:nutrisphere_flutter/features/auth/presentation/pages/register_page.dart';
+import 'package:nutrisphere_flutter/features/auth/presentation/state/auth_state.dart';
+import 'package:nutrisphere_flutter/features/auth/presentation/view_model/auth_view_model.dart';
+import 'package:nutrisphere_flutter/features/dashboard/presentation/pages/dashboard_page.dart';
 
-class LoginPage extends StatefulWidget {
+class LoginPage extends ConsumerStatefulWidget {
   const LoginPage({super.key});
 
   @override
-  State<LoginPage> createState() => _LoginPageState();
+  ConsumerState<LoginPage> createState() => _LoginPageState();
 }
 
-class _LoginPageState extends State<LoginPage> {
+class _LoginPageState extends ConsumerState<LoginPage> {
   final _formKey = GlobalKey<FormState>();
-  final _usernameCtrl = TextEditingController();
-  final _passwordCtrl = TextEditingController();
-  bool _obscure = true;
-  bool rememberMe = false;
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
+  bool _obscurePassword = true;
 
   @override
   void dispose() {
-    _usernameCtrl.dispose();
-    _passwordCtrl.dispose();
+    _emailController.dispose();
+    _passwordController.dispose();
     super.dispose();
   }
 
-  void _login() async {
+  Future<void> _handleLogin() async {
     if (!_formKey.currentState!.validate()) return;
 
-    // TODO (Sprint 3): Call AuthRepository.login()
-    // final result = await authRepo.login(...);
-
-    Navigator.pushReplacementNamed(context, "/dashboard");
+    await ref.read(authViewModelProvider.notifier).login(
+          email: _emailController.text.trim(),
+          password: _passwordController.text.trim(),
+        );
   }
 
   @override
   Widget build(BuildContext context) {
+    final authState = ref.watch(authViewModelProvider);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    ref.listen<AuthState>(authViewModelProvider, (prev, next) {
+      if (next.status == AuthStatus.authenticated) {
+        AppRoutes.pushReplacement(context, const HomeScreen());
+      } else if (next.status == AuthStatus.error) {
+        SnackbarUtils.showError(context, next.errorMessage!);
+      }
+    });
+
     return Scaffold(
-      resizeToAvoidBottomInset: true,
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 24),
+          padding: const EdgeInsets.all(24),
           child: Form(
             key: _formKey,
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                const SizedBox(height: 30),
+                const SizedBox(height: 40),
 
-                IconButton(
-                  onPressed: () =>
-                      Navigator.pushReplacementNamed(context, "/onboarding"),
-                  icon: const Icon(Icons.arrow_back),
+                SvgPicture.asset(
+                  'assets/svg/nutrisphere_logo.png',
+                  height: 70,
+                  colorFilter: ColorFilter.mode(
+                    isDark ? AppColors.darkTextPrimary : AppColors.primary,
+                    BlendMode.srcIn,
+                  ),
                 ),
 
-                const SizedBox(height: 10),
-
-                const Text(
-                  "Log in",
-                  style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
-                ),
-
-                const SizedBox(height: 30),
+                const SizedBox(height: 40),
 
                 TextFormField(
-                  controller: _usernameCtrl,
+                  controller: _emailController,
                   decoration: const InputDecoration(
-                    labelText: "Username",
-                    prefixIcon: Icon(Icons.person_outline),
+                    labelText: 'Email',
+                    prefixIcon: Icon(Icons.email_outlined),
                   ),
                   validator: (v) =>
-                      v == null || v.isEmpty ? "Enter username" : null,
+                      v != null && v.contains('@') ? null : 'Invalid email',
                 ),
 
-                const SizedBox(height: 20),
+                const SizedBox(height: 16),
 
                 TextFormField(
-                  controller: _passwordCtrl,
-                  obscureText: _obscure,
+                  controller: _passwordController,
+                  obscureText: _obscurePassword,
                   decoration: InputDecoration(
-                    labelText: "Password",
+                    labelText: 'Password',
                     prefixIcon: const Icon(Icons.lock_outline),
                     suffixIcon: IconButton(
-                      icon: Icon(
-                        _obscure ? Icons.visibility : Icons.visibility_off,
-                      ),
+                      icon: Icon(_obscurePassword
+                          ? Icons.visibility
+                          : Icons.visibility_off),
                       onPressed: () =>
-                          setState(() => _obscure = !_obscure),
+                          setState(() => _obscurePassword = !_obscurePassword),
                     ),
                   ),
                   validator: (v) =>
-                      v == null || v.length < 6 ? "Min 6 characters" : null,
+                      v != null && v.length >= 6 ? null : 'Min 6 chars',
                 ),
 
-                const SizedBox(height: 10),
+                const SizedBox(height: 32),
 
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Row(
-                      children: [
-                        Checkbox(
-                          value: rememberMe,
-                          onChanged: (v) =>
-                              setState(() => rememberMe = v!),
-                        ),
-                        const Text("Remember me"),
-                      ],
-                    ),
-                    GestureDetector(
-                      onTap: () =>
-                          Navigator.pushNamed(context, "/forgot"),
-                      child: const Text(
-                        "Forgot password?",
-                        style: TextStyle(color: Colors.blue),
-                      ),
-                    ),
-                  ],
+                ElevatedButton(
+                  onPressed: authState.status == AuthStatus.loading
+                      ? null
+                      : _handleLogin,
+                  child: authState.status == AuthStatus.loading
+                      ? const CircularProgressIndicator(color: Colors.white)
+                      : const Text('Login'),
                 ),
 
-                const SizedBox(height: 25),
+                const SizedBox(height: 16),
 
-                SizedBox(
-                  width: double.infinity,
-                  height: 52,
-                  child: ElevatedButton(
-                    onPressed: _login,
-                    child: const Text("Log in", style: TextStyle(fontSize: 18)),
-                  ),
-                ),
-
-                const SizedBox(height: 15),
-
-                _socialButton(
-                  icon: Icons.g_mobiledata,
-                  label: "Continue with Google",
-                ),
-                const SizedBox(height: 10),
-                _socialButton(
-                  icon: Icons.apple,
-                  label: "Continue with Apple",
-                ),
-
-                const SizedBox(height: 20),
-
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Text("Don't have an account? "),
-                    GestureDetector(
-                      onTap: () =>
-                          Navigator.pushNamed(context, "/register"),
-                      child: const Text(
-                        "Register!",
-                        style: TextStyle(
-                          color: Colors.blue,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                  ],
+                TextButton(
+                  onPressed: () =>
+                      AppRoutes.push(context, const RegisterPage()),
+                  child: const Text('Create account'),
                 ),
               ],
             ),
           ),
-        ),
-      ),
-    );
-  }
-
-  Widget _socialButton({required IconData icon, required String label}) {
-    return SizedBox(
-      width: double.infinity,
-      height: 52,
-      child: ElevatedButton(
-        style: ElevatedButton.styleFrom(backgroundColor: Colors.black),
-        onPressed: () {},
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(icon, color: Colors.white),
-            const SizedBox(width: 8),
-            Text(label, style: const TextStyle(color: Colors.white)),
-          ],
         ),
       ),
     );

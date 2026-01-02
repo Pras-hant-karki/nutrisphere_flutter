@@ -26,6 +26,8 @@ class AuthViewModel extends Notifier<AuthState> {
     required String username,
   }) async {
     state = state.copyWith(status: AuthStatus.loading);
+    // wait for 2 sec
+    await Future.delayed(const Duration(seconds: 2));
     final params = RegisterUsecaseParams(
       fullName: fullName,
       email: email,
@@ -52,6 +54,7 @@ class AuthViewModel extends Notifier<AuthState> {
     required String password,
   }) async {
     state = state.copyWith(status: AuthStatus.loading);
+    await Future.delayed(const Duration(seconds: 2));
     final params = LoginUsecaseParams(
       email: email,
       password: password,
