@@ -1,7 +1,6 @@
 import 'package:hive/hive.dart';
 import '../../models/auth_hive_model.dart';
 import '../auth_datasource.dart';
-import '../../../../core/constants/hive_table_constant.dart';
 
 class AuthLocalDataSource implements AuthDataSource {
   final Box<AuthHiveModel> _userBox;
