@@ -30,7 +30,7 @@ final loginUseCaseProvider = Provider<LoginUsecase> ((ref) {
 });
 
 
-class LoginUsecase implements UsecaseWithParams<AuthEntity, LoginUsecaseParams> {
+class LoginUsecase implements UsecaseWithParms<AuthEntity, LoginUsecaseParams> {
   final IAuthRepository _authRepository;
 
   LoginUsecase({required IAuthRepository authRepository})

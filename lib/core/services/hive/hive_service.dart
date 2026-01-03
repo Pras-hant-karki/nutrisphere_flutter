@@ -45,13 +45,13 @@ class HiveService {
 
   /// Register user
   Future<AuthHiveModel> registerUser(AuthHiveModel user) async {
-    await _authBox.put(user.username, user);
+    await _authBox.put(user.email, user);
     return user;
   }
 
   /// Login user
-  AuthHiveModel? loginUser(String username, String password) {
-    final user = _authBox.get(username);
+  AuthHiveModel? loginUser(String email, String password) {
+    final user = _authBox.get(email);
 
     if (user == null) return null;
     if (user.password != password) return null;
@@ -65,23 +65,23 @@ class HiveService {
     return;
   }
 
-  /// Get user by username
-  AuthHiveModel? getUser(String username) {
-    return _authBox.get(username);
+  /// Get user by email
+  AuthHiveModel? getUser(String email) {
+    return _authBox.get(email);
   }
 
   /// Update user
   Future<bool> updateUser(AuthHiveModel user) async {
-    if (_authBox.containsKey(user.username)) {
-      await _authBox.put(user.username, user);
+    if (_authBox.containsKey(user.email)) {
+      await _authBox.put(user.email, user);
       return true;
     }
     return false;
   }
 
   /// Delete user
-  Future<void> deleteUser(String username) async {
-    await _authBox.delete(username);
+  Future<void> deleteUser(String email) async {
+    await _authBox.delete(email);
   }
 
   /// Check if email exists

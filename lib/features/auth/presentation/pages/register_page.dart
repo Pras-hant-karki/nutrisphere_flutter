@@ -18,25 +18,11 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
 
-  bool _obscurePassword = true;
-  bool _obscureConfirmPassword = true;
   bool _agreedToTerms = false;
-
-  @override
-  void dispose() {
-    _nameController.dispose();
-    _emailController.dispose();
-    _passwordController.dispose();
-    _confirmPasswordController.dispose();
-    super.dispose();
-  }
 
   Future<void> _handleSignup() async {
     if (!_agreedToTerms) {
-      SnackbarUtils.showError(
-        context,
-        'Please agree to Terms & Conditions',
-      );
+      SnackbarUtils.showError(context, 'Please agree to Terms & Conditions');
       return;
     }
 
@@ -45,7 +31,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
     await ref.read(authViewModelProvider.notifier).register(
           fullName: _nameController.text.trim(),
           email: _emailController.text.trim(),
-          username: _emailController.text.trim().split('@').first,
+          username: _nameController.text.trim().split(' ').first,
           password: _passwordController.text.trim(),
         );
   }
@@ -64,74 +50,78 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
     });
 
     return Scaffold(
-      appBar: AppBar(),
+      appBar: AppBar(title: const Text('Registration')),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(24),
         child: Form(
           key: _formKey,
           child: Column(
             children: [
-              TextFormField(
-                controller: _nameController,
-                decoration:
-                    const InputDecoration(labelText: 'Full Name'),
-                validator: (v) =>
-                    v != null && v.length >= 3 ? null : 'Invalid name',
-              ),
+              _input(_nameController, 'Full Name *'),
+              _input(_emailController, 'Email *'),
+              _input(_passwordController, 'Password', obscure: true),
+              _input(_confirmPasswordController, 'Confirm Password',
+                  obscure: true,
+                  validator: (v) =>
+                      v == _passwordController.text ? null : 'Passwords do not match'),
 
               const SizedBox(height: 16),
 
-              TextFormField(
-                controller: _emailController,
-                decoration:
-                    const InputDecoration(labelText: 'Email'),
-                validator: (v) =>
-                    v != null && v.contains('@') ? null : 'Invalid email',
+              Row(
+                children: [
+                  Checkbox(
+                    value: _agreedToTerms,
+                    onChanged: (v) =>
+                        setState(() => _agreedToTerms = v ?? false),
+                  ),
+                  const Expanded(
+                    child: Text('I agree to terms and condition'),
+                  ),
+                ],
               ),
 
-              const SizedBox(height: 16),
+              const SizedBox(height: 32),
 
-              TextFormField(
-                controller: _passwordController,
-                obscureText: _obscurePassword,
-                decoration: const InputDecoration(labelText: 'Password'),
-                validator: (v) =>
-                    v != null && v.length >= 6 ? null : 'Min 6 chars',
-              ),
-
-              const SizedBox(height: 16),
-
-              TextFormField(
-                controller: _confirmPasswordController,
-                obscureText: _obscureConfirmPassword,
-                decoration:
-                    const InputDecoration(labelText: 'Confirm Password'),
-                validator: (v) => v == _passwordController.text
-                    ? null
-                    : 'Passwords do not match',
-              ),
-
-              const SizedBox(height: 20),
-
-              CheckboxListTile(
-                value: _agreedToTerms,
-                onChanged: (v) =>
-                    setState(() => _agreedToTerms = v ?? false),
-                title: const Text('I agree to Terms & Conditions'),
-              ),
-
-              const SizedBox(height: 24),
-
-              ElevatedButton(
-                onPressed: authState.status == AuthStatus.loading
-                    ? null
-                    : _handleSignup,
-                child: authState.status == AuthStatus.loading
-                    ? const CircularProgressIndicator()
-                    : const Text('Create Account'),
+              SizedBox(
+                width: double.infinity,
+                height: 48,
+                child: ElevatedButton(
+                  onPressed: authState.status == AuthStatus.loading
+                      ? null
+                      : _handleSignup,
+                  style: ElevatedButton.styleFrom(
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(24),
+                    ),
+                  ),
+                  child: authState.status == AuthStatus.loading
+                      ? const CircularProgressIndicator(color: Colors.white)
+                      : const Text('Register'),
+                ),
               ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _input(
+    TextEditingController controller,
+    String label, {
+    bool obscure = false,
+    String? Function(String?)? validator,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: TextFormField(
+        controller: controller,
+        obscureText: obscure,
+        validator: validator ??
+            (v) => v != null && v.isNotEmpty ? null : 'Required',
+        decoration: InputDecoration(
+          labelText: label,
+          border: const UnderlineInputBorder(),
         ),
       ),
     );

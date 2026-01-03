@@ -36,7 +36,7 @@ final registerUseCaseProvider = Provider<RegisterUsecase> ((ref) {
 });
 
 class RegisterUsecase 
-    implements UsecaseWithParams<bool, RegisterUsecaseParams> {
+    implements UsecaseWithParms<bool, RegisterUsecaseParams> {
   final IAuthRepository _authRepository;
 
   RegisterUsecase({required IAuthRepository authRepository})
