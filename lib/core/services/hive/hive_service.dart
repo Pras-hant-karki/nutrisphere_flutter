@@ -50,7 +50,7 @@ class HiveService {
   }
 
   /// Login user
-  AuthHiveModel? loginUser(String email, String password) {
+  AuthHiveModel? login(String email, String password) {
     final user = _authBox.get(email);
 
     if (user == null) return null;

@@ -37,6 +37,15 @@ class UserSessionService {
     await _prefs.setString(_keyFullName, fullName);
   }
 
+  // clear user session data
+  Future<void> clearUserSession() async {
+    await _prefs.remove(_keyIsLoggedIn);
+    await _prefs.remove(_keyUserId);
+    await _prefs.remove(_keyEmail);
+    await _prefs.remove(_keyUsername);
+    await _prefs.remove(_keyFullName);
+  }
+
   bool isLoggedIn() => _prefs.getBool(_keyIsLoggedIn) ?? false;
 
   String? get userId => _prefs.getString(_keyUserId);
