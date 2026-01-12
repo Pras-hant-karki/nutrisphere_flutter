@@ -42,14 +42,14 @@ class AuthLocalDatasource implements IAuthDatasource {
   @override
   Future<AuthHiveModel?> login(String email, String password) async{
     try{
-      final user = await _hiveService.login(email, password);
+      final user = _hiveService.login(email, password);
       // user ko details lai shared prefs ma save garni
       if (user != null) {
         await _userSessionService.saveSession(
           userId: user.authId!,
           email: user.email,
           username: user.username,
-          // phoneNumber: user.phoneNumber,
+          phoneNumber: user.phoneNumber,
           fullName: user.fullName,
         );
       }
@@ -62,7 +62,7 @@ class AuthLocalDatasource implements IAuthDatasource {
   @override
   Future<bool> logout() async{
     try{
-      await _hiveService.logoutUser();
+      await _userSessionService.logout();
       return Future.value(true);
     } catch (e) {
       return Future.value(false);

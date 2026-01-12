@@ -3,9 +3,6 @@ import 'package:hive/hive.dart';
 import 'package:nutrisphere_flutter/core/constants/hive_table_constants.dart';
 import 'package:nutrisphere_flutter/features/auth/domain/entities/auth_entity.dart';
 
-// dart run command to generate the adapter:
-// flutter packages pub run build_runner build --delete-conflicting-outputs
-// dart run build_runner build -d
 part 'auth_hive_model.g.dart';
 
 @HiveType(typeId: HiveTableConstants.authTypeId)
@@ -25,15 +22,36 @@ class AuthHiveModel extends HiveObject {
   @HiveField(4)
   final String password;
 
+  // 🔥 NEW FIELDS (Sprint 4)
+  @HiveField(5)
+  final String? address;
+
+  @HiveField(6)
+  final DateTime? dateOfBirth;
+
+  /// Stored as String: male / female / other
+  @HiveField(7)
+  final String? gender;
+
+  /// Full phone number with country code (+97798xxxxxxx)
+  @HiveField(8)
+  final String? phoneNumber;
+
   AuthHiveModel({
     String? authId,
     required this.fullName,
     required this.username,
     required this.email,
     required this.password,
-  }) : authId = authId ?? Uuid().v4();
+    this.address,
+    this.dateOfBirth,
+    this.gender,
+    this.phoneNumber,
+  }) : authId = authId ?? const Uuid().v4();
 
-  // From entity to Hive model
+  // ===================== MAPPERS =====================
+
+  /// Entity → Hive
   factory AuthHiveModel.fromEntity(AuthEntity entity) {
     return AuthHiveModel(
       authId: entity.authId,
@@ -41,10 +59,14 @@ class AuthHiveModel extends HiveObject {
       username: entity.username,
       email: entity.email,
       password: entity.password ?? '',
+      address: entity.address,
+      dateOfBirth: entity.dateOfBirth,
+      gender: entity.gender?.name, // enum → string
+      phoneNumber: entity.phoneNumber,
     );
   }
 
-  // From Hive model to entity
+  /// Hive → Entity
   AuthEntity toEntity() {
     return AuthEntity(
       authId: authId,
@@ -52,10 +74,13 @@ class AuthHiveModel extends HiveObject {
       username: username,
       email: email,
       password: password,
+      address: address,
+      dateOfBirth: dateOfBirth,
+      gender: gender != null ? Gender.values.byName(gender!) : null,
+      phoneNumber: phoneNumber,
     );
   }
 
-  // to entity list
   static List<AuthEntity> toEntityList(List<AuthHiveModel> models) {
     return models.map((model) => model.toEntity()).toList();
   }

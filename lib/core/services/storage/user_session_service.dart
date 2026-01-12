@@ -20,6 +20,7 @@ class UserSessionService {
   static const _keyEmail = 'email';
   static const _keyUsername = 'username';
   static const _keyFullName = 'full_name';
+  static const _keyPhoneNumber = 'phone_number';
 
   UserSessionService({required SharedPreferences prefs}) : _prefs = prefs;
 
@@ -29,32 +30,35 @@ class UserSessionService {
     required String email,
     required String username,
     required String fullName,
+    String? phoneNumber,
   }) async {
     await _prefs.setBool(_keyIsLoggedIn, true);
     await _prefs.setString(_keyUserId, userId);
     await _prefs.setString(_keyEmail, email);
     await _prefs.setString(_keyUsername, username);
     await _prefs.setString(_keyFullName, fullName);
+
+    if (phoneNumber != null) {
+      await _prefs.setString(_keyPhoneNumber, phoneNumber);
+    }
   }
 
-  // clear user session data
-  Future<void> clearUserSession() async {
+  /// Instagram-style logout
+  Future<void> logout() async {
     await _prefs.remove(_keyIsLoggedIn);
     await _prefs.remove(_keyUserId);
     await _prefs.remove(_keyEmail);
     await _prefs.remove(_keyUsername);
     await _prefs.remove(_keyFullName);
+    await _prefs.remove(_keyPhoneNumber);
   }
 
+  /// Session checks
   bool isLoggedIn() => _prefs.getBool(_keyIsLoggedIn) ?? false;
 
   String? get userId => _prefs.getString(_keyUserId);
   String? get email => _prefs.getString(_keyEmail);
   String? get username => _prefs.getString(_keyUsername);
   String? get fullName => _prefs.getString(_keyFullName);
-
-  /// Logout
-  Future<void> clearSession() async {
-    await _prefs.clear();
-  }
+  String? get phoneNumber => _prefs.getString(_keyPhoneNumber);
 }

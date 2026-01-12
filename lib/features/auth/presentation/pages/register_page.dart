@@ -13,12 +13,18 @@ class RegisterPage extends ConsumerStatefulWidget {
 
 class _RegisterPageState extends ConsumerState<RegisterPage> {
   final _formKey = GlobalKey<FormState>();
+
   final _nameController = TextEditingController();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
+  final _phoneController = TextEditingController();
+  final _addressController = TextEditingController();
 
   bool _agreedToTerms = false;
+  String _selectedCountryCode = '+977';
+  String _gender = 'Male';
+  DateTime? _dob;
 
   Future<void> _handleSignup() async {
     if (!_agreedToTerms) {
@@ -56,16 +62,100 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
         child: Form(
           key: _formKey,
           child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               _input(_nameController, 'Full Name *'),
-              _input(_emailController, 'Email *'),
-              _input(_passwordController, 'Password', obscure: true),
-              _input(_confirmPasswordController, 'Confirm Password',
-                  obscure: true,
-                  validator: (v) =>
-                      v == _passwordController.text ? null : 'Passwords do not match'),
 
-              const SizedBox(height: 16),
+              // Country + Phone
+              Row(
+                children: [
+                  SizedBox(
+                    width: 110,
+                    child: DropdownButtonFormField<String>(
+                      initialValue: _selectedCountryCode,
+                      decoration: const InputDecoration(
+                        labelText: 'Country',
+                        border: UnderlineInputBorder(),
+                      ),
+                      items: const [
+                        DropdownMenuItem(value: '+977', child: Text('+977')),
+                        DropdownMenuItem(value: '+91', child: Text('+91')),
+                        DropdownMenuItem(value: '+1', child: Text('+1')),
+                      ],
+                      onChanged: (v) => setState(() => _selectedCountryCode = v!),
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: _input(
+                      _phoneController,
+                      'Phone number *',
+                      keyboardType: TextInputType.phone,
+                    ),
+                  ),
+                ],
+              ),
+
+              _input(_emailController, 'Email *'),
+
+              // Gender
+              const SizedBox(height: 8),
+              const Text('Gender'),
+              Row(
+                children: [
+                  Radio<String>(
+                    value: 'Male',
+                    groupValue: _gender,
+                    onChanged: (v) => setState(() => _gender = v!),
+                  ),
+                  const Text('Male'),
+                  Radio<String>(
+                    value: 'Female',
+                    groupValue: _gender,
+                    onChanged: (v) => setState(() => _gender = v!),
+                  ),
+                  const Text('Female'),
+                ],
+              ),
+
+              // Date of Birth
+              GestureDetector(
+                onTap: () async {
+                  final picked = await showDatePicker(
+                    context: context,
+                    firstDate: DateTime(1900),
+                    lastDate: DateTime.now(),
+                    initialDate: DateTime(2000),
+                  );
+                  if (picked != null) setState(() => _dob = picked);
+                },
+                child: AbsorbPointer(
+                  child: TextFormField(
+                    decoration: InputDecoration(
+                      labelText: 'Date of birth',
+                      suffixIcon: const Icon(Icons.calendar_today),
+                    ),
+                    controller: TextEditingController(
+                      text: _dob == null
+                          ? ''
+                          : '${_dob!.year}-${_dob!.month}-${_dob!.day}',
+                    ),
+                  ),
+                ),
+              ),
+
+              _input(_passwordController, 'Password', obscure: true),
+              _input(
+                _confirmPasswordController,
+                'Re-enter Password',
+                obscure: true,
+                validator: (v) =>
+                    v == _passwordController.text ? null : 'Passwords do not match',
+              ),
+
+              _input(_addressController, 'Address'),
+
+              const SizedBox(height: 12),
 
               Row(
                 children: [
@@ -111,12 +201,14 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
     String label, {
     bool obscure = false,
     String? Function(String?)? validator,
+    TextInputType? keyboardType,
   }) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 16),
       child: TextFormField(
         controller: controller,
         obscureText: obscure,
+        keyboardType: keyboardType,
         validator: validator ??
             (v) => v != null && v.isNotEmpty ? null : 'Required',
         decoration: InputDecoration(
