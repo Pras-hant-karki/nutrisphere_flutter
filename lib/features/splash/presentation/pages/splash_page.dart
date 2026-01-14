@@ -1,35 +1,32 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:nutrisphere_flutter/app/routes/app_routes.dart';
 import 'package:nutrisphere_flutter/core/services/storage/user_session_service.dart';
 import 'package:nutrisphere_flutter/features/home/presentation/pages/home_page.dart';
 import 'package:nutrisphere_flutter/features/onboarding/presentation/pages/onboarding_page.dart';
 
-class SplashScreen extends StatefulWidget {
+class SplashScreen extends ConsumerStatefulWidget {
   const SplashScreen({super.key});
 
   @override
-  State<SplashScreen> createState() => _SplashScreenState();
+  ConsumerState<SplashScreen> createState() => _SplashScreenState();
 }
 
-class _SplashScreenState extends State<SplashScreen> {
-  get ref => null;
-
+class _SplashScreenState extends ConsumerState<SplashScreen> {
   @override
   void initState() {
     super.initState();
     _navigateToNext();
   }
 
-  Future <void> _navigateToNext() async {
-    await Future.delayed(const Duration(seconds: 3));
-    // Navigate to the next page, e.g., HomePage or LoginPage
-    // Navigator.pushReplacementNamed(context, '/home');
+  Future<void> _navigateToNext() async {
+    await Future.delayed(const Duration(seconds: 2));
     if (!mounted) return;
-    // check if user is already logged in
-    final UserSessionService = ref.read(userSessionServiceProvider);
-    final isLoggedIn = UserSessionService.isLoggedIn();
+
+    final userSessionService = ref.read(userSessionServiceProvider);
+    final isLoggedIn = userSessionService.isLoggedIn();
 
     if (isLoggedIn) {
       AppRoutes.pushReplacement(context, const HomeScreen());
@@ -43,10 +40,9 @@ class _SplashScreenState extends State<SplashScreen> {
     return Scaffold(
       body: Stack(
         children: [
-
           Positioned.fill(
             child: SvgPicture.asset(
-              "assets/images/bg.svg", // vector image
+              "assets/images/bg.svg",
               fit: BoxFit.cover,
             ),
           ),
