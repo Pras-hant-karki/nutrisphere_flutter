@@ -32,7 +32,6 @@ class AuthViewModel extends Notifier<AuthState> {
       fullName: fullName,
       email: email,
       password: password,
-      username: username,
     );
     final result = await _registerUsecase(params);
     result.fold(
