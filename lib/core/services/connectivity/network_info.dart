@@ -1,7 +1,6 @@
 import 'dart:io';
 
 import 'package:connectivity_plus/connectivity_plus.dart';
-import 'package:dartz/dartz.dart' as ConnectivityResult;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 abstract interface class INetworkInfo {
@@ -23,7 +22,7 @@ class NetworkInfo implements INetworkInfo {
     //
     final result = await _connectivity
         .checkConnectivity(); // is the internet or data is on or not
-    if (result.contains(ConnectivityResult.none)) {
+    if (result == ConnectivityResult.none) {
       return false;
     }
 
