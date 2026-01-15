@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:nutrisphere_flutter/core/services/hive/hive_service.dart';
 import 'package:nutrisphere_flutter/core/services/storage/user_session_service.dart';
@@ -48,7 +50,6 @@ class AuthLocalDatasource implements IAuthLocalDatasource {
         await _userSessionService.saveSession(
           userId: user.authId!,
           email: user.email,
-          username: user.username,
           fullName: user.fullName,
         );
       }
@@ -69,12 +70,36 @@ class AuthLocalDatasource implements IAuthLocalDatasource {
   }
 
   @override
-  Future<bool> register(AuthHiveModel model) async {
+  Future<AuthHiveModel> register(AuthHiveModel model) async {
     try{
       await _hiveService.registerUser(model);
-      return Future.value(true);
+      return Future.value(model);
     } catch (e) {
-      return Future.value(false);
+      return model;
     }
+  }
+  
+  @override
+  Future<bool> deleteUser(AuthHiveModel user) {
+    // TODO: implement deleteUser
+    throw UnimplementedError();
+  }
+  
+  @override
+  Future<AuthHiveModel?> getUserByEmail(String email) {
+    // TODO: implement getUserByEmail
+    throw UnimplementedError();
+  }
+  
+  @override
+  Future<AuthHiveModel?> getUserById(String authId) {
+    // TODO: implement getUserById
+    throw UnimplementedError();
+  }
+  
+  @override
+  Future<bool> updateUser(AuthHiveModel user) {
+    // TODO: implement updateUser
+    throw UnimplementedError();
   }
 }

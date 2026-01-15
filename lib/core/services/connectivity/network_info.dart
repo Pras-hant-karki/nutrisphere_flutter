@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:dartz/dartz.dart' as ConnectivityResult;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 abstract interface class INetworkInfo {

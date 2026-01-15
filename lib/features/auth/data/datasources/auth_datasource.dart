@@ -1,6 +1,9 @@
 import 'package:nutrisphere_flutter/features/auth/data/models/auth_api_model.dart';
-import '../models/auth_hive_model.dart';
+import 'package:nutrisphere_flutter/features/auth/data/models/auth_hive_model.dart';
 
+/// =======================
+/// LOCAL DATASOURCE
+/// =======================
 abstract interface class IAuthLocalDatasource {
   Future<AuthHiveModel> register(AuthHiveModel user);
   Future<AuthHiveModel?> login(String email, String password);
@@ -12,11 +15,13 @@ abstract interface class IAuthLocalDatasource {
   Future<AuthHiveModel?> getUserById(String authId);
   Future<bool> updateUser(AuthHiveModel user);
   Future<bool> deleteUser(AuthHiveModel user);
-
 }
 
+/// =======================
+/// REMOTE DATASOURCE
+/// =======================
 abstract interface class IAuthRemoteDatasource {
-  Future<bool> register(AuthApiModel model);
+  Future<AuthApiModel> register(AuthApiModel model);
   Future<AuthApiModel?> login(String email, String password);
   Future<AuthApiModel?> getCurrentUser();
   Future<bool> logout();

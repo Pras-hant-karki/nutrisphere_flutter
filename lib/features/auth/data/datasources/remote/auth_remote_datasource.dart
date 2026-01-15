@@ -23,32 +23,8 @@ class AuthRemoteDatasource implements IAuthRemoteDatasource {
     required UserSessionService userSessionService,
   }) : _apiClient = apiClient,
     _userSessionService = userSessionService;
-  
-  @override
-  getCurrentUser() {
-    // TODO: implement getCurrentUser
-    throw UnimplementedError();
-  }
-  
-  @override
-  Future<bool> isEmailExists(String email) {
-    // TODO: implement isEmailExists
-    throw UnimplementedError();
-  }
-  
-  @override
-  Future<AuthApiModel?> login(String email, String password) {
-    // TODO: implement login
-    throw UnimplementedError();
-  }
-  
-  @override
-  Future<bool> logout() {
-    // TODO: implement logout
-    throw UnimplementedError();
-  }
-  
-  @override
+
+    @override
   Future<AuthApiModel> register(AuthApiModel user) async{
     final response = await _apiClient.post(
       ApiEndpoints.register,
@@ -63,4 +39,49 @@ class AuthRemoteDatasource implements IAuthRemoteDatasource {
 
     return user;
   }
+  
+  @override
+  Future<AuthApiModel?> login(String email, String password) async {
+    final resonse = await _apiClient.post(
+      ApiEndpoints.login,
+      data: {
+        'email': email,
+        'password': password,
+      },
+    );
+
+    if (resonse.data['success'] == true){
+      final data = resonse.data['data'] as Map<String, dynamic>;
+      final loggedInUser = AuthApiModel.fromJson(data);
+
+      // save session
+      await _userSessionService.saveUserSession(
+        authId: loggedInUser.authId!,
+        email: loggedInUser.email,
+        fullName: loggedInUser.fullname,
+      );
+
+      return loggedInUser;
+    }
+    return null;
+  }
+  
+  @override
+  getCurrentUser() {
+    // TODO: implement getCurrentUser
+    throw UnimplementedError();
+  }
+  
+  @override
+  Future<bool> isEmailExists(String email) {
+    // TODO: implement isEmailExists
+    throw UnimplementedError();
+  }
+  
+  @override
+  Future<bool> logout() {
+    // TODO: implement logout
+    throw UnimplementedError();
+  }
+  
 }
