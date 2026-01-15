@@ -1,40 +1,65 @@
-import 'package:lost_n_found/features/batch/domain/entities/batch_entity.dart';
+import 'package:nutrisphere_flutter/features/auth/domain/entities/auth_entity.dart';
 
 class AuthApiModel {
-  final String? id;
-  final String fullName;
-  final String? status;
+  final String? authId;
+  final String fullname;
+  final String email;
+  final String? password;
 
-  AuthApiModel({this.id, required this.fullName, this.status});
+  AuthApiModel({
+    this.authId,
+    required this.fullname,
+    required this.email,
+    this.password,
+  });
 
-  // toJSON
+  // =======================
+  // TO JSON (APP → API)
+  // =======================
   Map<String, dynamic> toJson() {
-    return {"fullName": fullName};
+    return {
+      'fullname': fullname,
+      'email': email,
+      'password': password,
+    };
   }
 
-  // FromJSON
+  // =======================
+  // FROM JSON (API → APP)
+  // =======================
   factory AuthApiModel.fromJson(Map<String, dynamic> json) {
     return AuthApiModel(
-      id: json['_id'] as String,
-      fullName: json['fullName'] as String,
-      status: json['status'] as String,
+      authId: json['_authId'] as String,
+      fullname: json['fullname'] as String,
+      email: json['email'] as String,
     );
   }
 
-  //toEntity
-  BatchEntity toEntity() {
-    return BatchEntity(batchId: id, batchName: 'UK-$fullName', status: status);
+  // =======================
+  // TO ENTITY (DATA → DOMAIN)
+  // =======================
+  AuthEntity toEntity() {
+    return AuthEntity(
+      authId: authId,
+      fullName: fullname,
+      email: email,
+    );
   }
 
-  // fromEntitiy
-  factory AuthApiModel.fromEntity(BatchEntity entity) {
-    return AuthApiModel(fullName: entity.batchName);
+  // =======================
+  // FROM ENTITY (DOMAIN → DATA)
+  // =======================
+  factory AuthApiModel.fromEntity(AuthEntity entity) {
+    return AuthApiModel(
+      fullname: entity.fullName,
+      email: entity.email,
+    );    
   }
 
-  // toEntityList
-  static List<BatchEntity> toEntityList(List<AuthApiModel> models) {
+  // =======================
+  // TO ENTITY LIST (DATA → DOMAIN)
+  // =======================
+  static List<AuthEntity> toEntityList(List<AuthApiModel> models) {
     return models.map((model) => model.toEntity()).toList();
   }
-
-  //fromEntityList
 }
