@@ -1,3 +1,4 @@
+import 'package:nutrisphere_flutter/features/auth/data/models/auth_api_model.dart';
 import '../models/auth_hive_model.dart';
 
 abstract interface class IAuthLocalDatasource {

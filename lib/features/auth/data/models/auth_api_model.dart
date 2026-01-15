@@ -42,7 +42,8 @@ class AuthApiModel {
     return AuthEntity(
       authId: authId,
       fullName: fullname,
-      email: email,
+      email: email, 
+      password: password ?? '',
     );
   }
 
@@ -53,6 +54,7 @@ class AuthApiModel {
     return AuthApiModel(
       fullname: entity.fullName,
       email: entity.email,
+      password: entity.password,
     );    
   }
 
