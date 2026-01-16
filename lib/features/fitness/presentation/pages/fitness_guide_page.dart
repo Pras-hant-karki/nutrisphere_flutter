@@ -7,9 +7,9 @@ class FitnessGuideScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
 
-    return Scaffold(
-      backgroundColor: const Color(0xFFF5F5F5),
-      body: SafeArea(
+    return Material(
+      color: const Color(0xFFF5F5F5),
+      child: SafeArea(
         child: Column(
           children: [
             // top bar

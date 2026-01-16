@@ -5,7 +5,7 @@ import 'package:nutrisphere_flutter/core/utils/snackbar_utils.dart';
 import 'package:nutrisphere_flutter/features/auth/presentation/pages/register_page.dart';
 import 'package:nutrisphere_flutter/features/auth/presentation/state/auth_state.dart';
 import 'package:nutrisphere_flutter/features/auth/presentation/view_model/auth_view_model.dart';
-import 'package:nutrisphere_flutter/features/dashboard/presentation/pages/dashboard_page.dart';
+import 'package:nutrisphere_flutter/features/dashboard/presentation/pages/bottom_navigation_page.dart';
 
 class LoginPage extends ConsumerStatefulWidget {
   const LoginPage({super.key});
@@ -34,7 +34,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
 
     ref.listen<AuthState>(authViewModelProvider, (prev, next) {
       if (next.status == AuthStatus.authenticated) {
-        AppRoutes.pushReplacement(context, const DashboardPage());
+        AppRoutes.pushReplacement(context, const BottomNavigationScreen());
       } else if (next.status == AuthStatus.error) {
         SnackbarUtils.showError(context, next.errorMessage!);
       }
@@ -90,7 +90,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                   child: OutlinedButton.icon(
                     onPressed: () {},
                     icon: Image.asset(
-                      'assets/icons/google.png', 
+                      'assets/images/google.png', 
                       height: 22,
                     ),
                     label: const Text(
