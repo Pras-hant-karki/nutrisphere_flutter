@@ -41,34 +41,37 @@ class _BottomNavigationScreenState extends State<BottomNavigationScreen> {
         children: lstBottomScreen,
       ),
       bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _selectedIndex,
-        onTap: (index) {
-          setState(() {
-            _selectedIndex = index;
-          });
-        },
+      currentIndex: _selectedIndex,
+      onTap: (index) {
+        setState(() {
+          _selectedIndex = index;
+        });
+      },
+      type: BottomNavigationBarType.fixed,
+      backgroundColor: const Color.fromARGB(255, 244, 227, 169),
+      selectedItemColor: Colors.brown,
+      unselectedItemColor: Colors.brown.withOpacity(0.6),
+      showUnselectedLabels: true,
+      items: const [
+        BottomNavigationBarItem(
+          icon: Icon(Icons.home),
+          label: "Home",
+        ),
+        BottomNavigationBarItem(
+          icon: Icon(Icons.book_online),
+          label: "Guide",
+        ),
+        BottomNavigationBarItem(
+          icon: Icon(Icons.calendar_month),
+          label: "App/Req",
+        ),
+        BottomNavigationBarItem(
+          icon: Icon(Icons.person),
+          label: "Profile",
+        ),
+      ],
+    ),
 
-        type: BottomNavigationBarType.fixed,
-        backgroundColor: const Color.fromARGB(255, 244, 227, 169),
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.home),
-            label: "Home",
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.book_online),
-            label: "Guide",
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.calendar_month),
-            label: "App/Req",
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.person),
-            label: "Profile",
-          ),
-        ],
-      ),
     );
   }
 }

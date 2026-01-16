@@ -58,7 +58,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
           key: _formKey,
           child: Column(
             children: [
-              _input(_usernameController, 'Username'),
+              _input(_usernameController, 'Fullname'),
               _input(
                 _emailController,
                 'Email',
@@ -112,26 +112,71 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
     );
   }
 
-  Widget _input(
-    TextEditingController controller,
-    String label, {
-    bool obscure = false,
-    TextInputType? keyboardType,
-    String? Function(String?)? validator,
-  }) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 16),
-      child: TextFormField(
-        controller: controller,
-        obscureText: obscure,
-        keyboardType: keyboardType,
-        validator:
-            validator ?? (v) => v != null && v.isNotEmpty ? null : 'Required',
-        decoration: InputDecoration(
-          labelText: label,
-          border: const UnderlineInputBorder(),
+Widget _input(
+  TextEditingController controller,
+  String label, {
+  bool obscure = false,
+  TextInputType? keyboardType,
+  String? Function(String?)? validator,
+}) {
+  const borderRadius = BorderRadius.all(Radius.circular(20));
+
+  return Padding(
+    padding: const EdgeInsets.only(bottom: 16),
+    child: TextFormField(
+      controller: controller,
+      obscureText: obscure,
+      keyboardType: keyboardType,
+      validator:
+          validator ?? (v) => v != null && v.isNotEmpty ? null : 'Required',
+      decoration: InputDecoration(
+        labelText: label,
+        filled: true,
+        fillColor: Colors.transparent,
+
+        // NORMAL STATE
+        enabledBorder: const OutlineInputBorder(
+          borderRadius: borderRadius,
+          borderSide: BorderSide(
+            color: Colors.brown,
+            width: 1.5,
+          ),
+        ),
+
+        // FOCUSED STATE
+        focusedBorder: const OutlineInputBorder(
+          borderRadius: borderRadius,
+          borderSide: BorderSide(
+            color: Colors.brown,
+            width: 2,
+          ),
+        ),
+
+        // ERROR STATE
+        errorBorder: const OutlineInputBorder(
+          borderRadius: borderRadius,
+          borderSide: BorderSide(
+            color: Colors.red,
+            width: 1.5,
+          ),
+        ),
+
+        // FOCUSED ERROR STATE
+        focusedErrorBorder: const OutlineInputBorder(
+          borderRadius: borderRadius,
+          borderSide: BorderSide(
+            color: Colors.red,
+            width: 2,
+          ),
+        ),
+
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 14,
         ),
       ),
-    );
-  }
+    ),
+  );
+}
+
 }
