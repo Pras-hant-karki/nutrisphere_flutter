@@ -24,6 +24,7 @@ class AuthRemoteDatasource implements IAuthRemoteDatasource {
   }) : _apiClient = apiClient,
     _userSessionService = userSessionService;
 
+///Register
     @override
   Future<AuthApiModel> register(AuthApiModel user) async{
     final response = await _apiClient.post(
@@ -40,6 +41,7 @@ class AuthRemoteDatasource implements IAuthRemoteDatasource {
     return user;
   }
   
+/// Login
   @override
   Future<AuthApiModel?> login(String email, String password) async {
     final resonse = await _apiClient.post(
@@ -67,21 +69,32 @@ class AuthRemoteDatasource implements IAuthRemoteDatasource {
   }
   
   @override
-  getCurrentUser() {
-    // TODO: implement getCurrentUser
-    throw UnimplementedError();
+  Future<AuthApiModel?> getCurrentUser() async {
+    final session = await _userSessionService.getSession();
+    if (session == null) return null;
+
+    try {
+      final response = await _apiClient.get(ApiEndpoints.me);
+
+      if (response.data['success'] != true) return null;
+
+      final data = response.data['data'] as Map<String, dynamic>;
+      return AuthApiModel.fromJson(data);
+    } catch (_) {
+      return null;
+    }
   }
   
   @override
-  Future<bool> isEmailExists(String email) {
-    // TODO: implement isEmailExists
-    throw UnimplementedError();
+  Future<bool> isEmailExists(String email) async {
+    return false;
   }
-  
+
+  // LOGOUT
   @override
-  Future<bool> logout() {
-    // TODO: implement logout
-    throw UnimplementedError();
+  Future<bool> logout() async {
+    await _userSessionService.logout();
+    return true;
   }
   
 }

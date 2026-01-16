@@ -25,11 +25,6 @@ class AuthLocalDatasource implements IAuthLocalDatasource {
     required UserSessionService userSessionService,
   })  : _hiveService = hiveService,
         _userSessionService = userSessionService;
-  @override
-  Future<AuthHiveModel?> getCurrentUser() {
-    // TODO: implement getCurrentUser
-    throw UnimplementedError();
-  }
 
   @override
   Future<bool> isEmailExists(String email) {
@@ -60,16 +55,6 @@ class AuthLocalDatasource implements IAuthLocalDatasource {
   }
 
   @override
-  Future<bool> logout() async{
-    try{
-      await _userSessionService.logout();
-      return Future.value(true);
-    } catch (e) {
-      return Future.value(false);
-    }
-  }
-
-  @override
   Future<AuthHiveModel> register(AuthHiveModel model) async {
     try{
       await _hiveService.registerUser(model);
@@ -80,26 +65,42 @@ class AuthLocalDatasource implements IAuthLocalDatasource {
   }
   
   @override
-  Future<bool> deleteUser(AuthHiveModel user) {
-    // TODO: implement deleteUser
-    throw UnimplementedError();
+  Future<AuthHiveModel?> getCurrentUser() async {
+    final session = await _userSessionService.getSession();
+    if (session == null) return null;
+
+    return _hiveService.getUser(session.email);
   }
-  
-  @override
-  Future<AuthHiveModel?> getUserByEmail(String email) {
-    // TODO: implement getUserByEmail
-    throw UnimplementedError();
+
+    @override
+  Future<AuthHiveModel?> getUserByEmail(String email) async {
+    return _hiveService.getUser(email);
   }
-  
+
   @override
-  Future<AuthHiveModel?> getUserById(String authId) {
-    // TODO: implement getUserById
-    throw UnimplementedError();
+  Future<AuthHiveModel?> getUserById(String authId) async {
+    // Hive does NOT support ID lookup — email is the key
+    return _hiveService.getUser(authId);
   }
-  
+
   @override
-  Future<bool> updateUser(AuthHiveModel user) {
-    // TODO: implement updateUser
-    throw UnimplementedError();
+  Future<bool> updateUser(AuthHiveModel user) async {
+    return await _hiveService.updateUser(user);
+  }
+
+  @override
+  Future<bool> deleteUser(AuthHiveModel user) async {
+    await _hiveService.deleteUser(user.email);
+    return true;
+  }
+
+  @override
+  Future<bool> logout() async{
+    try{
+      await _userSessionService.logout();
+      return Future.value(true);
+    } catch (e) {
+      return Future.value(false);
+    }
   }
 }

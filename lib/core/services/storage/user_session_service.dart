@@ -12,6 +12,19 @@ final userSessionServiceProvider = Provider<UserSessionService>((ref) {
   return UserSessionService(prefs: prefs);
 });
 
+/// Simple session model
+class UserSession {
+  final String userId;
+  final String email;
+  final String fullName;
+
+  UserSession({
+    required this.userId,
+    required this.email,
+    required this.fullName,
+  });
+}
+
 class UserSessionService {
   final SharedPreferences _prefs;
 
@@ -22,12 +35,11 @@ class UserSessionService {
 
   UserSessionService({required SharedPreferences prefs}) : _prefs = prefs;
 
-  /// Save session after login
+  /// Save session (LOCAL + REMOTE use the same method)
   Future<void> saveSession({
     required String userId,
     required String email,
     required String fullName,
-    String? phoneNumber,
   }) async {
     await _prefs.setBool(_keyIsLoggedIn, true);
     await _prefs.setString(_keyUserId, userId);
@@ -35,7 +47,40 @@ class UserSessionService {
     await _prefs.setString(_keyFullName, fullName);
   }
 
-  /// Instagram-style logout
+  /// Alias for remote datasource (so nothing breaks)
+  Future<void> saveUserSession({
+    required String authId,
+    required String email,
+    required String fullName,
+  }) async {
+    await saveSession(
+      userId: authId,
+      email: email,
+      fullName: fullName,
+    );
+  }
+
+  /// Get current session
+  Future<UserSession?> getSession() async {
+    final isLoggedIn = _prefs.getBool(_keyIsLoggedIn) ?? false;
+    if (!isLoggedIn) return null;
+
+    final userId = _prefs.getString(_keyUserId);
+    final email = _prefs.getString(_keyEmail);
+    final fullName = _prefs.getString(_keyFullName);
+
+    if (userId == null || email == null || fullName == null) {
+      return null;
+    }
+
+    return UserSession(
+      userId: userId,
+      email: email,
+      fullName: fullName,
+    );
+  }
+
+  /// Logout
   Future<void> logout() async {
     await _prefs.remove(_keyIsLoggedIn);
     await _prefs.remove(_keyUserId);
@@ -43,12 +88,6 @@ class UserSessionService {
     await _prefs.remove(_keyFullName);
   }
 
-  /// Session checks
+  /// Quick checks
   bool isLoggedIn() => _prefs.getBool(_keyIsLoggedIn) ?? false;
-
-  String? get userId => _prefs.getString(_keyUserId);
-  String? get email => _prefs.getString(_keyEmail);
-  String? get fullName => _prefs.getString(_keyFullName);
-
-  Future<void> saveUserSession({required String authId, required String email, required String fullName}) async {}
 }
