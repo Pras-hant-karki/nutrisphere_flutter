@@ -44,7 +44,8 @@ class ApiClient {
           return error.type == DioExceptionType.connectionTimeout ||
               error.type == DioExceptionType.sendTimeout ||
               error.type == DioExceptionType.receiveTimeout ||
-              error.type == DioExceptionType.connectionError;
+              error.type == DioExceptionType.connectionError ||
+              error.type == DioExceptionType.unknown;
         },
       ),
     );
@@ -125,6 +126,15 @@ class _AuthInterceptor extends Interceptor {
 
   @override
   void onError(DioException err, ErrorInterceptorHandler handler) {
+    // Log detailed error information for debugging
+    print('🔴 DIO ERROR: ${err.type}');
+    print('   Message: ${err.message}');
+    print('   Status Code: ${err.response?.statusCode}');
+    print('   URL: ${err.requestOptions.path}');
+    print('   Response Data: ${err.response?.data}');
+    print('   Error: ${err.error}');
+    print('   StackTrace: ${err.stackTrace}');
+    
     if (err.response?.statusCode == 401) {
       _storage.delete(key: _tokenKey);
     }

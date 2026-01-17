@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:nutrisphere_flutter/features/auth/domain/entities/auth_entity.dart';
 import 'package:nutrisphere_flutter/features/auth/domain/usecases/login_usecase.dart';
 import 'package:nutrisphere_flutter/features/auth/domain/usecases/register_usecase.dart';
 import 'package:nutrisphere_flutter/features/auth/presentation/state/auth_state.dart';
@@ -23,7 +24,7 @@ class AuthViewModel extends Notifier<AuthState> {
     required String fullName,
     required String email,
     required String password,
-    required String username,
+    required String confirmPassword,
   }) async {
     state = state.copyWith(status: AuthStatus.loading);
     // wait for 2 sec
@@ -32,6 +33,7 @@ class AuthViewModel extends Notifier<AuthState> {
       fullName: fullName,
       email: email,
       password: password,
+      confirmPassword: confirmPassword,
     );
     final result = await _registerUsecase(params);
     result.fold(
@@ -42,7 +44,19 @@ class AuthViewModel extends Notifier<AuthState> {
         );
       },
       (isRegistered) {
-          state = state.copyWith(status: AuthStatus.registered);
+        // After successful registration, create a temporary user entity for display
+        if (isRegistered) {
+          final tempUser = AuthEntity(
+            fullName: fullName,
+            email: email,
+            password: password,
+          );
+          // Set authenticated status - token is already saved in secure storage
+          state = state.copyWith(
+            status: AuthStatus.authenticated,
+            authEntity: tempUser,
+          );
+        }
       },
     );
   }

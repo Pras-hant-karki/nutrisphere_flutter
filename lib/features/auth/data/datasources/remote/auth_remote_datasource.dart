@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:nutrisphere_flutter/core/api/api_client.dart';
 import 'package:nutrisphere_flutter/core/api/api_endpoints.dart';
 import 'package:nutrisphere_flutter/core/services/storage/user_session_service.dart';
@@ -27,45 +28,110 @@ class AuthRemoteDatasource implements IAuthRemoteDatasource {
 ///Register
     @override
   Future<AuthApiModel> register(AuthApiModel user) async{
-    final response = await _apiClient.post(
-      ApiEndpoints.register,
-      data: user.toJson(),
-    );
+    try {
+      final response = await _apiClient.post(
+        ApiEndpoints.register,
+        data: user.toJson(),
+      );
 
-    if (response.data['success'] == true){
-      final data = response.data['data'] as Map<String, dynamic>;
-      final registeredUser = AuthApiModel.fromJson(data);
-      return registeredUser;
+      // Check if registration was successful
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        // Handle different response formats
+        if (response.data != null && response.data is Map) {
+          final Map<String, dynamic> responseData = response.data as Map<String, dynamic>;
+          
+          // Extract token if provided
+          final String? token = responseData['token'] as String?;
+          if (token != null) {
+            // Save token to secure storage
+            const _storage = FlutterSecureStorage();
+            await _storage.write(key: 'auth_token', value: token);
+          }
+          
+          // Get user data - could be in 'user' field or 'data' field
+          final Map<String, dynamic> userData;
+          if (responseData['user'] is Map) {
+            userData = responseData['user'] as Map<String, dynamic>;
+          } else if (responseData['data'] is Map) {
+            userData = responseData['data'] as Map<String, dynamic>;
+          } else {
+            userData = responseData;
+          }
+          
+          final registeredUser = AuthApiModel.fromJson(userData);
+          
+          // Save session (IMPORTANT: This was missing!)
+          if (registeredUser.authId != null && registeredUser.email != null) {
+            await _userSessionService.saveUserSession(
+              authId: registeredUser.authId!,
+              email: registeredUser.email!,
+              fullName: registeredUser.fullName ?? 'User',
+            );
+          }
+          
+          return registeredUser;
+        }
+      }
+      
+      throw Exception('Registration failed: Invalid response format');
+    } catch (e) {
+      rethrow;
     }
-
-    return user;
   }
   
 /// Login
   @override
   Future<AuthApiModel?> login(String email, String password) async {
-    final resonse = await _apiClient.post(
-      ApiEndpoints.login,
-      data: {
-        'email': email,
-        'password': password,
-      },
-    );
-
-    if (resonse.data['success'] == true){
-      final data = resonse.data['data'] as Map<String, dynamic>;
-      final loggedInUser = AuthApiModel.fromJson(data);
-
-      // save session
-      await _userSessionService.saveUserSession(
-        authId: loggedInUser.authId!,
-        email: loggedInUser.email,
-        fullName: loggedInUser.fullname,
+    try {
+      final response = await _apiClient.post(
+        ApiEndpoints.login,
+        data: {
+          'email': email,
+          'password': password,
+        },
       );
 
-      return loggedInUser;
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        if (response.data != null && response.data is Map) {
+          final Map<String, dynamic> responseData = response.data as Map<String, dynamic>;
+          
+          // Extract token if provided
+          final String? token = responseData['token'] as String?;
+          if (token != null) {
+            // Save token to secure storage
+            const _storage = FlutterSecureStorage();
+            await _storage.write(key: 'auth_token', value: token);
+          }
+          
+          // Handle different response formats from backend
+          final Map<String, dynamic> userData;
+          if (responseData['user'] is Map) {
+            userData = responseData['user'] as Map<String, dynamic>;
+          } else if (responseData['data'] is Map) {
+            userData = responseData['data'] as Map<String, dynamic>;
+          } else {
+            userData = responseData;
+          }
+          
+          final loggedInUser = AuthApiModel.fromJson(userData);
+
+          // save session
+          if (loggedInUser.authId != null && loggedInUser.email != null) {
+            await _userSessionService.saveUserSession(
+              authId: loggedInUser.authId!,
+              email: loggedInUser.email!,
+              fullName: loggedInUser.fullName ?? 'User',
+            );
+          }
+
+          return loggedInUser;
+        }
+      }
+      return null;
+    } catch (e) {
+      print('Login Error: $e');
+      rethrow;
     }
-    return null;
   }
   
   @override

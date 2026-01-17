@@ -17,9 +17,7 @@ class NetworkInfo implements INetworkInfo {
   @override
   Future<bool> get isConnected async {
     final result = await _connectivity.checkConnectivity();
-    if (result == ConnectivityResult.none) {
-      return false;
-    }
-    return true;
+    // Check if there's any active connection (WiFi, Mobile, etc.)
+    return result != ConnectivityResult.none;
   }
 }

@@ -2,15 +2,17 @@ import 'package:nutrisphere_flutter/features/auth/domain/entities/auth_entity.da
 
 class AuthApiModel {
   final String? authId;
-  final String fullname;
+  final String fullName;
   final String email;
   final String? password;
+  final String? confirmPassword;
 
   AuthApiModel({
     this.authId,
-    required this.fullname,
+    required this.fullName,
     required this.email,
     this.password,
+    this.confirmPassword,
   });
 
   // =======================
@@ -18,9 +20,10 @@ class AuthApiModel {
   // =======================
   Map<String, dynamic> toJson() {
     return {
-      'fullname': fullname,
+      'fullName': fullName,
       'email': email,
       'password': password,
+      if (confirmPassword != null) 'confirmPassword': confirmPassword,
     };
   }
 
@@ -29,9 +32,9 @@ class AuthApiModel {
   // =======================
   factory AuthApiModel.fromJson(Map<String, dynamic> json) {
     return AuthApiModel(
-      authId: json['_authId'] as String,
-      fullname: json['fullname'] as String,
-      email: json['email'] as String,
+      authId: json['id'] as String? ?? json['_authId'] as String?,
+      fullName: json['fullName'] as String? ?? json['fullname'] as String? ?? 'User',
+      email: json['email'] as String? ?? '',
     );
   }
 
@@ -41,7 +44,7 @@ class AuthApiModel {
   AuthEntity toEntity() {
     return AuthEntity(
       authId: authId,
-      fullName: fullname,
+      fullName: fullName,
       email: email, 
       password: password ?? '',
     );
@@ -52,7 +55,7 @@ class AuthApiModel {
   // =======================
   factory AuthApiModel.fromEntity(AuthEntity entity) {
     return AuthApiModel(
-      fullname: entity.fullName,
+      fullName: entity.fullName,
       email: entity.email,
       password: entity.password,
     );    

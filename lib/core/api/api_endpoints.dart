@@ -2,7 +2,8 @@ class ApiEndpoints {
   ApiEndpoints._();
 
   // Base URL - change this for production
-  static const String baseUrl = 'http://10.0.2.2:3000/api/v1';
+  // static const String baseUrl = 'http://10.0.2.2:3000';
+  static const String baseUrl = 'http://192.168.0.105:3000/api';
   //static const String baseUrl = 'http://localhost:3000/api/v1';
   // For Android Emulator use: 'http://10.0.2.2:3000/api/v1'
   // For iOS Simulator use: 'http://localhost:5000/api/v1'
@@ -12,9 +13,9 @@ class ApiEndpoints {
   static const Duration receiveTimeout = Duration(seconds: 30);
 
   // ============ Auth Endpoints ============
-  static const String login = '/auth/login';
-  static const String register = '/auth/register';
-  static const String me = '/auth/me';
+  static const String login = '/api/auth/login';
+  static const String register = '/api/auth/register';
+  static const String me = '/api/auth/me';
 
   // ============ Posts (future use) ============
   static const String posts = '/posts';

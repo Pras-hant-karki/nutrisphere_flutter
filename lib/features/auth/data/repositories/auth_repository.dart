@@ -41,21 +41,42 @@ class AuthRepository implements IAuthRepository{
   Future<Either<Failure, bool>> register(AuthEntity user) async {
     if(await _networkInfo.isConnected){
       try{
-        // remote ma jaane
-      final apiModel = AuthApiModel.fromEntity(user);
-      await _authRemoteDatasource.register(apiModel);
-      return const Right(true);
+        // Register from API when internet is available
+        final apiModel = AuthApiModel(
+          fullName: user.fullName,
+          email: user.email,
+          password: user.password,
+          confirmPassword: user.confirmPassword,
+        );
+        await _authRemoteDatasource.register(apiModel);
+        
+        // Also save to Hive for offline reference
+        try {
+          final hiveModel = AuthHiveModel(
+            fullName: user.fullName,
+            email: user.email,
+            password: user.password,
+          );
+          await _authDatasource.register(hiveModel);
+        } catch (e) {
+          print("Note: Could not cache user locally: $e");
+        }
+        
+        return const Right(true);
       } on DioException catch (e) {
         return Left(
-          ApiFailure(message: e.response?.data['message'] ?? "Registration failed",
-          statusCode: e.response?.statusCode,
+          ApiFailure(
+            message: e.response?.data['message'] ?? e.message ?? "Registration failed",
+            statusCode: e.response?.statusCode,
           ),
         );
       }
       catch (e) {
-        return Left(ApiFailure(message: e.toString()));
+        return Left(ApiFailure(message: "Registration failed: ${e.toString()}"));
       }
     }
+    
+    // Register offline (Hive)
     try {
       // Check if email already exists
       final existingUser = await _authDatasource.getUserByEmail(user.email);
@@ -81,9 +102,21 @@ class AuthRepository implements IAuthRepository{
   Future<Either<Failure, AuthEntity>> login(String email, String password) async {
     if (await _networkInfo.isConnected){
       try{
-        // remote ma jaane
+        // Login from API when internet is available
         final apiModel = await _authRemoteDatasource.login(email, password);
         if (apiModel != null){
+          // Also save to Hive for offline use
+          try {
+            final hiveModel = AuthHiveModel(
+              fullName: apiModel.fullName,
+              email: apiModel.email,
+              password: password, // Store password for offline login
+            );
+            await _authDatasource.register(hiveModel);
+          } catch (e) {
+            print("Note: Could not cache user locally: $e");
+          }
+          
           final entity = apiModel.toEntity();
           return Right(entity);
         }
@@ -101,18 +134,19 @@ class AuthRepository implements IAuthRepository{
         return Left(ApiFailure(message: e.toString()));
       }
     } else {
+      // Login from Hive when offline
       try{
-      final user = await _authDatasource.login(email, password);
-      if (user != null){
-        final entity = user.toEntity();
-        return Right(entity);
+        final user = await _authDatasource.login(email, password);
+        if (user != null){
+          final entity = user.toEntity();
+          return Right(entity);
+        }
+        return const Left(
+          LocaldatabaseFailure(message: "Invalid email or password")
+        );
+      } catch (e) {
+        return Left(LocaldatabaseFailure(message: e.toString()));
       }
-      return const Left(
-        LocaldatabaseFailure(message: "Invalid email or password")
-      );
-    } catch (e) {
-      return Left(LocaldatabaseFailure(message: e.toString()));
-    }
     }
   }
   
