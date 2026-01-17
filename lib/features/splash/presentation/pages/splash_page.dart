@@ -4,7 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:nutrisphere_flutter/app/routes/app_routes.dart';
 import 'package:nutrisphere_flutter/core/services/storage/user_session_service.dart';
-import 'package:nutrisphere_flutter/features/home/presentation/pages/home_page.dart';
+import 'package:nutrisphere_flutter/features/home/presentation/pages/dashboard_page.dart';
 import 'package:nutrisphere_flutter/features/onboarding/presentation/pages/onboarding_page.dart';
 
 class SplashScreen extends ConsumerStatefulWidget {
@@ -29,7 +29,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
     final isLoggedIn = userSessionService.isLoggedIn();
 
     if (isLoggedIn) {
-      AppRoutes.pushReplacement(context, const HomeScreen());
+      AppRoutes.pushReplacement(context, const DashboardPage());
     } else {
       AppRoutes.pushReplacement(context, const OnboardingScreen());
     }
@@ -44,6 +44,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
             child: SvgPicture.asset(
               "assets/images/bg.svg",
               fit: BoxFit.cover,
+              placeholderBuilder: (_) => const SizedBox.expand(),
             ),
           ),
 

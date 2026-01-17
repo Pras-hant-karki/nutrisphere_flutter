@@ -37,66 +37,98 @@ class AuthRepository implements IAuthRepository{
         _authRemoteDatasource = authRemoteDatasource,
         _networkInfo = networkInfo;
 
-  @override
-  Future<Either<Failure, bool>> register(AuthEntity user) async {
-    if(await _networkInfo.isConnected){
-      try{
-        // Register from API when internet is available
-        final apiModel = AuthApiModel(
-          fullName: user.fullName,
-          email: user.email,
-          password: user.password,
-          confirmPassword: user.confirmPassword,
-        );
-        await _authRemoteDatasource.register(apiModel);
-        
-        // Also save to Hive for offline reference
-        try {
-          final hiveModel = AuthHiveModel(
-            fullName: user.fullName,
-            email: user.email,
-            password: user.password,
-          );
-          await _authDatasource.register(hiveModel);
-        } catch (e) {
-          print("Note: Could not cache user locally: $e");
-        }
-        
-        return const Right(true);
-      } on DioException catch (e) {
-        return Left(
-          ApiFailure(
-            message: e.response?.data['message'] ?? e.message ?? "Registration failed",
-            statusCode: e.response?.statusCode,
-          ),
-        );
-      }
-      catch (e) {
-        return Left(ApiFailure(message: "Registration failed: ${e.toString()}"));
-      }
-    }
-    
-    // Register offline (Hive)
+@override
+Future<Either<Failure, bool>> register(AuthEntity user) async {
+  // API call when online
+  if (await _networkInfo.isConnected) {
     try {
-      // Check if email already exists
-      final existingUser = await _authDatasource.getUserByEmail(user.email);
-      if (existingUser != null) {
-        return const Left(
-          LocaldatabaseFailure(message: "Email already registered"),
-        );
-      }
-
-      final authModel = AuthHiveModel(
+      final apiModel = AuthApiModel(
         fullName: user.fullName,
         email: user.email,
         password: user.password,
+        confirmPassword: user.confirmPassword,
       );
-      await _authDatasource.register(authModel);
+
+      await _authRemoteDatasource.register(apiModel);
+
+      // Cache locally (non-fatal if it fails)
+      try {
+        final hiveModel = AuthHiveModel(
+          fullName: user.fullName,
+          email: user.email,
+          password: user.password,
+        );
+        await _authDatasource.register(hiveModel);
+      } catch (_) {}
+
       return const Right(true);
+
+    } on DioException catch (e) {
+      String message = "Registration failed";
+      int? statusCode = e.response?.statusCode;
+
+      final data = e.response?.data;
+
+      // Handle JSON error safely
+      if (data is Map<String, dynamic>) {
+        if (data['message'] is String) {
+          message = data['message'];
+        } else if (data['errors'] is List && data['errors'].isNotEmpty) {
+          final firstError = data['errors'][0];
+          if (firstError is Map && firstError['message'] is String) {
+            message = firstError['message'];
+          }
+        }
+      }
+      // Handle HTML / string response safely
+      else if (data is String) {
+        message = "Server error (${statusCode ?? 'unknown'})";
+      }
+      // Dio-level error
+      else if (e.message != null) {
+        message = e.message!;
+      }
+
+      return Left(
+        ApiFailure(
+          message: message,
+          statusCode: statusCode,
+        ),
+      );
     } catch (e) {
-      return Left(LocaldatabaseFailure(message: e.toString()));
+      return Left(
+        ApiFailure(
+          message: "Registration failed: ${e.toString()}",
+        ),
+      );
     }
   }
+
+  // Hive local registration when offline
+  try {
+    final existingUser = await _authDatasource.getUserByEmail(user.email);
+    if (existingUser != null) {
+      return const Left(
+        LocaldatabaseFailure(message: "Email already registered"),
+      );
+    }
+
+    final authModel = AuthHiveModel(
+      fullName: user.fullName,
+      email: user.email,
+      password: user.password,
+    );
+
+    await _authDatasource.register(authModel);
+    return const Right(true);
+
+  } catch (e) {
+    return Left(
+      LocaldatabaseFailure(message: e.toString()),
+    );
+  }
+}
+
 
   @override
   Future<Either<Failure, AuthEntity>> login(String email, String password) async {
