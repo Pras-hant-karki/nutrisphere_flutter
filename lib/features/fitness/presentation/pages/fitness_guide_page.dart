@@ -1,7 +1,52 @@
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart'
 
-class FitnessGuideScreen extends StatelessWidget {
+
+import 'package:permission_handler/permission_handler.dart';class FitnessGuideScreen extends StatefulWidget {
   const FitnessGuideScreen({super.key});
+
+  @override
+  State<FitnessGuideScreen> createState() => _FitnessGuideScreenState();
+}
+
+class _FitnessGuideScreenState extends State<FitnessGuideScreen> {
+
+  final List<XFile> _selectedMedia = [];
+  final ImagePicker _imagePicker = ImagePicker();
+
+  Future<bool> _userSangaPermissionMagu(Permission permission) async {
+    final status = await permission.status;
+    if(status.isGranted) {
+      return true;
+    }
+
+    if(status.isDenied) {
+      final result = await permission.request(); 
+      return result.isGranted;
+    }
+
+    if(status.isPermanentlyDenied) {
+      _showPermissionDeniedDialog();
+      return false;
+    }
+    return false;
+  }
+
+  void _showPermissionDeniedDialog() {
+    showDialog(
+      context: context, 
+      builder: (context) => AlertDialog(
+        title: Text("Please provide Permission"),
+        content: Text(
+          "Please go to permission settings to use this features"
+        ),
+        actions: [
+          TextButton(onPressed: (){}, child: Text('Cancel')),
+          TextButton(onPressed: (){}, child: Text('Open Settings')),
+        ],
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -12,7 +57,6 @@ class FitnessGuideScreen extends StatelessWidget {
       body: SafeArea(
         child: Stack(
           children: [
-            /// MAIN CONTENT
             Column(
               children: [
                 // top bar
