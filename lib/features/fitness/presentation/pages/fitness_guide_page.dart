@@ -7,82 +7,110 @@ class FitnessGuideScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
 
-    return Material(
-      color: const Color(0xFFF5F5F5),
-      child: SafeArea(
-        child: Column(
+    return Scaffold(
+      backgroundColor: const Color(0xFFF5F5F5),
+      body: SafeArea(
+        child: Stack(
           children: [
-            // top bar
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-
-                  Text(
-                    "High quality fitness\n guidance below !",
-                    style: textTheme.titleMedium,
-                  ),
-
-                  Stack(
+            /// MAIN CONTENT
+            Column(
+              children: [
+                // top bar
+                Padding(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      IconButton(
-                        icon: const Icon(Icons.notifications_none),
-                        onPressed: () {},
+                      Text(
+                        "High quality fitness\n guidance below !",
+                        style: textTheme.titleMedium,
                       ),
-                      Positioned(
-                        right: 10,
-                        top: 10,
-                        child: Container(
-                          height: 10,
-                          width: 10,
-                          decoration: const BoxDecoration(
-                            color: Colors.red,
-                            shape: BoxShape.circle,
+                      Stack(
+                        children: [
+                          IconButton(
+                            icon: const Icon(Icons.notifications_none),
+                            onPressed: () {},
                           ),
-                        ),
+                          Positioned(
+                            right: 10,
+                            top: 10,
+                            child: Container(
+                              height: 10,
+                              width: 10,
+                              decoration: const BoxDecoration(
+                                color: Colors.red,
+                                shape: BoxShape.circle,
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                     ],
                   ),
-                ],
-              ),
+                ),
+
+                // scrollable content
+                Expanded(
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const SizedBox(height: 20),
+
+                        _imageCard(imagePath: 'assets/images/test.png'),
+                        const SizedBox(height: 20),
+
+                        _imageCard(imagePath: 'assets/images/dose.png'),
+                        const SizedBox(height: 30),
+
+                        _imageCard(imagePath: 'assets/images/plan.png'),
+                        const SizedBox(height: 30),
+
+                        _imageCard(imagePath: 'assets/images/pt.png'),
+                        const SizedBox(height: 30),
+
+                        _imageCard(imagePath: 'assets/images/dose.png'),
+                        const SizedBox(height: 120), // space for floating button
+                      ],
+                    ),
+                  ),
+                ),
+              ],
             ),
 
-            // scrollable
-            Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-
-                    const SizedBox(height: 20),
-
-                    _imageCard(
-                      imagePath: 'assets/images/test.png',
+            /// FLOATING + BUTTON (ADMIN POST)
+            Positioned(
+              bottom: 16,
+              left: 0,
+              right: 0,
+              child: Center(
+                child: GestureDetector(
+                  onTap: () {
+                    // later: camera / gallery / mic permissions
+                    debugPrint("Add fitness guide pressed");
+                  },
+                  child: Container(
+                    height: 64,
+                    width: 64,
+                    decoration: BoxDecoration(
+                      color: Colors.green,
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.25),
+                          blurRadius: 8,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
                     ),
-                    const SizedBox(height: 20),
-
-                    _imageCard(
-                      imagePath: 'assets/images/dose.png',
+                    child: const Icon(
+                      Icons.add,
+                      color: Colors.white,
+                      size: 36,
                     ),
-                    const SizedBox(height: 30),
-
-                    _imageCard(
-                      imagePath: 'assets/images/plan.png',
-                    ),
-                    const SizedBox(height: 30),
-
-                    _imageCard(
-                      imagePath: 'assets/images/pt.png',
-                    ),
-                    const SizedBox(height: 30),
-
-                    _imageCard(
-                      imagePath: 'assets/images/dose.png',
-                    ),
-                    const SizedBox(height: 30),
-                  ],
+                  ),
                 ),
               ),
             ),
