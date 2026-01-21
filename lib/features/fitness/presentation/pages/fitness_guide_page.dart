@@ -69,6 +69,8 @@ class _FitnessGuideScreenState extends State<FitnessGuideScreen> {
   }
 
   // gallery code
+
+bool _isMediaConfirmed = false;
 Future<void> _pickFromGallery() async {
   try {
     final hasPermission =
@@ -103,7 +105,31 @@ Future<void> _pickFromGallery() async {
 
   // video code
   Future<void> _pickFromVideo() async {
-    return Future.value(true);
+    try{
+      final hasPermission = await _userSangaPermissionMagu(
+        Permission.camera,
+      );
+      if (!hasPermission) return;
+
+      final hasMicPermission = await _userSangaPermissionMagu(
+        Permission.microphone,
+      );
+      if (!hasMicPermission) return;
+
+      final XFile? video = await _imagePicker.pickVideo(
+        source: ImageSource.camera,
+        maxDuration: const Duration(minutes: 1),
+      );
+
+      if (video != null) {
+        setState(() {
+          _selectedMedia.clear();
+          _selectedMedia.add(video);
+        });
+      }
+    } catch (e) {
+      _showPermissionDeniedDialog();
+    }
   }
 
   // code for dialogBox : showDialog for menu
@@ -140,7 +166,10 @@ Future<void> _pickFromGallery() async {
                 ListTile(
                   leading: Icon(Icons.video_camera_back), 
                   title: Text('Record Video') , 
-                  onTap: _pickFromVideo,
+                  onTap: () {
+                    Navigator.pop(context);
+                    _pickFromVideo();
+                  },
                 ),
               ],
             ),         
@@ -298,41 +327,42 @@ Future<void> _pickFromGallery() async {
                   ),
                 ),
 
-            /// FLOATING + BUTTON (ADMIN POST)
-            Positioned(
-              bottom: 16,
-              left: 0,
-              right: 0,
-              child: Center(
-                child: GestureDetector(
-                  onTap: () {
-                    _pickMedia();
-                  },
-                  child: Container(
-                    height: 64,
-                    width: 64,
-                    decoration: BoxDecoration(
-                      color: Colors.green,
-                      shape: BoxShape.circle,
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.25),
-                          blurRadius: 8,
-                          offset: const Offset(0, 4),
+                /// FLOATING + BUTTON (ADMIN POST)
+                Positioned(
+                  bottom: 16,
+                  left: 0,
+                  right: 0,
+                  child: Center(
+                    child: GestureDetector(
+                      onTap: () {
+                        _pickMedia();
+                      },
+                      child: Container(
+                        height: 64,
+                        width: 64,
+                        decoration: BoxDecoration(
+                          color: Colors.green,
+                          shape: BoxShape.circle,
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.25),
+                              blurRadius: 8,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
                         ),
-                      ],
-                    ),
-                    child: const Icon(
-                      Icons.add,
-                      color: Colors.white,
-                      size: 36,
+                        child: const Icon(
+                          Icons.add,
+                          color: Colors.white,
+                          size: 36,
+                        ),
+                      ),
                     ),
                   ),
                 ),
-              ),
+              ],
             ),
           ],
-        ),
         ),
       ),
     );
@@ -360,7 +390,7 @@ Future<void> _pickFromGallery() async {
       ),
     );
   }
-}
+
 
 Widget _imagePreviewCard(File file) {
   return Container(
@@ -383,4 +413,4 @@ Widget _imagePreviewCard(File file) {
     ),
   );
 }
-
+}
