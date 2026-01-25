@@ -14,7 +14,8 @@ class FitnessGuideScreen extends StatefulWidget {
 
 class _FitnessGuideScreenState extends State<FitnessGuideScreen> {
 
-  final List<XFile> _selectedMedia = [];
+  XFile? _pendingMedia; // Media being previewed before confirmation
+  final List<XFile> _confirmedMedia = []; // List of confirmed photos to display
   final ImagePicker _imagePicker = ImagePicker();
 
   Future<bool> _userSangaPermissionMagu(Permission permission) async {
@@ -90,6 +91,31 @@ class _FitnessGuideScreenState extends State<FitnessGuideScreen> {
     );
   }
 
+  void _showDeleteConfirmationDialog(int index) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text("Delete Photo"),
+        content: Text("Are you sure you want to delete this photo?"),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text("Cancel"),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              setState(() {
+                _confirmedMedia.removeAt(index);
+              });
+            },
+            child: Text("Delete", style: TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
+    );
+  }
+
   // camera code
   Future<void> _clickFromCamera() async{
     final hasPermission = await _userSangaPermissionMagu(Permission.camera);
@@ -99,10 +125,9 @@ class _FitnessGuideScreenState extends State<FitnessGuideScreen> {
       source: ImageSource.camera,
       imageQuality: 80,
     );
-    if(photo!=null){
+    if(photo != null){
       setState(() {
-        _selectedMedia.clear();
-        _selectedMedia.add(photo);
+        _pendingMedia = photo;
       });
     }
   }
@@ -125,8 +150,7 @@ Future<void> _pickFromGallery() async {
 
     if (image != null) {
       setState(() {
-        _selectedMedia.clear();
-        _selectedMedia.add(image);
+        _pendingMedia = image;
         _isMediaConfirmed = false; // reset confirmation
       });
     }
@@ -163,8 +187,7 @@ Future<void> _pickFromGallery() async {
 
       if (video != null) {
         setState(() {
-          _selectedMedia.clear();
-          _selectedMedia.add(video);
+          _pendingMedia = video;
         });
       }
     } catch (e) {
@@ -238,37 +261,17 @@ Future<void> _pickFromGallery() async {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
-                        "High quality fitness\n guidance below !",
+                        "High quality fitness guidance below !",
                         style: textTheme.titleMedium,
-                      ),
-                      Stack(
-                        children: [
-                          IconButton(
-                            icon: const Icon(Icons.notifications_none),
-                            onPressed: () {},
-                          ),
-                          Positioned(
-                            right: 10,
-                            top: 10,
-                            child: Container(
-                              height: 10,
-                              width: 10,
-                              decoration: const BoxDecoration(
-                                color: Colors.red,
-                                shape: BoxShape.circle,
-                              ),
-                            ),
-                          ),
-                        ],
                       ),
                     ],
                   ),
                 ),
 
-                if (_selectedMedia.isNotEmpty) ...[
+                if (_pendingMedia != null) ...[
                   Column(
                     children: [
-                      // Preview
+                      // Preview for pending media
                       Stack(
                         children: [
                           Container(
@@ -277,7 +280,7 @@ Future<void> _pickFromGallery() async {
                             decoration: BoxDecoration(
                               borderRadius: BorderRadius.circular(20),
                               image: DecorationImage(
-                                image: FileImage(File(_selectedMedia[0].path)),
+                                image: FileImage(File(_pendingMedia!.path)),
                                 fit: BoxFit.cover,
                               ),
                             ),
@@ -288,8 +291,7 @@ Future<void> _pickFromGallery() async {
                             child: GestureDetector(
                               onTap: () {
                                 setState(() {
-                                  _selectedMedia.clear();
-                                  _isMediaConfirmed = false;
+                                  _pendingMedia = null;
                                 });
                               },
                               child: const CircleAvatar(
@@ -305,29 +307,29 @@ Future<void> _pickFromGallery() async {
                       const SizedBox(height: 12),
 
                       // Confirm / Cancel buttons
-                      if (!_isMediaConfirmed)
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            TextButton(
-                              onPressed: () {
-                                setState(() {
-                                  _selectedMedia.clear();
-                                });
-                              },
-                              child: const Text("Cancel"),
-                            ),
-                            const SizedBox(width: 16),
-                            ElevatedButton(
-                              onPressed: () {
-                                setState(() {
-                                  _isMediaConfirmed = true;
-                                });
-                              },
-                              child: const Text("Confirm"),
-                            ),
-                          ],
-                        ),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          TextButton(
+                            onPressed: () {
+                              setState(() {
+                                _pendingMedia = null;
+                              });
+                            },
+                            child: const Text("Cancel"),
+                          ),
+                          const SizedBox(width: 16),
+                          ElevatedButton(
+                            onPressed: () {
+                              setState(() {
+                                _confirmedMedia.add(_pendingMedia!);
+                                _pendingMedia = null;
+                              });
+                            },
+                            child: const Text("Confirm"),
+                          ),
+                        ],
+                      ),
                     ],
                   ),
                 ],
@@ -342,10 +344,20 @@ Future<void> _pickFromGallery() async {
                       children: [
                         const SizedBox(height: 20),
 
-                        // 👉 If admin has confirmed media, show it in feed
-                        if (_isMediaConfirmed && _selectedMedia.isNotEmpty)
-                          _imagePreviewCard(File(_selectedMedia[0].path))
-                        else ...[
+                        // Show all confirmed media
+                        ..._confirmedMedia.asMap().entries.map((entry) {
+                          int index = entry.key;
+                          XFile media = entry.value;
+                          return Column(
+                            children: [
+                              _imagePreviewCardWithDelete(File(media.path), index),
+                              const SizedBox(height: 20),
+                            ],
+                          );
+                        }).toList(),
+
+                        // Show default images if no confirmed media
+                        if (_confirmedMedia.isEmpty) ...[
                           _imageCard(imagePath: 'assets/images/test.png'),
                           const SizedBox(height: 20),
 
@@ -451,6 +463,53 @@ Widget _imagePreviewCard(File file) {
       file,
       fit: BoxFit.contain,
     ),
+  );
+}
+
+Widget _imagePreviewCardWithDelete(File file, int index) {
+  return Stack(
+    children: [
+      Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(14),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.grey.shade300,
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Image.file(
+          file,
+          fit: BoxFit.contain,
+        ),
+      ),
+      Positioned(
+        top: 16,
+        right: 16,
+        child: GestureDetector(
+          onTap: () {
+            _showDeleteConfirmationDialog(index);
+          },
+          child: Container(
+            decoration: const BoxDecoration(
+              color: Colors.red,
+              shape: BoxShape.circle,
+            ),
+            padding: const EdgeInsets.all(8),
+            child: const Icon(
+              Icons.delete,
+              color: Colors.white,
+              size: 20,
+            ),
+          ),
+        ),
+      ),
+    ],
   );
 }
 }
