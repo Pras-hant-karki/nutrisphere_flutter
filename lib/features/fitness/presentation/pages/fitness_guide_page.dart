@@ -35,17 +35,56 @@ class _FitnessGuideScreenState extends State<FitnessGuideScreen> {
     return false;
   }
 
+  Future<bool> _requestGalleryPermission() async {
+    try {
+      // Try requesting photos permission first (Android 13+)
+      PermissionStatus status = await Permission.photos.request();
+      
+      if (status.isGranted) {
+        return true;
+      }
+      
+      if (status.isDenied) {
+        // Show error message for denied permission
+        if (mounted) {
+          SnackbarUtils.showError(context, 'Please enable gallery permission');
+        }
+        return false;
+      }
+      
+      if (status.isPermanentlyDenied) {
+        // Show dialog to open settings
+        _showPermissionDeniedDialog();
+        return false;
+      }
+      
+      return false;
+    } catch (e) {
+      debugPrint('Permission Error: $e');
+      return false;
+    }
+  }
+
   void _showPermissionDeniedDialog() {
     showDialog(
       context: context, 
       builder: (context) => AlertDialog(
-        title: Text("Please provide Permission"),
+        title: Text("Permission Required"),
         content: Text(
-          "Please go to permission settings to use this features"
+          "Gallery access is permanently denied. Please enable it in app settings to use this feature."
         ),
         actions: [
-          TextButton(onPressed: (){}, child: Text('Cancel')),
-          TextButton(onPressed: (){}, child: Text('Open Settings')),
+          TextButton(
+            onPressed: () => Navigator.pop(context), 
+            child: Text('Cancel')
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              openAppSettings();
+            }, 
+            child: Text('Open Settings')
+          ),
         ],
       ),
     );
@@ -73,10 +112,11 @@ class _FitnessGuideScreenState extends State<FitnessGuideScreen> {
 bool _isMediaConfirmed = false;
 Future<void> _pickFromGallery() async {
   try {
-    final hasPermission =
-        await _userSangaPermissionMagu(Permission.photos);
+    final hasPermission = await _requestGalleryPermission();
 
-    if (!hasPermission) return;
+    if (!hasPermission) {
+      return;
+    }
 
     final XFile? image = await _imagePicker.pickImage(
       source: ImageSource.gallery,
@@ -91,12 +131,12 @@ Future<void> _pickFromGallery() async {
       });
     }
   } catch (e) {
-    debugPrint('Gallery Error $e');
+    debugPrint('Gallery Error: $e');
 
     if (mounted) {
       SnackbarUtils.showError(
         context,
-        'Gallery could not be accessed. Please try again.',
+        'Failed to access gallery. Please try again.',
       );
     }
   }
