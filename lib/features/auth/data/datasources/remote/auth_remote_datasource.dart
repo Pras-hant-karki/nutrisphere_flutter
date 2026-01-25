@@ -1,33 +1,38 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:nutrisphere_flutter/core/api/api_client.dart';
 import 'package:nutrisphere_flutter/core/api/api_endpoints.dart';
+import 'package:nutrisphere_flutter/core/services/storage/token_service.dart';
 import 'package:nutrisphere_flutter/core/services/storage/user_session_service.dart';
 import 'package:nutrisphere_flutter/features/auth/data/datasources/auth_datasource.dart';
 import 'package:nutrisphere_flutter/features/auth/data/models/auth_api_model.dart';
 
 // Provider for AuthRemoteDatasource
 final authRemoteDatasourceProvider = Provider<IAuthRemoteDatasource>((ref) {
-  return AuthRemoteDatasource(apiClient: ref.read(apiClientProvider), 
-  userSessionService: ref.read(userSessionServiceProvider)
+  return AuthRemoteDatasource(
+    apiClient: ref.read(apiClientProvider), 
+    userSessionService: ref.read(userSessionServiceProvider),
+    tokenService: ref.read(tokenServiceProvider),
   );
 });
 
 
 class AuthRemoteDatasource implements IAuthRemoteDatasource {
-
   final ApiClient _apiClient;
   final UserSessionService _userSessionService;
+  final TokenService _tokenService;
 
   AuthRemoteDatasource({
     required ApiClient apiClient,
     required UserSessionService userSessionService,
+    required TokenService tokenService,
   }) : _apiClient = apiClient,
-    _userSessionService = userSessionService;
+    _userSessionService = userSessionService ,
+    _tokenService = tokenService;
 
-///Register
-    @override
-  Future<AuthApiModel> register(AuthApiModel user) async{
+  /// Register
+  @override
+  Future<AuthApiModel> register(AuthApiModel user) async {
     try {
       final response = await _apiClient.post(
         ApiEndpoints.register,
@@ -38,16 +43,16 @@ class AuthRemoteDatasource implements IAuthRemoteDatasource {
       if (response.statusCode == 200 || response.statusCode == 201) {
         // Handle different response formats
         if (response.data != null && response.data is Map) {
-          final Map<String, dynamic> responseData = response.data as Map<String, dynamic>;
-          
+          final Map<String, dynamic> responseData =
+              response.data as Map<String, dynamic>;
+
           // Extract token if provided
           final String? token = responseData['token'] as String?;
           if (token != null) {
-            // Save token to secure storage
-            const _storage = FlutterSecureStorage();
-            await _storage.write(key: 'auth_token', value: token);
+            // Save token to token service
+            await _tokenService.saveToken(token);
           }
-          
+
           // Get user data - could be in 'user' field or 'data' field
           final Map<String, dynamic> userData;
           if (responseData['user'] is Map) {
@@ -57,10 +62,10 @@ class AuthRemoteDatasource implements IAuthRemoteDatasource {
           } else {
             userData = responseData;
           }
-          
+
           final registeredUser = AuthApiModel.fromJson(userData);
-          
-          // Save session (IMPORTANT: This was missing!)
+
+          // Save session
           if (registeredUser.authId != null && registeredUser.email != null) {
             await _userSessionService.saveUserSession(
               authId: registeredUser.authId!,
@@ -68,18 +73,19 @@ class AuthRemoteDatasource implements IAuthRemoteDatasource {
               fullName: registeredUser.fullName ?? 'User',
             );
           }
-          
+
           return registeredUser;
         }
       }
-      
+
       throw Exception('Registration failed: Invalid response format');
     } catch (e) {
+      debugPrint('Register Error: $e');
       rethrow;
     }
   }
   
-/// Login
+  /// Login
   @override
   Future<AuthApiModel?> login(String email, String password) async {
     try {
@@ -93,16 +99,15 @@ class AuthRemoteDatasource implements IAuthRemoteDatasource {
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         if (response.data != null && response.data is Map) {
-          final Map<String, dynamic> responseData = response.data as Map<String, dynamic>;
-          
-          // Extract token if provided
+          final Map<String, dynamic> responseData =
+              response.data as Map<String, dynamic>;
+
+          // Extract and save token if provided
           final String? token = responseData['token'] as String?;
           if (token != null) {
-            // Save token to secure storage
-            const _storage = FlutterSecureStorage();
-            await _storage.write(key: 'auth_token', value: token);
+            await _tokenService.saveToken(token);
           }
-          
+
           // Handle different response formats from backend
           final Map<String, dynamic> userData;
           if (responseData['user'] is Map) {
@@ -112,24 +117,24 @@ class AuthRemoteDatasource implements IAuthRemoteDatasource {
           } else {
             userData = responseData;
           }
-          
+
           final loggedInUser = AuthApiModel.fromJson(userData);
 
-          // save session
-          if (loggedInUser.authId != null && loggedInUser.email != null) {
-            await _userSessionService.saveUserSession(
-              authId: loggedInUser.authId!,
-              email: loggedInUser.email!,
-              fullName: loggedInUser.fullName ?? 'User',
-            );
-          }
+          // Save session
+          // if (loggedInUser.authId != null && loggedInUser.email != null) {
+          //   await _userSessionService.saveUserSession(
+          //     authId: loggedInUser.authId!,
+          //     email: loggedInUser.email!,
+          //     fullName: loggedInUser.fullName ?? 'User',
+          //   );
+          // }
 
           return loggedInUser;
         }
       }
       return null;
     } catch (e) {
-      print('Login Error: $e');
+      debugPrint('Login Error: $e');
       rethrow;
     }
   }
