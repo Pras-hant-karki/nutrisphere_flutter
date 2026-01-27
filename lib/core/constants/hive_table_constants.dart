@@ -12,4 +12,7 @@ class HiveTableConstants {
   static const int workoutTypeId = 2;
   static const String workoutTable = 'workout_table';
 
+  static const int fitnessTypeId = 3;
+  static const String fitnessTable = 'fitness_table';
 }
+
