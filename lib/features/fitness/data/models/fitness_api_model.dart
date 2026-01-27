@@ -109,6 +109,8 @@ class FitnessApiModel {
     );
   }
 
+  get fitnessId => null;
+
   static List<FitnessEntity> toEntityList(List<FitnessApiModel> models) {
     return models.map((model) => model.toEntity()).toList();
   }

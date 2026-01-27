@@ -96,6 +96,8 @@ class ApiClient {
     return _dio.delete(path,
         data: data, queryParameters: queryParameters, options: options);
   }
+
+  Future<dynamic> uploadFile(fitnessUploadMedia, {required FormData formData, required Options options}) async {}
 }
 
 // ================= AUTH INTERCEPTOR =================

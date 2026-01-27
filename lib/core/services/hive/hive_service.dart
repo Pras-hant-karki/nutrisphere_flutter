@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive/hive.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:nutrisphere_flutter/core/constants/hive_table_constants.dart';
+import 'package:nutrisphere_flutter/features/fitness/data/models/fitness_hive_model.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:nutrisphere_flutter/features/auth/data/models/auth_hive_model.dart';
 
@@ -89,4 +90,16 @@ class HiveService {
     final users = _authBox.values.where((user) => user.email == email);
     return users.isNotEmpty;
   }
+
+  Future<void> updateFitness(FitnessHiveModel fitness) async {}
+
+  Future<FitnessHiveModel?> getFitnessById(String fitnessId) async {}
+
+  Future<List<FitnessHiveModel>> getFitnessByCategory(String category) async {}
+
+  Future<List<FitnessHiveModel>> getAllFitness() async {}
+
+  Future<void> deleteFitness(String fitnessId) async {}
+
+  Future<void> createFitness(FitnessHiveModel fitness) async {}
 }

@@ -1,6 +1,12 @@
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:nutrisphere_flutter/core/services/hive/hive_service.dart';
 import 'package:nutrisphere_flutter/features/fitness/data/datasources/fitness_datasource.dart';
 import 'package:nutrisphere_flutter/features/fitness/data/models/fitness_hive_model.dart';
+
+final fitnessLocalDatasourceProvider = Provider<IFitnessLocalDataSource>((ref) {
+  final hiveService = ref.read(hiveServiceProvider);
+  return FitnessLocalDatasource(hiveService: hiveService);
+});
 
 class FitnessLocalDatasource implements IFitnessLocalDataSource {
   final HiveService _hiveService;
@@ -19,32 +25,49 @@ class FitnessLocalDatasource implements IFitnessLocalDataSource {
   }
   
   @override
-  Future<bool> deleteFitness(String fitnessId) {
-    // TODO: implement deleteFitness
-    throw UnimplementedError();
+  Future<bool> deleteFitness(String fitnessId) async {
+    try {
+      await _hiveService.deleteFitness(fitnessId);
+      return true;
+    } catch (e) {
+      return false;
+    }
   }
   
   @override
-  Future<List<FitnessHiveModel>> getAllFitness() {
-    // TODO: implement getAllFitness
-    throw UnimplementedError();
+  Future<List<FitnessHiveModel>> getAllFitness() async {
+    try {
+      return _hiveService.getAllFitness();  
+    } catch (e) {
+      return [];
+    }
   }
   
   @override
-  Future<List<FitnessHiveModel>> getFitnessByCategory(String category) {
-    // TODO: implement getFitnessByCategory
-    throw UnimplementedError();
+  Future<List<FitnessHiveModel>> getFitnessByCategory(String category) async {
+    try {
+      return _hiveService.getFitnessByCategory(category);
+    } catch (e) {
+      return [];
+    }
   }
   
   @override
-  Future<FitnessHiveModel?> getFitnessById(String fitnessId) {
-    // TODO: implement getFitnessById
-    throw UnimplementedError();
+  Future<FitnessHiveModel?> getFitnessById(String fitnessId) async {
+    try {
+      return _hiveService.getFitnessById(fitnessId);
+    } catch (e) {
+      return null;
+    }
   }
   
   @override
-  Future<bool> updateFitness(FitnessHiveModel fitness) {
-    // TODO: implement updateFitness
-    throw UnimplementedError();
+  Future<bool> updateFitness(FitnessHiveModel fitness) async {
+    try {
+      await _hiveService.updateFitness(fitness);
+      return true;
+    } catch (e) {
+      return false;
+    }
   }
 }
