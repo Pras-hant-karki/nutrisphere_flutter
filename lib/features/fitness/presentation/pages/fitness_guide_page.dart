@@ -18,7 +18,7 @@ class _FitnessGuideScreenState extends State<FitnessGuideScreen> {
   final List<XFile> _confirmedMedia = []; // List of confirmed photos to display
   final ImagePicker _imagePicker = ImagePicker();
 
-  Future<bool> _userSangaPermissionMagu(Permission permission) async {
+  Future<bool> _askPermissionWithUser(Permission permission) async {
     final status = await permission.status;
     if(status.isGranted) {
       return true;
@@ -118,7 +118,7 @@ class _FitnessGuideScreenState extends State<FitnessGuideScreen> {
 
   // camera code
   Future<void> _clickFromCamera() async{
-    final hasPermission = await _userSangaPermissionMagu(Permission.camera);
+    final hasPermission = await _askPermissionWithUser(Permission.camera);
     if(!hasPermission) return;
 
     final XFile? photo = await _imagePicker.pickImage(
@@ -170,12 +170,12 @@ Future<void> _pickFromGallery() async {
   // video code
   Future<void> _pickFromVideo() async {
     try{
-      final hasPermission = await _userSangaPermissionMagu(
+      final hasPermission = await _askPermissionWithUser(
         Permission.camera,
       );
       if (!hasPermission) return;
 
-      final hasMicPermission = await _userSangaPermissionMagu(
+      final hasMicPermission = await _askPermissionWithUser(
         Permission.microphone,
       );
       if (!hasMicPermission) return;

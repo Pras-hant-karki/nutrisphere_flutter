@@ -121,13 +121,13 @@ class AuthRemoteDatasource implements IAuthRemoteDatasource {
           final loggedInUser = AuthApiModel.fromJson(userData);
 
           // Save session
-          // if (loggedInUser.authId != null && loggedInUser.email != null) {
-          //   await _userSessionService.saveUserSession(
-          //     authId: loggedInUser.authId!,
-          //     email: loggedInUser.email!,
-          //     fullName: loggedInUser.fullName ?? 'User',
-          //   );
-          // }
+          if (loggedInUser.authId != null && loggedInUser.email != null) {
+            await _userSessionService.saveUserSession(
+              authId: loggedInUser.authId!,
+              email: loggedInUser.email!,
+              fullName: loggedInUser.fullName ?? 'User',
+            );
+          }
 
           return loggedInUser;
         }
@@ -156,16 +156,18 @@ class AuthRemoteDatasource implements IAuthRemoteDatasource {
     }
   }
   
-  @override
-  Future<bool> isEmailExists(String email) async {
-    return false;
-  }
-
   // LOGOUT
   @override
   Future<bool> logout() async {
+    await _tokenService.removeToken();
     await _userSessionService.logout();
     return true;
+  }
+  
+  @override
+  Future<bool> isEmailExists(String email) async {
+    // TODO: Implement email existence check from backend
+    throw UnimplementedError();
   }
   
 }
