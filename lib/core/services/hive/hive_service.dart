@@ -91,15 +91,39 @@ class HiveService {
     return users.isNotEmpty;
   }
 
-  Future<void> updateFitness(FitnessHiveModel fitness) async {}
+  // ======================= FITNESS QUERIES =======================
 
-  Future<FitnessHiveModel?> getFitnessById(String fitnessId) async {}
+  /// Create fitness
+  Future<void> createFitness(FitnessHiveModel fitness) async {
+    await _fitnessBox.put(fitness.fitnessId, fitness);
+  }
 
-  Future<List<FitnessHiveModel>> getFitnessByCategory(String category) async {}
+  /// Get all fitness
+  Future<List<FitnessHiveModel>> getAllFitness() async {
+    return _fitnessBox.values.toList();
+  }
 
-  Future<List<FitnessHiveModel>> getAllFitness() async {}
+  /// Get fitness by ID
+  Future<FitnessHiveModel?> getFitnessById(String fitnessId) async {
+    return _fitnessBox.get(fitnessId);
+  }
 
-  Future<void> deleteFitness(String fitnessId) async {}
+  /// Get fitness by category
+  Future<List<FitnessHiveModel>> getFitnessByCategory(String category) async {
+    return _fitnessBox.values
+        .where((fitness) => fitness.category == category)
+        .toList();
+  }
 
-  Future<void> createFitness(FitnessHiveModel fitness) async {}
+  /// Update fitness
+  Future<void> updateFitness(FitnessHiveModel fitness) async {
+    if (_fitnessBox.containsKey(fitness.fitnessId)) {
+      await _fitnessBox.put(fitness.fitnessId, fitness);
+    }
+  }
+
+  /// Delete fitness
+  Future<void> deleteFitness(String fitnessId) async {
+    await _fitnessBox.delete(fitnessId);
+  }
 }

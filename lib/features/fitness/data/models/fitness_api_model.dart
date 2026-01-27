@@ -29,6 +29,8 @@ class FitnessApiModel {
     this.updatedAt,
   });
 
+  String? get fitnessId => id;
+
   Map<String, dynamic> toJson() {
     return {
       'title': title,
@@ -108,8 +110,6 @@ class FitnessApiModel {
       updatedAt: entity.updatedAt,
     );
   }
-
-  get fitnessId => null;
 
   static List<FitnessEntity> toEntityList(List<FitnessApiModel> models) {
     return models.map((model) => model.toEntity()).toList();
