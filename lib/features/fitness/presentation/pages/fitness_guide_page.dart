@@ -133,38 +133,35 @@ class _FitnessGuideScreenState extends State<FitnessGuideScreen> {
   }
 
   // gallery code
+  Future<void> _pickFromGallery() async {
+    try {
+      final hasPermission = await _requestGalleryPermission();
 
-bool _isMediaConfirmed = false;
-Future<void> _pickFromGallery() async {
-  try {
-    final hasPermission = await _requestGalleryPermission();
+      if (!hasPermission) {
+        return;
+      }
 
-    if (!hasPermission) {
-      return;
-    }
-
-    final XFile? image = await _imagePicker.pickImage(
-      source: ImageSource.gallery,
-      imageQuality: 80,
-    );
-
-    if (image != null) {
-      setState(() {
-        _pendingMedia = image;
-        _isMediaConfirmed = false; // reset confirmation
-      });
-    }
-  } catch (e) {
-    debugPrint('Gallery Error: $e');
-
-    if (mounted) {
-      SnackbarUtils.showError(
-        context,
-        'Failed to access gallery. Please try again.',
+      final XFile? image = await _imagePicker.pickImage(
+        source: ImageSource.gallery,
+        imageQuality: 80,
       );
+
+      if (image != null) {
+        setState(() {
+          _pendingMedia = image;
+        });
+      }
+    } catch (e) {
+      debugPrint('Gallery Error: $e');
+
+      if (mounted) {
+        SnackbarUtils.showError(
+          context,
+          'Failed to access gallery. Please try again.',
+        );
+      }
     }
   }
-}
 
 
   // video code
@@ -442,29 +439,6 @@ Future<void> _pickFromGallery() async {
       ),
     );
   }
-
-
-Widget _imagePreviewCard(File file) {
-  return Container(
-    width: double.infinity,
-    padding: const EdgeInsets.all(12),
-    decoration: BoxDecoration(
-      color: Colors.white,
-      borderRadius: BorderRadius.circular(14),
-      boxShadow: [
-        BoxShadow(
-          color: Colors.grey.shade300,
-          blurRadius: 8,
-          offset: const Offset(0, 2),
-        ),
-      ],
-    ),
-    child: Image.file(
-      file,
-      fit: BoxFit.contain,
-    ),
-  );
-}
 
 Widget _imagePreviewCardWithDelete(File file, int index) {
   return Stack(
