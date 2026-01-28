@@ -4,7 +4,7 @@ class FitnessApiModel {
   final String? id;
   final String title;
   final String? description;
-  final String category; // 'yoga', 'cardio', 'strength', 'stretching', etc.
+  final String? category; // 'yoga', 'cardio', 'strength', 'stretching', etc.
   final String? media; // URL to image/video
   final String? mediaType; // 'image' or 'video'
   final String? createdBy; // Admin ID who posted

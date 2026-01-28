@@ -2,7 +2,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive/hive.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:nutrisphere_flutter/core/constants/hive_table_constants.dart';
-import 'package:nutrisphere_flutter/features/fitness/data/models/fitness_hive_model.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:nutrisphere_flutter/features/auth/data/models/auth_hive_model.dart';
 
@@ -89,41 +88,5 @@ class HiveService {
   bool isEmailExists(String email) {
     final users = _authBox.values.where((user) => user.email == email);
     return users.isNotEmpty;
-  }
-
-  // ======================= FITNESS QUERIES =======================
-
-  /// Create fitness
-  Future<void> createFitness(FitnessHiveModel fitness) async {
-    await _fitnessBox.put(fitness.fitnessId, fitness);
-  }
-
-  /// Get all fitness
-  Future<List<FitnessHiveModel>> getAllFitness() async {
-    return _fitnessBox.values.toList();
-  }
-
-  /// Get fitness by ID
-  Future<FitnessHiveModel?> getFitnessById(String fitnessId) async {
-    return _fitnessBox.get(fitnessId);
-  }
-
-  /// Get fitness by category
-  Future<List<FitnessHiveModel>> getFitnessByCategory(String category) async {
-    return _fitnessBox.values
-        .where((fitness) => fitness.category == category)
-        .toList();
-  }
-
-  /// Update fitness
-  Future<void> updateFitness(FitnessHiveModel fitness) async {
-    if (_fitnessBox.containsKey(fitness.fitnessId)) {
-      await _fitnessBox.put(fitness.fitnessId, fitness);
-    }
-  }
-
-  /// Delete fitness
-  Future<void> deleteFitness(String fitnessId) async {
-    await _fitnessBox.delete(fitnessId);
   }
 }

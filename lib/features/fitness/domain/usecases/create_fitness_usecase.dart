@@ -11,7 +11,7 @@ class CreateFitnessParams extends Equatable {
   final String? fitnessId;
   final String title;
   final String? description;
-  final String category; // 'yoga', 'cardio', 'strength', 'stretching', etc.
+  final String? category; // 'yoga', 'cardio', 'strength', 'stretching', etc.
   final String? media; // URL to image/video
   final String? mediaType; // 'image' or 'video'
   final String? createdBy; // Admin ID who posted
@@ -24,7 +24,7 @@ class CreateFitnessParams extends Equatable {
     this.fitnessId,
     required this.title,
     this.description,
-    required this.category,
+    this.category,
     this.media,
     this.mediaType,
     this.createdBy,
@@ -35,19 +35,19 @@ class CreateFitnessParams extends Equatable {
   });
 
   @override
-  List<Object?> get props => [
-    fitnessId,
-    title,
-    description,
-    category,
-    media,
-    mediaType,
-    createdBy,
-    createdByName,
-    duration,
-    createdAt,
-    updatedAt,
-  ];
+List<Object?> get props => [ // CopyWith method for immutability -enables safe state updates without mutation.
+  fitnessId,
+  title,
+  description,
+  category,
+  media,
+  mediaType,
+  createdBy,
+  createdByName,
+  duration,
+  createdAt,
+  updatedAt,
+];
 }
 
 final createFitnessUsecaseProvider = Provider<CreatefitnessUsecase>((ref) {

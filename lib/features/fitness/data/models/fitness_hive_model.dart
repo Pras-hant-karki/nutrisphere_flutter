@@ -17,7 +17,7 @@ class FitnessHiveModel extends HiveObject {
   final String? description;
 
   @HiveField(3)
-  final String category; // 'yoga', 'cardio', 'strength', 'stretching', etc.
+  final String? category; // 'yoga', 'cardio', 'strength', 'stretching', etc.
 
   @HiveField(4)
   final String? media; // URL to image/video
@@ -38,7 +38,7 @@ class FitnessHiveModel extends HiveObject {
     String? fitnessId,
     required this.title,
     this.description,
-    required this.category,
+    this.category,
     this.media,
     this.mediaType,
     this.createdBy,
