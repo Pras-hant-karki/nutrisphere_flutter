@@ -26,22 +26,6 @@ class FitnessRemoteDatasource implements IFitnessRemoteDataSource {
        _tokenService = tokenService;
 
   @override
-  Future<String> uploadMedia(File media) async {
-    final fileName = media.path.split('/').last;
-    final formData = FormData.fromMap({
-      'fitnessMedia': await MultipartFile.fromFile(media.path, filename: fileName),
-    });
-    final token = await _tokenService.getToken();
-    final response = await _apiClient.uploadFile(
-      ApiEndpoints.fitnessUploadMedia,
-      formData: formData,
-      options: Options(headers: {'Authorization': 'Bearer $token'}),
-    );
-
-    return response.data['data'];
-  }
-
-  @override
   Future<FitnessApiModel> createFitness(FitnessApiModel fitness) async {
     final token = await _tokenService.getToken();
     final response = await _apiClient.post(
@@ -95,5 +79,39 @@ class FitnessRemoteDatasource implements IFitnessRemoteDataSource {
       options: Options(headers: {'Authorization': 'Bearer $token'}),
     );
     return true;
+  }
+  
+  @override
+  Future<String> uploadPhoto(File photo) async {
+    final fileName = photo.path.split('/').last;
+    final formData = FormData.fromMap({
+      'fitnessPhoto': await MultipartFile.fromFile(photo.path, filename: fileName),
+    });
+    // Get token from token service
+    final token = await _tokenService.getToken();
+    final response = await _apiClient.uploadFile(
+      ApiEndpoints.fitnessUploadPhoto,
+      formData: formData,
+      options: Options(headers: {'Authorization': 'Bearer $token'}),
+    );
+
+    return response.data['data'];
+  }
+
+  @override
+  Future<String> uploadVideo(File video) async {
+    final fileName = video.path.split('/').last;
+    final formData = FormData.fromMap({
+      'fitnessVideo': await MultipartFile.fromFile(video.path, filename: fileName),
+    });
+    // Get token from token service
+    final token = await _tokenService.getToken();
+    final response = await _apiClient.uploadFile(
+      ApiEndpoints.fitnessUploadVideo,
+      formData: formData,
+      options: Options(headers: {'Authorization': 'Bearer $token'}),
+    );
+
+    return response.data['data'];
   }
 }

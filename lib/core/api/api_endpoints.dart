@@ -41,9 +41,13 @@ class ApiEndpoints {
   static const String register = '/api/auth/register';
   static const String me = '/api/auth/me';
 
+  // ============ Fitness Endpoints ============
+  static const String fitness = '/fitness';
+  static String fitnessById(String id) => '/fitness/$id';
+
   // ============ Posts (future use) ============
   static const String posts = '/posts';
-  static const String fitness = '/fitness/upload-photo';
+  static const String fitnessUploadPhoto= '/fitness/upload-photo';
   static const String fitnessUploadVideo = '/fitness/upload-video';
 }
 
