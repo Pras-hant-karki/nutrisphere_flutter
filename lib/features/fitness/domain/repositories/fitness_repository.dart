@@ -6,9 +6,6 @@ import 'package:nutrisphere_flutter/features/fitness/domain/entities/fitness_ent
 
 abstract interface class IFitnessRepository {
   Future<Either<Failure, List<FitnessEntity>>> getAllFitness();
-  Future<Either<Failure, List<FitnessEntity>>> getFitnessByUser(String userId);
-  Future<Either<Failure, List<FitnessEntity>>> getLostFitness();
-  Future<Either<Failure, List<FitnessEntity>>> getFoundFitness();
   Future<Either<Failure, List<FitnessEntity>>> getFitnessByCategory(
     String categoryId,
   );

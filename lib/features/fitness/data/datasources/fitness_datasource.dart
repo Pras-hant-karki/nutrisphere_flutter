@@ -13,7 +13,8 @@ abstract interface class IFitnessLocalDataSource {
 }
 
 abstract interface class IFitnessRemoteDataSource {
-  Future<String> uploadMedia(File media);
+  Future<String> uploadPhoto(File photo);
+  Future<String> uploadVideo(File video);
   Future<FitnessApiModel> createFitness(FitnessApiModel fitness);
   Future<List<FitnessApiModel>> getAllFitness();
   Future<FitnessApiModel> getFitnessById(String fitnessId);

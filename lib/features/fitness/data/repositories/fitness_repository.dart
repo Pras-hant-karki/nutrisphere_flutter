@@ -67,10 +67,10 @@ class FitnessRepository implements IFitnessRepository {
           return const Right(true);
         }
         return const Left(
-          LocalDatabaseFailure(message: "Failed to delete fitness"),
+          LocaldatabaseFailure(message: "Failed to delete fitness"),
         );
       } catch (e) {
-        return Left(LocalDatabaseFailure(message: e.toString()));
+        return Left(LocaldatabaseFailure(message: e.toString()));
       }
     }
   }
@@ -91,7 +91,7 @@ class FitnessRepository implements IFitnessRepository {
         final entities = FitnessHiveModel.toEntityList(models);
         return Right(entities);
       } catch (e) {
-        return Left(LocalDatabaseFailure(message: e.toString()));
+        return Left(LocaldatabaseFailure(message: e.toString()));
       }
     }
   }
@@ -111,9 +111,9 @@ class FitnessRepository implements IFitnessRepository {
         if (model != null) {
           return Right(model.toEntity());
         }
-        return const Left(LocalDatabaseFailure(message: 'Fitness not found'));
+        return const Left(LocaldatabaseFailure(message: 'Fitness not found'));
       } catch (e) {
-        return Left(LocalDatabaseFailure(message: e.toString()));
+        return Left(LocaldatabaseFailure(message: e.toString()));
       }
     }
   }
@@ -136,7 +136,7 @@ class FitnessRepository implements IFitnessRepository {
         final entities = FitnessHiveModel.toEntityList(models);
         return Right(entities);
       } catch (e) {
-        return Left(LocalDatabaseFailure(message: e.toString()));
+        return Left(LocaldatabaseFailure(message: e.toString()));
       }
     }
   }
@@ -159,19 +159,33 @@ class FitnessRepository implements IFitnessRepository {
           return const Right(true);
         }
         return const Left(
-          LocalDatabaseFailure(message: "Failed to update fitness"),
+          LocaldatabaseFailure(message: "Failed to update fitness"),
         );
       } catch (e) {
-        return Left(LocalDatabaseFailure(message: e.toString()));
+        return Left(LocaldatabaseFailure(message: e.toString()));
       }
     }
   }
 
   @override
-  Future<Either<Failure, String>> uploadMedia(File media) async {
+  Future<Either<Failure, String>> uploadPhoto(File photo) async {
     if (await _networkInfo.isConnected) {
       try {
-        final url = await _remoteDataSource.uploadMedia(media);
+        final url = await _remoteDataSource.uploadPhoto(photo);
+        return Right(url);
+      } catch (e) {
+        return Left(ApiFailure(message: e.toString()));
+      }
+    } else {
+      return const Left(NetworkFailure(message: 'No internet connection'));
+    }
+  }
+  
+  @override
+  Future<Either<Failure, String>> uploadVideo(File video) async {
+    if (await _networkInfo.isConnected) {
+      try {
+        final url = await _remoteDataSource.uploadVideo(video);
         return Right(url);
       } catch (e) {
         return Left(ApiFailure(message: e.toString()));
