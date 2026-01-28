@@ -21,3 +21,8 @@ class ApiFailure extends Failure {
   const ApiFailure({this.statusCode, required String message})
       : super(message);
 }
+
+class NetworkFailure extends Failure {
+  const NetworkFailure({String message = "No internet connection"})
+    : super(message);
+}

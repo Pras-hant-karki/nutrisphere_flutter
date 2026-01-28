@@ -43,12 +43,7 @@ class ApiEndpoints {
 
   // ============ Posts (future use) ============
   static const String posts = '/posts';
-
-  static String get fitness => null;
-
-  static get fitnessUploadMedia => null;
-  static String postById(String id) => '/posts/$id';
-
-  static String fitnessById(String fitnessId) {}
+  static const String fitness = '/fitness/upload-photo';
+  static const String fitnessUploadVideo = '/fitness/upload-video';
 }
 

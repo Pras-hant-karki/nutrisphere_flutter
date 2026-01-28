@@ -25,15 +25,14 @@ class FitnessHiveModelAdapter extends TypeAdapter<FitnessHiveModel> {
       mediaType: fields[5] as String?,
       createdBy: fields[6] as String?,
       createdByName: fields[7] as String?,
-      difficulty: fields[8] as String?,
-      duration: fields[9] as int?,
+      duration: fields[8] as int?,
     );
   }
 
   @override
   void write(BinaryWriter writer, FitnessHiveModel obj) {
     writer
-      ..writeByte(10)
+      ..writeByte(9)
       ..writeByte(0)
       ..write(obj.fitnessId)
       ..writeByte(1)
@@ -51,8 +50,6 @@ class FitnessHiveModelAdapter extends TypeAdapter<FitnessHiveModel> {
       ..writeByte(7)
       ..write(obj.createdByName)
       ..writeByte(8)
-      ..write(obj.difficulty)
-      ..writeByte(9)
       ..write(obj.duration);
   }
 

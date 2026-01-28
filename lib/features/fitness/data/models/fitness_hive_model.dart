@@ -32,9 +32,6 @@ class FitnessHiveModel extends HiveObject {
   final String? createdByName; // Admin name for display
 
   @HiveField(8)
-  final String? difficulty; // 'beginner', 'intermediate', 'advanced'
-
-  @HiveField(9)
   final int? duration; // duration in minutes
 
   FitnessHiveModel({
@@ -46,7 +43,6 @@ class FitnessHiveModel extends HiveObject {
     this.mediaType,
     this.createdBy,
     this.createdByName,
-    this.difficulty,
     this.duration,
   }) : fitnessId = fitnessId ?? const Uuid().v4();
 
@@ -60,7 +56,6 @@ class FitnessHiveModel extends HiveObject {
       mediaType: mediaType,
       createdBy: createdBy,
       createdByName: createdByName,
-      difficulty: difficulty,
       duration: duration,
     );
   }
@@ -75,7 +70,6 @@ class FitnessHiveModel extends HiveObject {
       mediaType: entity.mediaType,
       createdBy: entity.createdBy,
       createdByName: entity.createdByName,
-      difficulty: entity.difficulty,
       duration: entity.duration,
     );
   }

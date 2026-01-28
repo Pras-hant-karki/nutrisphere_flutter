@@ -9,11 +9,11 @@ class FitnessApiModel {
   final String? mediaType; // 'image' or 'video'
   final String? createdBy; // Admin ID who posted
   final String? createdByName; // Admin name for display
-  final String? difficulty; // 'beginner', 'intermediate', 'advanced'
   final int? duration; // duration in minutes
   final DateTime? createdAt;
   final DateTime? updatedAt;
 
+//constructor
   FitnessApiModel({
     this.id,
     required this.title,
@@ -23,7 +23,6 @@ class FitnessApiModel {
     this.mediaType,
     this.createdBy,
     this.createdByName,
-    this.difficulty,
     this.duration,
     this.createdAt,
     this.updatedAt,
@@ -38,7 +37,6 @@ class FitnessApiModel {
       if (description != null) 'description': description,
       if (media != null) 'media': media,
       if (mediaType != null) 'mediaType': mediaType,
-      if (difficulty != null) 'difficulty': difficulty,
       if (duration != null) 'duration': duration,
     };
   }
@@ -66,7 +64,6 @@ class FitnessApiModel {
       mediaType: json['mediaType'] as String?,
       createdBy: extractId(json['createdBy']),
       createdByName: extractName(json['createdBy']),
-      difficulty: json['difficulty'] as String?,
       duration: json['duration'] as int?,
       createdAt: json['createdAt'] != null
           ? DateTime.parse(json['createdAt'] as String)
@@ -87,7 +84,6 @@ class FitnessApiModel {
       mediaType: mediaType,
       createdBy: createdBy,
       createdByName: createdByName,
-      difficulty: difficulty,
       duration: duration,
       createdAt: createdAt,
       updatedAt: updatedAt,
@@ -104,7 +100,6 @@ class FitnessApiModel {
       mediaType: entity.mediaType,
       createdBy: entity.createdBy,
       createdByName: entity.createdByName,
-      difficulty: entity.difficulty,
       duration: entity.duration,
       createdAt: entity.createdAt,
       updatedAt: entity.updatedAt,
