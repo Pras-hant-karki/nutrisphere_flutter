@@ -1,4 +1,6 @@
-class FitnessEntity {
+import 'package:equatable/equatable.dart';
+
+class FitnessEntity extends Equatable {
   final String? fitnessId;
   final String title;
   final String? description;
@@ -7,12 +9,11 @@ class FitnessEntity {
   final String? mediaType; // 'image' or 'video'
   final String? createdBy; // Admin ID who posted
   final String? createdByName; // Admin name for display
-  final String? difficulty; // 'beginner', 'intermediate', 'advanced'
   final int? duration; // duration in minutes
   final DateTime? createdAt;
   final DateTime? updatedAt;
 
-  FitnessEntity({
+  const FitnessEntity({
     this.fitnessId,
     required this.title,
     this.description,
@@ -21,7 +22,6 @@ class FitnessEntity {
     this.mediaType,
     this.createdBy,
     this.createdByName,
-    this.difficulty,
     this.duration,
     this.createdAt,
     this.updatedAt,
@@ -37,7 +37,6 @@ class FitnessEntity {
     String? mediaType,
     String? createdBy,
     String? createdByName,
-    String? difficulty,
     int? duration,
     DateTime? createdAt,
     DateTime? updatedAt,
@@ -51,15 +50,9 @@ class FitnessEntity {
       mediaType: mediaType ?? this.mediaType,
       createdBy: createdBy ?? this.createdBy,
       createdByName: createdByName ?? this.createdByName,
-      difficulty: difficulty ?? this.difficulty,
       duration: duration ?? this.duration,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
     );
   }
 
-  @override
-  String toString() {
-    return 'FitnessEntity(fitnessId: $fitnessId, title: $title, category: $category, difficulty: $difficulty, duration: $duration, createdBy: $createdByName, createdAt: $createdAt)';
-  }
-}
