@@ -1,18 +1,21 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:nutrisphere_flutter/app/theme/theme_extentions.dart';
 import 'package:nutrisphere_flutter/core/utils/snackbar_utils.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:nutrisphere_flutter/features/fitness/domain/usecases/upload_photo_usecase.dart';
+import 'package:nutrisphere_flutter/features/fitness/domain/usecases/upload_video_usecase.dart';
 
-class FitnessGuideScreen extends StatefulWidget {
+class FitnessGuideScreen extends ConsumerStatefulWidget {
   const FitnessGuideScreen({super.key});
 
   @override
-  State<FitnessGuideScreen> createState() => _FitnessGuideScreenState();
+  ConsumerState<FitnessGuideScreen> createState() => _FitnessGuideScreenState();
 }
 
-class _FitnessGuideScreenState extends State<FitnessGuideScreen> {
+class _FitnessGuideScreenState extends ConsumerState<FitnessGuideScreen> {
 
   XFile? _pendingMedia; // Media being previewed before confirmation
   final List<XFile> _confirmedMedia = []; // List of confirmed photos to display
@@ -65,6 +68,11 @@ class _FitnessGuideScreenState extends State<FitnessGuideScreen> {
       return false;
     }
   }
+
+  // Media selection
+  final List<XFile> _selectedMedia = []; // images or video
+  final ImagePicker _imagePicker = ImagePicker();
+  String? _selectedMediaType; // 'image' or 'video'
 
   void _showPermissionDeniedDialog() {
     showDialog(
@@ -125,44 +133,85 @@ class _FitnessGuideScreenState extends State<FitnessGuideScreen> {
       source: ImageSource.camera,
       imageQuality: 80,
     );
-    if(photo != null){
+    if (photo != null) {
       setState(() {
-        _pendingMedia = photo;
+        _selectedMedia.clear();
+        _selectedMedia.add(photo);
+        _selectedMediaType = 'photo';
       });
+      // Upload photo to server using fitness upload usecase
+      final uploadResult = await ref.read(uploadPhotoUsecaseProvider)(File(photo.path));
+      uploadResult.fold(
+        (failure) {
+          if (mounted) SnackbarUtils.showError(context, failure.message);
+        },
+        (url) {
+          if (mounted) SnackbarUtils.showSuccess(context, 'Photo uploaded');
+        },
+      );
     }
   }
 
   // gallery code
-  Future<void> _pickFromGallery() async {
+  Future<void> _pickFromGallery({bool allowMultiple = false}) async {
     try {
-      final hasPermission = await _requestGalleryPermission();
+      if (allowMultiple) {
+        final List<XFile> images = await _imagePicker.pickMultiImage(
+          imageQuality: 80,
+        );
 
-      if (!hasPermission) {
-        return;
-      }
+        if (images.isNotEmpty) {
+          setState(() {
+            _selectedMedia.clear();
+            _selectedMedia.addAll(images);
+            _selectedMediaType = 'photo';
+          });
+          // Upload first photo to server using fitness upload usecase
+          final uploadResult = await ref.read(uploadPhotoUsecaseProvider)(File(images.first.path));
+          uploadResult.fold(
+            (failure) {
+              if (mounted) SnackbarUtils.showError(context, failure.message);
+            },
+            (url) {
+              if (mounted) SnackbarUtils.showSuccess(context, 'Photo uploaded');
+            },
+          );
+        }
+      } else {
+        final XFile? image = await _imagePicker.pickImage(
+          source: ImageSource.gallery,
+          imageQuality: 80,
+        );
 
-      final XFile? image = await _imagePicker.pickImage(
-        source: ImageSource.gallery,
-        imageQuality: 80,
-      );
-
-      if (image != null) {
-        setState(() {
-          _pendingMedia = image;
-        });
+        if (image != null) {
+          setState(() {
+            _selectedMedia.clear();
+            _selectedMedia.add(image);
+            _selectedMediaType = 'photo';
+          });
+          // Upload photo to server using fitness upload usecase
+          final uploadResult = await ref.read(uploadPhotoUsecaseProvider)(File(image.path));
+          uploadResult.fold(
+            (failure) {
+              if (mounted) SnackbarUtils.showError(context, failure.message);
+            },
+            (url) {
+              if (mounted) SnackbarUtils.showSuccess(context, 'Photo uploaded');
+            },
+          );
+        }
       }
     } catch (e) {
-      debugPrint('Gallery Error: $e');
+      debugPrint('Gallery Error $e');
 
       if (mounted) {
         SnackbarUtils.showError(
           context,
-          'Failed to access gallery. Please try again.',
+          'Unable to access gallery. Please try using the camera instead.',
         );
       }
     }
   }
-
 
   // video code
   Future<void> _pickFromVideo() async {
@@ -184,8 +233,20 @@ class _FitnessGuideScreenState extends State<FitnessGuideScreen> {
 
       if (video != null) {
         setState(() {
-          _pendingMedia = video;
+          _selectedMedia.clear();
+          _selectedMedia.add(video);
+          _selectedMediaType = 'video';
         });
+        // Upload video to server using fitness upload video usecase
+        final uploadResult = await ref.read(uploadVideoUsecaseProvider)(File(video.path));
+        uploadResult.fold(
+          (failure) {
+            if (mounted) SnackbarUtils.showError(context, failure.message);
+          },
+          (url) {
+            if (mounted) SnackbarUtils.showSuccess(context, 'Video uploaded');
+          },
+        );
       }
     } catch (e) {
       _showPermissionDeniedDialog();
@@ -204,38 +265,38 @@ class _FitnessGuideScreenState extends State<FitnessGuideScreen> {
       builder: (context) => SafeArea(
         child: Padding(
           padding:EdgeInsets.all(20),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                ListTile(
-                  leading: Icon(Icons.camera), 
-                  title: Text('Open Camera') , 
-                  onTap: () {
-                    Navigator.pop(context);
-                    _clickFromCamera();
-                  },
-                ),
-                ListTile(
-                  leading: Icon(Icons.browse_gallery), 
-                  title: Text('Open Gallery') ,
-                  onTap: () {
-                    Navigator.pop(context);
-                    _pickFromGallery();
-                  },
-                ),
-                ListTile(
-                  leading: Icon(Icons.video_camera_back), 
-                  title: Text('Record Video') , 
-                  onTap: () {
-                    Navigator.pop(context);
-                    _pickFromVideo();
-                  },
-                ),
-              ],
-            ),         
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                leading: Icon(Icons.camera), 
+                title: Text('Open Camera') , 
+                onTap: () {
+                  Navigator.pop(context);
+                  _clickFromCamera();
+                },
+              ),
+              ListTile(
+                leading: Icon(Icons.browse_gallery), 
+                title: Text('Open Gallery') ,
+                onTap: () {
+                  Navigator.pop(context);
+                  _pickFromGallery();
+                },
+              ),
+              ListTile(
+                leading: Icon(Icons.video_camera_back), 
+                title: Text('Record Video') , 
+                onTap: () {
+                  Navigator.pop(context);
+                  _pickFromVideo();
+                },
+              ),
+            ],
           ),
         ),
-      );
+      ),
+    );
   }
 
 

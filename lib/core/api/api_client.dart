@@ -97,7 +97,16 @@ class ApiClient {
         data: data, queryParameters: queryParameters, options: options);
   }
 
-  Future<dynamic> uploadFile(fitnessUploadMedia, {required FormData formData, required Options options}) async {}
+  Future<Response> uploadFile(String path, {required FormData formData, Options? options}) async {
+    final opts = options ?? Options();
+    // Ensure multipart content-type is set (Dio will set proper boundary)
+    opts.headers = {
+      ...?opts.headers,
+      'Content-Type': 'multipart/form-data',
+    };
+
+    return _dio.post(path, data: formData, options: opts);
+  }
 }
 
 // ================= AUTH INTERCEPTOR =================

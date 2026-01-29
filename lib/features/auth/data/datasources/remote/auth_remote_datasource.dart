@@ -27,8 +27,8 @@ class AuthRemoteDatasource implements IAuthRemoteDatasource {
     required UserSessionService userSessionService,
     required TokenService tokenService,
   }) : _apiClient = apiClient,
-    _userSessionService = userSessionService ,
-    _tokenService = tokenService;
+        _userSessionService = userSessionService ,
+        _tokenService = tokenService;
 
   /// Register
   @override
