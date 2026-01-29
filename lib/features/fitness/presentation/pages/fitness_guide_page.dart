@@ -2,7 +2,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:nutrisphere_flutter/app/theme/theme_extentions.dart';
+import 'package:nutrisphere_flutter/app/theme/theme_extensions.dart';
 import 'package:nutrisphere_flutter/core/utils/snackbar_utils.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:nutrisphere_flutter/features/fitness/domain/usecases/upload_photo_usecase.dart';
@@ -71,7 +71,7 @@ class _FitnessGuideScreenState extends ConsumerState<FitnessGuideScreen> {
 
   // Media selection
   final List<XFile> _selectedMedia = []; // images or video
-  final ImagePicker _imagePicker = ImagePicker();
+  // final ImagePicker _imagePicker = ImagePicker();
   String? _selectedMediaType; // 'image' or 'video'
 
   void _showPermissionDeniedDialog() {
@@ -138,6 +138,7 @@ class _FitnessGuideScreenState extends ConsumerState<FitnessGuideScreen> {
         _selectedMedia.clear();
         _selectedMedia.add(photo);
         _selectedMediaType = 'photo';
+        _pendingMedia = photo;
       });
       // Upload photo to server using fitness upload usecase
       final uploadResult = await ref.read(uploadPhotoUsecaseProvider)(File(photo.path));
@@ -165,6 +166,7 @@ class _FitnessGuideScreenState extends ConsumerState<FitnessGuideScreen> {
             _selectedMedia.clear();
             _selectedMedia.addAll(images);
             _selectedMediaType = 'photo';
+            _pendingMedia = images.first;
           });
           // Upload first photo to server using fitness upload usecase
           final uploadResult = await ref.read(uploadPhotoUsecaseProvider)(File(images.first.path));
