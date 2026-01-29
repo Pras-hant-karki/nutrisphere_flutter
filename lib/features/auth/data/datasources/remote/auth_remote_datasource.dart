@@ -69,7 +69,7 @@ class AuthRemoteDatasource implements IAuthRemoteDatasource {
           if (registeredUser.authId != null && registeredUser.email != null) {
             await _userSessionService.saveUserSession(
               authId: registeredUser.authId!,
-              email: registeredUser.email!,
+              email: registeredUser.email,
               fullName: registeredUser.fullName ?? 'User',
             );
           }
@@ -124,7 +124,7 @@ class AuthRemoteDatasource implements IAuthRemoteDatasource {
           if (loggedInUser.authId != null && loggedInUser.email != null) {
             await _userSessionService.saveUserSession(
               authId: loggedInUser.authId!,
-              email: loggedInUser.email!,
+              email: loggedInUser.email,
               fullName: loggedInUser.fullName ?? 'User',
             );
           }
