@@ -13,7 +13,7 @@ import 'package:nutrisphere_flutter/features/auth/data/models/auth_api_model.dar
 // Provider for AuthRemoteDatasource
 final authRemoteDatasourceProvider = Provider<IAuthRemoteDatasource>((ref) {
   return AuthRemoteDatasource(
-    apiClient: ref.read(apiClientProvider), 
+    apiClient: ref.read(apiClientProvider),
     userSessionService: ref.read(userSessionServiceProvider),
     tokenService: ref.read(tokenServiceProvider),
   );
@@ -42,8 +42,8 @@ class AuthRemoteDatasource implements IAuthRemoteDatasource {
     required ApiClient apiClient,
     required UserSessionService userSessionService,
     required TokenService tokenService,
-  }) : _apiClient = apiClient,
-        _userSessionService = userSessionService ,
+  })  : _apiClient = apiClient,
+        _userSessionService = userSessionService,
         _tokenService = tokenService;
 
   /// Register
@@ -67,6 +67,9 @@ class AuthRemoteDatasource implements IAuthRemoteDatasource {
           if (token != null) {
             // Save token to token service
             await _tokenService.saveToken(token);
+
+            // Set token into Dio immediately
+            await _apiClient.setAuthToken(token);
           }
 
           // Get user data - could be in 'user' field or 'data' field
@@ -99,7 +102,7 @@ class AuthRemoteDatasource implements IAuthRemoteDatasource {
       throw Exception('Register Error: $e');
     }
   }
-  
+
   /// Login
   @override
   Future<AuthApiModel?> login(String email, String password) async {
@@ -112,18 +115,29 @@ class AuthRemoteDatasource implements IAuthRemoteDatasource {
         },
       );
 
+      // DEBUG: print full backend response
+      debugPrint("LOGIN RESPONSE = ${response.data}");
+
       if (response.statusCode == 200 || response.statusCode == 201) {
         if (response.data != null && response.data is Map) {
           final Map<String, dynamic> responseData =
               response.data as Map<String, dynamic>;
 
-          // Extract and save token if provided
+          // DEBUG: print token only
           final String? token = responseData['token'] as String?;
+          debugPrint("TOKEN = $token");
+
+          // Save token if received
           if (token != null) {
             await _tokenService.saveToken(token);
+
+          // Set token into Dio immediately
+            await _apiClient.setAuthToken(token);
+          } else {
+            debugPrint("Token is NULL. Backend didn't send token.");
           }
 
-          // Handle different response formats from backend
+          // Handle user data
           final Map<String, dynamic> userData;
           if (responseData['user'] is Map) {
             userData = responseData['user'] as Map<String, dynamic>;
@@ -147,13 +161,14 @@ class AuthRemoteDatasource implements IAuthRemoteDatasource {
           return loggedInUser;
         }
       }
+
       return null;
     } catch (e) {
-      debugPrint('Login Error: $e');
+      debugPrint("Login Error: $e");
       rethrow;
     }
   }
-  
+
   @override
   Future<AuthApiModel?> getCurrentUser() async {
     final session = await _userSessionService.getSession();
@@ -170,15 +185,19 @@ class AuthRemoteDatasource implements IAuthRemoteDatasource {
       return null;
     }
   }
-  
+
   // LOGOUT
   @override
   Future<bool> logout() async {
     await _tokenService.removeToken();
+
+    // remove token from Dio header 
+    await _apiClient.removeAuthToken();
+
     await _userSessionService.logout();
     return true;
   }
-  
+
   @override
   Future<AuthApiModel> uploadProfilePicture(File image) async {
     try {
@@ -204,11 +223,10 @@ class AuthRemoteDatasource implements IAuthRemoteDatasource {
       throw Exception('Failed to upload image: ${e.toString()}');
     }
   }
-  
+
   @override
   Future<bool> isEmailExists(String email) {
     // TODO: implement isEmailExists
     throw UnimplementedError();
   }
 }
-  

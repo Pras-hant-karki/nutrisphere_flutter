@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:nutrisphere_flutter/app/routes/app_routes.dart';
 import 'package:nutrisphere_flutter/core/utils/snackbar_utils.dart';
 import 'package:nutrisphere_flutter/features/auth/presentation/pages/register_page.dart';
 import 'package:nutrisphere_flutter/features/auth/presentation/state/auth_state.dart';
@@ -125,9 +126,10 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                 Align(
                   alignment: Alignment.centerRight,
                   child: TextButton(
-                    onPressed: () {
-                      // TODO: Implement forgot password
-                    },
+                    onPressed: () => Navigator.pushNamed(
+                        context,
+                        AppRoutes.forgotPassword,
+                      ),
                     child: const Text(
                       'Forgot password?',
                       style: TextStyle(color: Colors.orange),
