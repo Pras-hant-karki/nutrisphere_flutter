@@ -4,8 +4,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:nutrisphere_flutter/app/routes/app_routes.dart';
 import 'package:nutrisphere_flutter/core/services/storage/user_session_service.dart';
-import 'package:nutrisphere_flutter/features/home/presentation/pages/dashboard_page.dart';
-import 'package:nutrisphere_flutter/features/onboarding/presentation/pages/onboarding_page.dart';
 
 class SplashScreen extends ConsumerStatefulWidget {
   const SplashScreen({super.key});
@@ -29,9 +27,9 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
     final isLoggedIn = userSessionService.isLoggedIn();
 
     if (isLoggedIn) {
-      AppRoutes.pushReplacement(context, const DashboardPage());
+      Navigator.pushReplacementNamed(context, AppRoutes.dashboard);
     } else {
-      AppRoutes.pushReplacement(context, const OnboardingScreen());
+      Navigator.pushReplacementNamed(context, AppRoutes.onboarding);
     }
   }
 

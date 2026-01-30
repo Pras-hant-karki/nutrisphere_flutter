@@ -1,3 +1,6 @@
+import 'dart:io';
+
+import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:nutrisphere_flutter/core/api/api_client.dart';
@@ -16,6 +19,19 @@ final authRemoteDatasourceProvider = Provider<IAuthRemoteDatasource>((ref) {
   );
 });
 
+/// Abstract interface for remote authentication data source
+abstract class AuthRemoteDataSource {
+  Future<AuthApiModel> register({
+    required String email,
+    required String password,
+    required String name,
+  });
+
+  Future<AuthApiModel> login(String email, String password);
+  Future<AuthApiModel> getUserById(String authId);
+  Future<AuthApiModel> updateUser(AuthApiModel user);
+  Future<AuthApiModel> uploadProfilePicture(File image);
+}
 
 class AuthRemoteDatasource implements IAuthRemoteDatasource {
   final ApiClient _apiClient;
@@ -80,8 +96,7 @@ class AuthRemoteDatasource implements IAuthRemoteDatasource {
 
       throw Exception('Registration failed: Invalid response format');
     } catch (e) {
-      debugPrint('Register Error: $e');
-      rethrow;
+      throw Exception('Register Error: $e');
     }
   }
   
@@ -165,9 +180,35 @@ class AuthRemoteDatasource implements IAuthRemoteDatasource {
   }
   
   @override
-  Future<bool> isEmailExists(String email) async {
-    // TODO: Implement email existence check from backend
-    throw UnimplementedError();
+  Future<AuthApiModel> uploadProfilePicture(File image) async {
+    try {
+      String fileName = image.path.split('/').last;
+      AuthApiModel formData = AuthApiModel.fromJson({
+        "profileImage": await MultipartFile.fromFile(
+          image.path,
+          filename: fileName,
+        ),
+      });
+
+      final response = await _apiClient.post(
+        ApiEndpoints.uploadImage, // Ensure this exists in your ApiEndpoints
+        data: formData,
+      );
+
+      if (response.statusCode == 200) {
+        // Return the image name returned by backend (e.g., "123-profile.jpg")
+        return response.data['data'];
+      }
+      throw Exception('Upload failed');
+    } catch (e) {
+      throw Exception('Failed to upload image: ${e.toString()}');
+    }
   }
   
+  @override
+  Future<bool> isEmailExists(String email) {
+    // TODO: implement isEmailExists
+    throw UnimplementedError();
+  }
 }
+  
