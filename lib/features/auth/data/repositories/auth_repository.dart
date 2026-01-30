@@ -49,7 +49,11 @@ Future<Either<Failure, bool>> register(AuthEntity user) async {
         confirmPassword: user.confirmPassword,
       );
 
-      await _authRemoteDatasource.register(apiModel);
+      await _authRemoteDatasource.register(
+        email: user.email,
+        name: user.fullName,
+        password: user.password,
+      );
 
       // Cache locally (non-fatal if it fails)
       try {

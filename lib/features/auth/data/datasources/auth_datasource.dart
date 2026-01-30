@@ -21,10 +21,10 @@ abstract interface class IAuthLocalDatasource {
 /// REMOTE DATASOURCE
 /// =======================
 abstract interface class IAuthRemoteDatasource {
-  Future<AuthApiModel> register(AuthApiModel model);
+  Future<AuthApiModel> register({required String email, required String name, required String password});
   Future<AuthApiModel?> login(String email, String password);
   Future<AuthApiModel?> getCurrentUser();
   Future<bool> logout();
-  // get email exists
   Future<bool> isEmailExists(String email);
 }
+
