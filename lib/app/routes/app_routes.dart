@@ -1,35 +1,32 @@
 import 'package:flutter/material.dart';
+import 'package:nutrisphere_flutter/features/auth/presentation/pages/forgot_password_page.dart';
+import 'package:nutrisphere_flutter/features/auth/presentation/pages/login_page.dart';
+import 'package:nutrisphere_flutter/features/auth/presentation/pages/register_page.dart';
+import 'package:nutrisphere_flutter/features/home/presentation/pages/dashboard_page.dart';
+import 'package:nutrisphere_flutter/features/onboarding/presentation/pages/onboarding_page.dart';
+import 'package:nutrisphere_flutter/features/splash/presentation/pages/splash_page.dart';
 
-/// Simple navigation utility class
+/// Centralized route definitions for the application
 class AppRoutes {
-  AppRoutes._();
+  /// Route names
+  static const String splash = '/';
+  static const String login = '/login';
+  static const String signup = '/signup';
+  static const String dashboard = '/dashboard';
+  static const String onboarding = '/onboarding';
+  static const String forgotPassword = '/forgot-password';
+  // static const String setting = '/setting';
+  // static const String adminDashboard = '/admin-dashboard';
 
-  /// Push a new route onto the stack
-  static void push(BuildContext context, Widget page) {
-    Navigator.push(context, MaterialPageRoute(builder: (_) => page));
-  }
-
-  /// Replace current route with a new one
-  static void pushReplacement(BuildContext context, Widget page) {
-    Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => page));
-  }
-
-  /// Push a new route and remove all previous routes
-  static void pushAndRemoveUntil(BuildContext context, Widget page) {
-    Navigator.pushAndRemoveUntil(
-      context,
-      MaterialPageRoute(builder: (_) => page),
-      (route) => false,
-    );
-  }
-
-  /// Pop the current route
-  static void pop(BuildContext context) {
-    Navigator.pop(context);
-  }
-
-  /// Pop to first route (root)
-  static void popToFirst(BuildContext context) {
-    Navigator.popUntil(context, (route) => route.isFirst);
-  }
+  /// Route map
+  static final Map<String, WidgetBuilder> routes = {
+    splash: (context) => const SplashScreen(),
+    login: (context) => const LoginPage(),
+    signup: (context) => const RegisterPage(),
+    dashboard: (context) => const DashboardPage(),
+    onboarding: (context) => const OnboardingScreen(),
+    forgotPassword: (context) => const ForgotPasswordScreen(),
+    // setting: (context) => const SettingPage(),
+    // adminDashboard: (context) => const AdminDashboardPage(),
+  };
 }

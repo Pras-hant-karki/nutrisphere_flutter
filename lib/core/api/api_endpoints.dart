@@ -40,14 +40,18 @@ class ApiEndpoints {
   static const String login = '/api/auth/login';
   static const String register = '/api/auth/register';
   static const String me = '/api/auth/me';
+  static const String uploadImage = '/api/auth/upload-profile-picture';
 
-  // ============ Fitness Endpoints ============
-  static const String fitness = '/fitness';
-  static String fitnessById(String id) => '/fitness/$id';
+  // // ============ Fitness Endpoints ============
+  // static const String fitness = '/api/fitness';
+  // static String fitnessById(String id) => '/api/fitness/$id';
+  // static const String fitnessUploadPhoto = '/api/fitness/upload-photo';
+  // static const String fitnessUploadVideo = '/api/fitness/upload-video';
 
-  // ============ Posts (future use) ============
-  static const String posts = '/posts';
-  static const String fitnessUploadPhoto= '/fitness/upload-photo';
-  static const String fitnessUploadVideo = '/fitness/upload-video';
+    // ============ Fitness Endpoints ============
+  static const String fitness = '/admin/fitness';
+  static String fitnessById(String id) => '/admin/fitness/$id';
+  static const String fitnessUploadPhoto = '/admin/fitness/upload-photo';
+  static const String fitnessUploadVideo = '/admin/fitness/upload-video';
 }
 

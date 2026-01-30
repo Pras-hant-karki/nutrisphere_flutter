@@ -81,22 +81,47 @@ class FitnessRemoteDatasource implements IFitnessRemoteDataSource {
     return true;
   }
   
-  @override
-  Future<String> uploadPhoto(File photo) async {
+  // @override
+  // Future<String> uploadPhoto(File photo) async {
+  //   final fileName = photo.path.split('/').last;
+  //   final formData = FormData.fromMap({
+  //     "fitnessPhoto": await MultipartFile.fromFile(photo.path, filename: fileName),
+  //   });
+  //   // Get token from token service
+  //   final token = await _tokenService.getToken();
+  //   final response = await _apiClient.uploadFile(
+  //     ApiEndpoints.fitnessUploadPhoto,
+  //     formData: formData,
+  //     options: Options(headers: {'Authorization': 'Bearer $token'}),
+  //   );
+
+  //   return response.data['data'];
+  // }
+  
+    @override
+    Future<String> uploadPhoto(File photo) async {
     final fileName = photo.path.split('/').last;
-    final formData = FormData.fromMap({
-      'fitnessPhoto': await MultipartFile.fromFile(photo.path, filename: fileName),
-    });
-    // Get token from token service
+
     final token = await _tokenService.getToken();
+    if (token == null) {
+      throw Exception("Token not found. Please login again.");
+    }
+
+    final formData = FormData.fromMap({
+      "fitnessPhoto": await MultipartFile.fromFile(photo.path, filename: fileName),
+    });
+
     final response = await _apiClient.uploadFile(
       ApiEndpoints.fitnessUploadPhoto,
       formData: formData,
-      options: Options(headers: {'Authorization': 'Bearer $token'}),
+      options: Options(
+        headers: {'Authorization': 'Bearer $token'},
+      ),
     );
 
     return response.data['data'];
   }
+
 
   @override
   Future<String> uploadVideo(File video) async {
