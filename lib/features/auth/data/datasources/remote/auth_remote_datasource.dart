@@ -1,7 +1,7 @@
 import 'dart:io';
 
 import 'package:dio/dio.dart';
-import 'package:flutter/foundation.dart';
+// import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:nutrisphere_flutter/core/api/api_client.dart';
 import 'package:nutrisphere_flutter/core/api/api_endpoints.dart';
@@ -9,6 +9,7 @@ import 'package:nutrisphere_flutter/core/services/storage/token_service.dart';
 import 'package:nutrisphere_flutter/core/services/storage/user_session_service.dart';
 import 'package:nutrisphere_flutter/features/auth/data/datasources/auth_datasource.dart';
 import 'package:nutrisphere_flutter/features/auth/data/models/auth_api_model.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 // Provider for AuthRemoteDatasource
 final authRemoteDatasourceProvider = Provider<IAuthRemoteDatasource>((ref) {
@@ -46,126 +47,76 @@ class AuthRemoteDatasource implements IAuthRemoteDatasource {
         _userSessionService = userSessionService,
         _tokenService = tokenService;
 
-  /// Register
   @override
-  Future<AuthApiModel> register(AuthApiModel user) async {
-    try {
-      final response = await _apiClient.post(
-        ApiEndpoints.register,
-        data: user.toJson(),
-      );
-
-      // Check if registration was successful
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        // Handle different response formats
-        if (response.data != null && response.data is Map) {
-          final Map<String, dynamic> responseData =
-              response.data as Map<String, dynamic>;
-
-          // Extract token if provided
-          final String? token = responseData['token'] as String?;
-          if (token != null) {
-            // Save token to token service
-            await _tokenService.saveToken(token);
-
-            // Set token into Dio immediately
-            await _apiClient.setAuthToken(token);
-          }
-
-          // Get user data - could be in 'user' field or 'data' field
-          final Map<String, dynamic> userData;
-          if (responseData['user'] is Map) {
-            userData = responseData['user'] as Map<String, dynamic>;
-          } else if (responseData['data'] is Map) {
-            userData = responseData['data'] as Map<String, dynamic>;
-          } else {
-            userData = responseData;
-          }
-
-          final registeredUser = AuthApiModel.fromJson(userData);
-
-          // Save session
-          if (registeredUser.authId != null && registeredUser.email != null) {
-            await _userSessionService.saveUserSession(
-              authId: registeredUser.authId!,
-              email: registeredUser.email,
-              fullName: registeredUser.fullName ?? 'User',
-            );
-          }
-
-          return registeredUser;
-        }
-      }
-
-      throw Exception('Registration failed: Invalid response format');
-    } catch (e) {
-      throw Exception('Register Error: $e');
-    }
-  }
-
-  /// Login
-  @override
-  Future<AuthApiModel?> login(String email, String password) async {
+  Future<AuthApiModel> login(String email, String password) async {
     try {
       final response = await _apiClient.post(
         ApiEndpoints.login,
-        data: {
-          'email': email,
-          'password': password,
-        },
+        data: {'email': email, 'password': password},
       );
 
-      // DEBUG: print full backend response
-      debugPrint("LOGIN RESPONSE = ${response.data}");
+      if (response.statusCode == 200) {
+        if (response.data['success'] == true) {
+          final data = response.data['data'] as Map<String, dynamic>;
+          final loggedInUser = AuthApiModel.fromJson(data);
 
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        if (response.data != null && response.data is Map) {
-          final Map<String, dynamic> responseData =
-              response.data as Map<String, dynamic>;
+          // Set auth token if available - token is at root level in response
+          if (response.data['token'] != null) {
+            _apiClient.setAuthToken(response.data['token']);
 
-          // DEBUG: print token only
-          final String? token = responseData['token'] as String?;
-          debugPrint("TOKEN = $token");
-
-          // Save token if received
-          if (token != null) {
+            // Save token to storage for later use
+            final token = response.data['token'] as String;
             await _tokenService.saveToken(token);
-
-          // Set token into Dio immediately
-            await _apiClient.setAuthToken(token);
-          } else {
-            debugPrint("Token is NULL. Backend didn't send token.");
-          }
-
-          // Handle user data
-          final Map<String, dynamic> userData;
-          if (responseData['user'] is Map) {
-            userData = responseData['user'] as Map<String, dynamic>;
-          } else if (responseData['data'] is Map) {
-            userData = responseData['data'] as Map<String, dynamic>;
-          } else {
-            userData = responseData;
-          }
-
-          final loggedInUser = AuthApiModel.fromJson(userData);
-
-          // Save session
-          if (loggedInUser.authId != null && loggedInUser.email != null) {
-            await _userSessionService.saveUserSession(
-              authId: loggedInUser.authId!,
-              email: loggedInUser.email,
-              fullName: loggedInUser.fullName ?? 'User',
-            );
           }
 
           return loggedInUser;
         }
       }
-
-      return null;
+      throw Exception(response.data['message'] ?? 'Login failed');
     } catch (e) {
-      debugPrint("Login Error: $e");
-      rethrow;
+      throw Exception('Login failed: ${e.toString()}');
+    }
+  }
+
+  @override
+  Future<AuthApiModel> register({
+    required String email,
+    required String password,
+    required String name,
+  }) async {
+    try {
+      final authModel = AuthApiModel(
+        fullName: name,
+        email: email,
+        password: password,
+      );
+
+      final response = await _apiClient.post(
+        ApiEndpoints.register,
+        data: authModel.toJson(),
+      );
+
+      if (response.statusCode == 201 || response.statusCode == 200) {
+        if (response.data['success'] == true) {
+          final data = response.data['data'] as Map<String, dynamic>;
+          final registeredUser = AuthApiModel.fromJson(data);
+
+          // Set auth token if available - token is at root level in response
+          if (response.data['token'] != null) {
+            _apiClient.setAuthToken(response.data['token']);
+
+            // Save token to storage for later use
+            final prefs = await SharedPreferences.getInstance();
+            final tokenService = TokenService(prefs);
+            await tokenService.saveToken(response.data['token']);
+          }
+
+          return registeredUser;
+        }
+      }
+      throw Exception(response.data['message'] ?? 'Registration failed');
+    } catch (e) {
+      throw Exception('Registration failed: ${e.toString()}');
     }
   }
 
