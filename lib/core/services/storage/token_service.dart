@@ -29,7 +29,7 @@ class TokenService {
   }
 
   /// Remove token (logout / expired)
-  Future<void> clearToken() async {
+  Future<void> removeToken() async {
     await _prefs.remove(_tokenKey);
   }
 }

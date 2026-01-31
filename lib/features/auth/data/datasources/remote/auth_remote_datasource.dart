@@ -9,7 +9,6 @@ import 'package:nutrisphere_flutter/core/services/storage/token_service.dart';
 import 'package:nutrisphere_flutter/core/services/storage/user_session_service.dart';
 import 'package:nutrisphere_flutter/features/auth/data/datasources/auth_datasource.dart';
 import 'package:nutrisphere_flutter/features/auth/data/models/auth_api_model.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 // Provider for AuthRemoteDatasource
 final authRemoteDatasourceProvider = Provider<IAuthRemoteDatasource>((ref) {
@@ -56,70 +55,168 @@ class AuthRemoteDatasource implements IAuthRemoteDatasource {
         data: {'email': email, 'password': password},
       );
 
-      if (response.statusCode == 200) {
-        if (response.data['success'] == true) {
-          final data = response.data['data'] as Map<String, dynamic>;
-          final loggedInUser = AuthApiModel.fromJson(data);
-
-          // Set auth token if available - token is at root level in response
-          if (response.data['token'] != null) {
-            _apiClient.setAuthToken(response.data['token']);
-
-            // Save token to storage for later use
-            final token = response.data['token'] as String;
-            await _tokenService.saveToken(token);
-          }
-
-          return loggedInUser;
-        }
+      // safety checks (prevents crash)
+      if (response.data == null || response.data is! Map<String, dynamic>) {
+        throw Exception("Invalid login response: ${response.data}");
       }
-      throw Exception(response.data['message'] ?? 'Login failed');
+
+      final resData = response.data as Map<String, dynamic>;
+
+      if (response.statusCode == 200 && resData['success'] == true) {
+        // backend returns user inside "user"
+        final userData = resData['user'];
+
+        if (userData == null || userData is! Map<String, dynamic>) {
+          throw Exception("Login failed: user data missing");
+        }
+
+        final loggedInUser = AuthApiModel.fromJson(userData);
+
+        // token is at root level
+        final token = resData['token'];
+        if (token != null && token is String && token.isNotEmpty) {
+          _apiClient.setAuthToken(token);
+          // await _tokenService.saveToken(token);
+          await _apiClient.setAuthToken(token);
+        } else {
+          throw Exception("Login failed: token missing");
+        }
+
+        return loggedInUser;
+      }
+
+      throw Exception(resData['message'] ?? 'Login failed');
     } catch (e) {
       throw Exception('Login failed: ${e.toString()}');
     }
   }
 
+  // @override
+  // Future<AuthApiModel> login(String email, String password) async {
+  //   try {
+  //     final response = await _apiClient.post(
+  //       ApiEndpoints.login,
+  //       data: {'email': email, 'password': password},
+  //     );
+
+  //     if (response.statusCode == 200) {
+  //       if (response.data['success'] == true) {
+  //         final data = response.data['data'] as Map<String, dynamic>;
+  //         final loggedInUser = AuthApiModel.fromJson(data);
+
+  //         // Set auth token if available - token is at root level in response
+  //         if (response.data['token'] != null) {
+  //           _apiClient.setAuthToken(response.data['token']);
+
+  //           // Save token to storage for later use
+  //           final token = response.data['token'] as String;
+  //           await _tokenService.saveToken(token);
+  //         }
+
+  //         return loggedInUser;
+  //       }
+  //     }
+  //     throw Exception(response.data['message'] ?? 'Login failed');
+  //   } catch (e) {
+  //     throw Exception('Login failed: ${e.toString()}');
+  //   }
+  // }
+
   @override
-  Future<AuthApiModel> register({
-    required String email,
-    required String password,
-    required String name,
-  }) async {
-    try {
-      final authModel = AuthApiModel(
-        fullName: name,
-        email: email,
-        password: password,
-      );
+Future<AuthApiModel> register({
+  required String email,
+  required String password,
+  required String name,
+}) async {
+  try {
+    final authModel = AuthApiModel(
+      fullName: name,
+      email: email,
+      password: password,
+    );
 
-      final response = await _apiClient.post(
-        ApiEndpoints.register,
-        data: authModel.toJson(),
-      );
+    final response = await _apiClient.post(
+      ApiEndpoints.register,
+      data: authModel.toJson(),
+    );
 
-      if (response.statusCode == 201 || response.statusCode == 200) {
-        if (response.data['success'] == true) {
-          final data = response.data['data'] as Map<String, dynamic>;
-          final registeredUser = AuthApiModel.fromJson(data);
-
-          // Set auth token if available - token is at root level in response
-          if (response.data['token'] != null) {
-            _apiClient.setAuthToken(response.data['token']);
-
-            // Save token to storage for later use
-            final prefs = await SharedPreferences.getInstance();
-            final tokenService = TokenService(prefs);
-            await tokenService.saveToken(response.data['token']);
-          }
-
-          return registeredUser;
-        }
-      }
-      throw Exception(response.data['message'] ?? 'Registration failed');
-    } catch (e) {
-      throw Exception('Registration failed: ${e.toString()}');
+    // safety checks
+    if (response.data == null || response.data is! Map<String, dynamic>) {
+      throw Exception("Invalid register response: ${response.data}");
     }
+
+    final resData = response.data as Map<String, dynamic>;
+
+    if ((response.statusCode == 201 || response.statusCode == 200) &&
+        resData['success'] == true) {
+      // backend returns user inside "user"
+      final userData = resData['user'];
+
+      if (userData == null || userData is! Map<String, dynamic>) {
+        throw Exception("Registration failed: user data missing");
+      }
+
+      final registeredUser = AuthApiModel.fromJson(userData);
+
+      // token is at root level
+      final token = resData['token'];
+      if (token != null && token is String && token.isNotEmpty) {
+        _apiClient.setAuthToken(token);
+        // await _tokenService.saveToken(token);
+        await _apiClient.setAuthToken(token);
+      }
+
+      return registeredUser;
+    }
+
+    throw Exception(resData['message'] ?? 'Registration failed');
+  } catch (e) {
+    throw Exception('Registration failed: ${e.toString()}');
   }
+}
+
+
+  // @override
+  // Future<AuthApiModel> register({
+  //   required String email,
+  //   required String password,
+  //   required String name,
+  // }) async {
+  //   try {
+  //     final authModel = AuthApiModel(
+  //       fullName: name,
+  //       email: email,
+  //       password: password,
+  //     );
+
+  //     final response = await _apiClient.post(
+  //       ApiEndpoints.register,
+  //       data: authModel.toJson(),
+  //     );
+
+  //     if (response.statusCode == 201 || response.statusCode == 200) {
+  //       if (response.data['success'] == true) {
+  //         final data = response.data['data'] as Map<String, dynamic>;
+  //         final registeredUser = AuthApiModel.fromJson(data);
+
+  //         // Set auth token if available - token is at root level in response
+  //         if (response.data['token'] != null) {
+  //           _apiClient.setAuthToken(response.data['token']);
+
+  //           // Save token to storage for later use
+  //           final prefs = await SharedPreferences.getInstance();
+  //           final tokenService = TokenService(prefs);
+  //           await tokenService.saveToken(response.data['token']);
+  //         }
+
+  //         return registeredUser;
+  //       }
+  //     }
+  //     throw Exception(response.data['message'] ?? 'Registration failed');
+  //   } catch (e) {
+  //     throw Exception('Registration failed: ${e.toString()}');
+  //   }
+  // }
 
   @override
   Future<AuthApiModel?> getCurrentUser() async {
@@ -144,37 +241,65 @@ class AuthRemoteDatasource implements IAuthRemoteDatasource {
     await _tokenService.removeToken();
 
     // remove token from Dio header 
-    await _apiClient.removeAuthToken();
+    _apiClient.removeAuthToken();
 
     await _userSessionService.logout();
     return true;
   }
 
   @override
-  Future<AuthApiModel> uploadProfilePicture(File image) async {
+  Future<String> uploadProfilePicture(File image) async {
     try {
-      String fileName = image.path.split('/').last;
-      AuthApiModel formData = AuthApiModel.fromJson({
-        "profileImage": await MultipartFile.fromFile(
+      final fileName = image.path.split('/').last;
+
+      final formData = FormData.fromMap({
+        "fitnessPhoto": await MultipartFile.fromFile(
           image.path,
           filename: fileName,
         ),
       });
 
-      final response = await _apiClient.post(
-        ApiEndpoints.uploadImage, // Ensure this exists in your ApiEndpoints
-        data: formData,
+      final response = await _apiClient.uploadFile(
+        ApiEndpoints.uploadImage, // should be "/api/fitness/upload-photo"
+        formData: formData,
       );
 
       if (response.statusCode == 200) {
-        // Return the image name returned by backend (e.g., "123-profile.jpg")
-        return response.data['data'];
+        return response.data["data"].toString();
       }
-      throw Exception('Upload failed');
+
+      throw Exception("Upload failed: ${response.data}");
     } catch (e) {
-      throw Exception('Failed to upload image: ${e.toString()}');
+      throw Exception("Failed to upload image: $e");
     }
   }
+
+
+  // @override
+  // Future<AuthApiModel> uploadProfilePicture(File image) async {
+  //   try {
+  //     String fileName = image.path.split('/').last;
+  //     AuthApiModel formData = AuthApiModel.fromJson({
+  //       "profileImage": await MultipartFile.fromFile(
+  //         image.path,
+  //         filename: fileName,
+  //       ),
+  //     });
+
+  //     final response = await _apiClient.post(
+  //       ApiEndpoints.uploadImage, // Ensure this exists in your ApiEndpoints
+  //       data: formData,
+  //     );
+
+  //     if (response.statusCode == 200) {
+  //       // Return the image name returned by backend (e.g., "123-profile.jpg")
+  //       return response.data['data'];
+  //     }
+  //     throw Exception('Upload failed');
+  //   } catch (e) {
+  //     throw Exception('Failed to upload image: ${e.toString()}');
+  //   }
+  // }
 
   @override
   Future<bool> isEmailExists(String email) {

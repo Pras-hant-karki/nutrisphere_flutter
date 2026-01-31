@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:nutrisphere_flutter/features/auth/data/models/auth_api_model.dart';
 import 'package:nutrisphere_flutter/features/auth/data/models/auth_hive_model.dart';
 
@@ -15,6 +17,7 @@ abstract interface class IAuthLocalDatasource {
   Future<AuthHiveModel?> getUserById(String authId);
   Future<bool> updateUser(AuthHiveModel user);
   Future<bool> deleteUser(AuthHiveModel user);
+  // Future<String> uploadProfilePicture(File image);
 }
 
 /// =======================
@@ -26,5 +29,6 @@ abstract interface class IAuthRemoteDatasource {
   Future<AuthApiModel?> getCurrentUser();
   Future<bool> logout();
   Future<bool> isEmailExists(String email);
+  Future<String> uploadProfilePicture(File image);
 }
 
