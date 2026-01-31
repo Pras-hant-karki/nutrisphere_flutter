@@ -27,7 +27,10 @@ class FitnessRemoteDatasource implements IFitnessRemoteDataSource {
 
   @override
   Future<FitnessApiModel> createFitness(FitnessApiModel fitness) async {
-    final token = await _tokenService.getToken();
+    final token = _tokenService.getToken();
+      if (token == null) {
+        throw Exception("Token not found. Please login again.");
+      }
     final response = await _apiClient.post(
       ApiEndpoints.fitness,
       data: fitness.toJson(),
@@ -62,7 +65,10 @@ class FitnessRemoteDatasource implements IFitnessRemoteDataSource {
 
   @override
   Future<bool> updateFitness(FitnessApiModel fitness) async {
-    final token = await _tokenService.getToken();
+    final token = _tokenService.getToken();
+      if (token == null) {
+        throw Exception("Token not found. Please login again.");
+      }
     await _apiClient.put(
       ApiEndpoints.fitnessById(fitness.fitnessId!),
       data: fitness.toJson(),
@@ -73,7 +79,10 @@ class FitnessRemoteDatasource implements IFitnessRemoteDataSource {
 
   @override
   Future<bool> deleteFitness(String fitnessId) async {
-    final token = await _tokenService.getToken();
+    final token = _tokenService.getToken();
+      if (token == null) {
+        throw Exception("Token not found. Please login again.");
+      }
     await _apiClient.delete(
       ApiEndpoints.fitnessById(fitnessId),
       options: Options(headers: {'Authorization': 'Bearer $token'}),
@@ -102,10 +111,10 @@ class FitnessRemoteDatasource implements IFitnessRemoteDataSource {
     Future<String> uploadPhoto(File photo) async {
     final fileName = photo.path.split('/').last;
 
-    final token = await _tokenService.getToken();
-    if (token == null) {
-      throw Exception("Token not found. Please login again.");
-    }
+    final token = _tokenService.getToken();
+      if (token == null) {
+        throw Exception("Token not found. Please login again.");
+      }
 
     final formData = FormData.fromMap({
       "fitnessPhoto": await MultipartFile.fromFile(photo.path, filename: fileName),
@@ -130,7 +139,10 @@ class FitnessRemoteDatasource implements IFitnessRemoteDataSource {
       'fitnessVideo': await MultipartFile.fromFile(video.path, filename: fileName),
     });
     // Get token from token service
-    final token = await _tokenService.getToken();
+    final token = _tokenService.getToken();
+      if (token == null) {
+        throw Exception("Token not found. Please login again.");
+      }
     final response = await _apiClient.uploadFile(
       ApiEndpoints.fitnessUploadVideo,
       formData: formData,
