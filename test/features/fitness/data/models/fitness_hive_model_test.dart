@@ -182,6 +182,7 @@ void main() {
       expect(entities[0].title, 'Yoga 1');
       expect(entities[1].title, 'Cardio 1');
       expect(entities[2].title, 'Strength 1');
+      // ignore: unnecessary_type_check
       expect(entities.every((e) => e is FitnessEntity), true);
     });
 
