@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:nutrisphere_flutter/app/theme/app_colors.dart';
 
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({super.key});
@@ -32,6 +33,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppColors.background,
       body: SafeArea(
         child: Column(
           children: [
@@ -64,6 +66,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                           style: const TextStyle(
                             fontSize: 22,
                             fontWeight: FontWeight.bold,
+                            color: AppColors.gold,
                           ),
                         ),
                         const SizedBox(height: 10),
@@ -73,7 +76,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                           textAlign: TextAlign.center,
                           style: const TextStyle(
                             fontSize: 15,
-                            color: Colors.black54,
+                            color: AppColors.silver,
                           ),
                         ),
                       ],
@@ -95,8 +98,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   width: _currentPage == index ? 20 : 8,
                   decoration: BoxDecoration(
                     color: _currentPage == index
-                        ? Colors.orange
-                        : Colors.grey.shade400,
+                        ? AppColors.primary
+                        : AppColors.secondaryDark,
                     borderRadius: BorderRadius.circular(12),
                   ),
                 ),
@@ -113,7 +116,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 height: 50,
                 child: ElevatedButton(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.orange,
+                    backgroundColor: AppColors.primary,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(30),
                     ),
@@ -147,7 +150,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               },
               child: const Text(
                 "Skip",
-                style: TextStyle(color: Colors.grey, fontSize: 15),
+                style: TextStyle(color: AppColors.textSecondary, fontSize: 15),
               ),
             ),
 

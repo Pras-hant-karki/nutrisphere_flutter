@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:nutrisphere_flutter/core/api/api_endpoints.dart';
+import 'package:nutrisphere_flutter/app/theme/app_colors.dart';
 import 'package:nutrisphere_flutter/core/services/storage/user_session_service.dart';
 import 'package:nutrisphere_flutter/core/services/storage/token_service.dart';
 import 'package:nutrisphere_flutter/core/utils/snackbar_utils.dart';
@@ -21,8 +22,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   final _usernameCtrl = TextEditingController();
   final _emailCtrl = TextEditingController();
   final _phoneCtrl = TextEditingController();
+  final _roleCtrl = TextEditingController();
   
-  
+
   final ImagePicker _imagePicker = ImagePicker();
   XFile? _profileImage;
   String? _profileImageUrl;
@@ -42,7 +44,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       setState(() {
         _nameCtrl.text = session.fullName;
         _emailCtrl.text = session.email;
-        _usernameCtrl.text = _getRoleFromEmail(session.email);
+        _usernameCtrl.text = _getUsernameFromEmail(session.email);
+        _roleCtrl.text = _getRoleLabelFromEmail(session.email);
         _isLoading = false;
       });
     } else {
@@ -52,12 +55,16 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     }
   }
 
-  String _getRoleFromEmail(String email) {
+  String _getUsernameFromEmail(String email) {
     // Extract username from email or return "User"
     if (email.contains('@')) {
       return email.split('@')[0];
     }
     return "User";
+  }
+
+  String _getRoleLabelFromEmail(String email) {
+    return email.toLowerCase().contains('admin') ? 'Admin' : 'User';
   }
 
   String _getInitials(String fullName) {
@@ -240,6 +247,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     _usernameCtrl.dispose();
     _emailCtrl.dispose();
     _phoneCtrl.dispose();
+    _roleCtrl.dispose();
     super.dispose();
   }
 
@@ -248,13 +256,17 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   Widget build(BuildContext context) {
     if (_isLoading) {
       return const Material(
-        color: Color(0xFFF5F5F5),
-        child: Center(child: CircularProgressIndicator()),
+        color: AppColors.background,
+        child: Center(
+          child: CircularProgressIndicator(
+            color: AppColors.primary,
+          ),
+        ),
       );
     }
 
     return Material(
-      color: const Color(0xFFF5F5F5),
+      color: AppColors.background,
       child: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(16),
@@ -272,7 +284,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   Stack(
                     children: [
                       IconButton(
-                        icon: const Icon(Icons.notifications_none),
+                        icon: const Icon(Icons.notifications_none, color: AppColors.textPrimary),
                         onPressed: () {},
                       ),
                       Positioned(
@@ -282,7 +294,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                           height: 10,
                           width: 10,
                           decoration: const BoxDecoration(
-                            color: Colors.red,
+                            color: AppColors.primary,
                             shape: BoxShape.circle,
                           ),
                         ),
@@ -300,7 +312,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   children: [
                     CircleAvatar(
                       radius: 50,
-                      backgroundColor: const Color(0xFF001F3F), // Navy blue
+                      backgroundColor: AppColors.secondaryDark,
                       backgroundImage: _profileImage != null
                           ? FileImage(File(_profileImage!.path))
                           : _profileImageUrl != null
@@ -310,7 +322,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                           ? Text(
                               _getInitials(_nameCtrl.text.isEmpty ? "User" : _nameCtrl.text),
                               style: const TextStyle(
-                                color: Colors.white,
+                                color: AppColors.textPrimary,
                                 fontSize: 28,
                                 fontWeight: FontWeight.bold,
                               ),
@@ -326,17 +338,17 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                           height: 35,
                           width: 35,
                           decoration: BoxDecoration(
-                            color: Theme.of(context).primaryColor,
+                            color: AppColors.primary,
                             shape: BoxShape.circle,
                             border: Border.all(
-                              color: Colors.white,
+                              color: AppColors.textPrimary,
                               width: 2,
                             ),
                           ),
                           child: const Icon(
                             Icons.camera_alt,
                             size: 18,
-                            color: Colors.white,
+                            color: AppColors.textPrimary,
                           ),
                         ),
                       ),
@@ -347,10 +359,11 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
 
               const SizedBox(height: 20),
 
-              _editableField("Full name", _nameCtrl),
-              _editableField("Username", _usernameCtrl),
-              _editableField("Email address", _emailCtrl),
-              _editableField("Phone number", _phoneCtrl),
+              _profileField("Full name", _nameCtrl),
+              _profileField("Username", _usernameCtrl),
+              _profileField("Email address", _emailCtrl),
+              _profileField("Role", _roleCtrl, readOnly: true),
+              _profileField("Phone number", _phoneCtrl),
 
               const SizedBox(height: 10),
 
@@ -396,17 +409,43 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     );
   }
 
-  Widget _editableField(String label, TextEditingController controller) {
+  Widget _profileField(
+    String label,
+    TextEditingController controller, {
+    bool readOnly = false,
+  }) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 14),
-      child: TextField(
-        controller: controller,
-        decoration: InputDecoration(labelText: label),
+      child: Material(
+        color: AppColors.cardBackground,
+        elevation: 8,
+        borderRadius: BorderRadius.circular(20),
+        shadowColor: Colors.black54,
+        child: TextField(
+          controller: controller,
+          readOnly: readOnly,
+          style: const TextStyle(color: AppColors.textPrimary),
+          decoration: InputDecoration(
+            labelText: label,
+            labelStyle: const TextStyle(color: AppColors.textSecondary),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(20),
+              borderSide: BorderSide.none,
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(20),
+              borderSide: BorderSide.none,
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(20),
+              borderSide: const BorderSide(color: AppColors.gold, width: 1.8),
+            ),
+            filled: true,
+            fillColor: AppColors.inputFill,
+          ),
+        ),
       ),
     );
   }
 }
-
-
-
 

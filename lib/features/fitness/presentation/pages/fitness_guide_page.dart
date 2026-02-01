@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:nutrisphere_flutter/app/theme/app_colors.dart';
 import 'package:nutrisphere_flutter/app/theme/theme_extensions.dart';
 import 'package:nutrisphere_flutter/core/utils/snackbar_utils.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -307,7 +308,7 @@ class _FitnessGuideScreenState extends ConsumerState<FitnessGuideScreen> {
     final textTheme = Theme.of(context).textTheme;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F5F5),
+      backgroundColor: AppColors.background,
       body: SafeArea(
         child: Stack(
           children: [

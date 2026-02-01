@@ -1,105 +1,105 @@
 import 'package:flutter/material.dart';
+import 'package:nutrisphere_flutter/app/theme/app_colors.dart';
 
 ThemeData getApplicationTheme() {
   return ThemeData(
     useMaterial3: true,
     fontFamily: "OpenSans Regular",
+    scaffoldBackgroundColor: AppColors.background,
 
-    // color scheme
-    colorScheme: ColorScheme.fromSeed(
-      seedColor: const Color.fromARGB(255, 248, 248, 249),
+    colorScheme: ColorScheme(
+      brightness: Brightness.dark,
+      primary: AppColors.primary,
+      onPrimary: AppColors.textPrimary,
+      secondary: AppColors.secondaryDark,
+      onSecondary: AppColors.textPrimary,
+      error: Colors.redAccent,
+      onError: AppColors.textPrimary,
+      background: AppColors.background,
+      onBackground: AppColors.textPrimary,
+      surface: AppColors.cardBackground,
+      onSurface: AppColors.textPrimary,
     ),
 
-    // app bar theme
     appBarTheme: const AppBarTheme(
-      backgroundColor:  Color.fromARGB(255, 246, 228, 169),
-      elevation: 2,
-      centerTitle: true, // Center the title
-      iconTheme: IconThemeData(color: Colors.black),
+      backgroundColor: AppColors.background,
+      elevation: 0,
+      centerTitle: true,
+      iconTheme: IconThemeData(color: AppColors.textPrimary),
       titleTextStyle: TextStyle(
         fontSize: 20,
-        fontWeight: FontWeight.bold, // Bold
-        color: Colors.black,
-        fontFamily: "Montserrat Bold", // Montserrat Bold
+        fontWeight: FontWeight.bold,
+        color: AppColors.textPrimary,
+        fontFamily: "Montserrat Bold",
       ),
     ),
 
-    // text field theme
     inputDecorationTheme: InputDecorationTheme(
       filled: true,
-      fillColor: Colors.white,
+      fillColor: AppColors.inputFill,
       contentPadding: const EdgeInsets.symmetric(
-        horizontal: 14,
-        vertical: 12,
+        horizontal: 16,
+        vertical: 14,
       ),
       enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(8),
-        borderSide: const BorderSide(color: Colors.grey),
+        borderRadius: BorderRadius.circular(20),
+        borderSide: const BorderSide(color: AppColors.border),
       ),
       focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(8),
-        borderSide: const BorderSide(color: Colors.deepPurple, width: 2),
-      ),
-      errorBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(8),
-        borderSide: const BorderSide(color: Colors.red, width: 1.5),
-      ),
-      focusedErrorBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(8),
-        borderSide: const BorderSide(color: Colors.red, width: 2),
+        borderRadius: BorderRadius.circular(20),
+        borderSide: const BorderSide(color: AppColors.primary, width: 1.5),
       ),
       hintStyle: const TextStyle(
         fontSize: 14,
-        color: Colors.black54,
+        color: AppColors.textMuted,
       ),
       labelStyle: const TextStyle(
-        fontSize: 15,
-        color: Colors.deepPurple,
+        fontSize: 14,
+        color: AppColors.textSecondary,
         fontWeight: FontWeight.w600,
       ),
     ),
 
-    // text theme
     textTheme: const TextTheme(
-    bodyMedium: TextStyle(
-      fontSize: 14,
-      fontFamily: 'OpenSans Regular',
+      bodyMedium: TextStyle(
+        fontSize: 14,
+        fontFamily: 'OpenSans Regular',
+        color: AppColors.textSecondary,
+      ),
+      bodyLarge: TextStyle(
+        fontSize: 16,
+        fontFamily: 'OpenSans Regular',
+        color: AppColors.textPrimary,
+      ),
+      titleLarge: TextStyle(
+        fontSize: 22,
+        fontWeight: FontWeight.w700,
+        fontFamily: 'Montserrat Bold',
+        color: AppColors.textPrimary,
+      ),
     ),
-    bodyLarge: TextStyle(
-      fontSize: 16,
-      fontFamily: 'OpenSans Regular',
-    ),
-    titleLarge: TextStyle(
-      fontSize: 22,
-      fontWeight: FontWeight.w700,
-      fontFamily: 'Montserrat Bold',
-    ),
-  ),
 
-
-    // bottom navigation theme
     bottomNavigationBarTheme: const BottomNavigationBarThemeData(
-      backgroundColor: Color.fromARGB(255, 86, 6, 6),
-      selectedItemColor: Colors.deepPurple,
-      unselectedItemColor: Colors.black54,
+      backgroundColor: AppColors.background,
+      selectedItemColor: AppColors.textPrimary,
+      unselectedItemColor: AppColors.secondaryDark,
       showSelectedLabels: true,
       showUnselectedLabels: true,
       type: BottomNavigationBarType.fixed,
-      elevation: 10,
+      elevation: 0,
     ),
 
-    // elevated button
     elevatedButtonTheme: ElevatedButtonThemeData(
       style: ElevatedButton.styleFrom(
-        backgroundColor: const Color(0xFFDFF300),
+        backgroundColor: AppColors.primary,
+        foregroundColor: AppColors.textPrimary,
         textStyle: const TextStyle(
-          fontSize: 18,
-          color: Colors.black12,
+          fontSize: 16,
           fontWeight: FontWeight.bold,
-          fontFamily: 'Montserrat Bold', 
+          fontFamily: 'Montserrat Bold',
         ),
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(5),
+          borderRadius: BorderRadius.circular(20),
         ),
       ),
     ),

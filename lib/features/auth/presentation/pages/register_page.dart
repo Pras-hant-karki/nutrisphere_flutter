@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:nutrisphere_flutter/app/theme/app_colors.dart';
 import 'package:nutrisphere_flutter/core/utils/snackbar_utils.dart';
 import 'package:nutrisphere_flutter/features/auth/presentation/state/auth_state.dart';
 import 'package:nutrisphere_flutter/features/auth/presentation/view_model/auth_view_model.dart';
@@ -156,6 +157,8 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                 ),
               ),
 
+              const SizedBox(height: 12),
+
               // Confirm Password Field
               TextFormField(
                 controller: _confirmPasswordController,
@@ -280,14 +283,14 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
     return InputDecoration(
       labelText: label,
       filled: true,
-      fillColor: Colors.transparent,
+      fillColor: AppColors.inputFill,
       prefixIcon: icon != null ? Icon(icon) : null,
       suffixIcon: suffixIcon,
       // NORMAL STATE
       enabledBorder: const OutlineInputBorder(
         borderRadius: borderRadius,
         borderSide: BorderSide(
-          color: Colors.brown,
+          color: AppColors.border,
           width: 1.5,
         ),
       ),
@@ -295,7 +298,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
       focusedBorder: const OutlineInputBorder(
         borderRadius: borderRadius,
         borderSide: BorderSide(
-          color: Colors.brown,
+          color: AppColors.gold,
           width: 2,
         ),
       ),
