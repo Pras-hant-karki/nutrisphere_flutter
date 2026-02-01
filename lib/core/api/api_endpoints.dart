@@ -33,11 +33,12 @@ class ApiEndpoints {
   static const String register = '/api/auth/register';
   static const String me = '/api/auth/me';
   static const String uploadImage = '/api/auth/upload-profile-picture';
+  static const String uploadProfilePicture = '/api/auth/profile-picture';
 
   // ============ Fitness Endpoints ============
   static const String fitness = '/api/fitness';
   static String fitnessById(String id) => '/api/fitness/$id';
-  static const String fitnessUploadPhoto = '/api/fitness/upload_photo';
-  static const String fitnessUploadVideo = '/api/fitness/upload_video';
+  static const String fitnessUploadPhoto = '/api/fitness/upload-photo';
+  static const String fitnessUploadVideo = '/api/fitness/upload-video';
 }
 

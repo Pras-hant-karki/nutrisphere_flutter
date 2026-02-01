@@ -76,8 +76,7 @@ class AuthRemoteDatasource implements IAuthRemoteDatasource {
         final token = resData['token'];
         if (token != null && token is String && token.isNotEmpty) {
           _apiClient.setAuthToken(token);
-          // await _tokenService.saveToken(token);
-          await _apiClient.setAuthToken(token);
+          await _tokenService.saveToken(token);
         } else {
           throw Exception("Login failed: token missing");
         }
@@ -162,8 +161,7 @@ Future<AuthApiModel> register({
       final token = resData['token'];
       if (token != null && token is String && token.isNotEmpty) {
         _apiClient.setAuthToken(token);
-        // await _tokenService.saveToken(token);
-        await _apiClient.setAuthToken(token);
+        await _tokenService.saveToken(token);
       }
 
       return registeredUser;

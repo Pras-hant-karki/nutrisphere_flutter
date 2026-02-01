@@ -2,8 +2,11 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:nutrisphere_flutter/core/api/api_endpoints.dart';
 import 'package:nutrisphere_flutter/core/services/storage/user_session_service.dart';
+import 'package:nutrisphere_flutter/core/services/storage/token_service.dart';
 import 'package:nutrisphere_flutter/core/utils/snackbar_utils.dart';
+import 'package:nutrisphere_flutter/features/profile/domain/usecases/upload_profile_picture_usecase.dart';
 import 'package:permission_handler/permission_handler.dart';
 
 class ProfileScreen extends ConsumerStatefulWidget {
@@ -18,6 +21,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   final _usernameCtrl = TextEditingController();
   final _emailCtrl = TextEditingController();
   final _phoneCtrl = TextEditingController();
+  
   
   final ImagePicker _imagePicker = ImagePicker();
   XFile? _profileImage;
@@ -200,8 +204,31 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   }
 
   Future<void> _saveProfile() async {
-    // TODO: Implement save profile logic
-    // This would typically call an API to update user profile
+    // Upload profile picture if selected
+    if (_profileImage != null) {
+      final uploadResult = await ref.read(uploadProfilePictureUsecaseProvider)(File(_profileImage!.path));
+      uploadResult.fold(
+        (failure) {
+          if (mounted) {
+            SnackbarUtils.showError(context, 'Failed to upload profile picture: ${failure.message}');
+          }
+        },
+        (imageUrl) {
+          setState(() {
+            // Prepend base URL if the path is relative
+            _profileImageUrl = imageUrl.startsWith('http') 
+                ? imageUrl 
+                : '${ApiEndpoints.baseUrl}$imageUrl';
+            _profileImage = null; // Clear the local image after upload
+          });
+          if (mounted) {
+            SnackbarUtils.showSuccess(context, 'Profile picture uploaded successfully');
+          }
+        },
+      );
+    }
+
+    // TODO: Save other profile data (name, email, phone) to backend
     if (mounted) {
       SnackbarUtils.showSuccess(context, 'Profile updated successfully');
     }
@@ -343,9 +370,12 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 width: double.infinity,
                 child: OutlinedButton.icon(
                   onPressed: () async {
-                    // Logout and clear session
+                    // Logout and clear session + token
                     final userSession = ref.read(userSessionServiceProvider);
+                    final tokenService = ref.read(tokenServiceProvider);
+                    
                     await userSession.logout();
+                    await tokenService.removeToken();
                     
                     if (mounted) {
                       Navigator.pushNamedAndRemoveUntil(
@@ -376,3 +406,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     );
   }
 }
+
+
+
+
