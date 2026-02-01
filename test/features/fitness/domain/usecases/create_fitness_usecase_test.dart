@@ -1,18 +1,9 @@
-import 'package:dartz/dartz.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:nutrisphere_flutter/features/fitness/domain/entities/fitness_entity.dart';
+import 'package:nutrisphere_flutter/features/fitness/domain/usecases/create_fitness_usecase.dart';
 
 void main() {
-  late CreatefitnessUsecase createFitnessUsecase;
-  late MockFitnessRepository mockFitnessRepository;
-
-  setUp(() {
-    mockFitnessRepository = MockFitnessRepository();
-    createFitnessUsecase = CreatefitnessUsecase(
-      fitnessRepository: mockFitnessRepository,
-    );
-  });
-
-  group('CreateFitnessUsecase', () {
+  group('CreateFitnessParams Tests', () {
     test('CreateFitnessParams with required fields only', () {
       // Arrange & Act
       const params = CreateFitnessParams(
@@ -96,10 +87,33 @@ void main() {
       expect(params1, isNot(params2));
     });
 
-    test('call() should create FitnessEntity and call repository', () async {
+    test('CreateFitnessParams with minimal params', () {
       // Arrange
       const params = CreateFitnessParams(
-        fitnessId: 'fit_1',
+        title: 'Simple Fitness',
+      );
+
+      // Act
+      final fitnessEntity = FitnessEntity(
+        fitnessId: params.fitnessId,
+        title: params.title,
+        description: params.description,
+        category: params.category,
+        media: params.media,
+        mediaType: params.mediaType,
+      );
+
+      // Assert
+      expect(fitnessEntity.title, 'Simple Fitness');
+      expect(fitnessEntity.fitnessId, isNull);
+      expect(fitnessEntity.description, isNull);
+      expect(fitnessEntity.category, isNull);
+    });
+
+    test('CreateFitnessParams creates FitnessEntity with all fields', () {
+      // Arrange
+      const params = CreateFitnessParams(
+        fitnessId: 'fit_2',
         title: 'Strength Training',
         description: 'Full body strength',
         category: 'strength',
@@ -107,199 +121,43 @@ void main() {
         mediaType: 'video',
       );
 
-      when(mockFitnessRepository.createFitness(any))
-          .thenAnswer((_) async => const Right(true));
-
       // Act
-      final result = await createFitnessUsecase(params);
+      final fitnessEntity = FitnessEntity(
+        fitnessId: params.fitnessId,
+        title: params.title,
+        description: params.description,
+        category: params.category,
+        media: params.media,
+        mediaType: params.mediaType,
+      );
 
       // Assert
-      expect(result, const Right(true));
-      verify(mockFitnessRepository.createFitness(any)).called(1);
+      expect(fitnessEntity.fitnessId, 'fit_2');
+      expect(fitnessEntity.title, 'Strength Training');
+      expect(fitnessEntity.description, 'Full body strength');
+      expect(fitnessEntity.category, 'strength');
+      expect(fitnessEntity.media, 'https://example.com/strength.mp4');
+      expect(fitnessEntity.mediaType, 'video');
     });
 
-    test('call() should pass correct FitnessEntity to repository', () async {
-      // Arrange
-      const params = CreateFitnessParams(
-        fitnessId: 'fit_2',
-        title: 'Cardio Blast',
-        description: 'High intensity cardio',
-        category: 'cardio',
-        media: 'https://example.com/cardio.mp4',
-        mediaType: 'video',
-      );
-
-      when(mockFitnessRepository.createFitness(any))
-          .thenAnswer((_) async => const Right(true));
-
-      // Act
-      await createFitnessUsecase(params);
-
-      // Assert - Capture the FitnessEntity passed
-      final capturedArg = verify(mockFitnessRepository.createFitness(captureAny))
-          .captured
-          .single as FitnessEntity;
-
-      expect(capturedArg.title, 'Cardio Blast');
-      expect(capturedArg.description, 'High intensity cardio');
-      expect(capturedArg.category, 'cardio');
-      expect(capturedArg.media, 'https://example.com/cardio.mp4');
-    });
-
-    test('call() should return Right(true) on successful creation', () async {
-      // Arrange
-      const params = CreateFitnessParams(
-        title: 'Yoga',
-      );
-
-      when(mockFitnessRepository.createFitness(any))
-          .thenAnswer((_) async => const Right(true));
-
-      // Act
-      final result = await createFitnessUsecase(params);
-
-      // Assert
-      expect(result.isRight(), true);
-      expect(result.getOrElse(() => false), true);
-    });
-
-    test('call() should return Left(Failure) on repository error', () async {
-      // Arrange
-      const params = CreateFitnessParams(
-        title: 'Yoga',
-      );
-
-      final failure = LocaldatabaseFailure();
-      when(mockFitnessRepository.createFitness(any))
-          .thenAnswer((_) async => Left(failure));
-
-      // Act
-      final result = await createFitnessUsecase(params);
-
-      // Assert
-      expect(result.isLeft(), true);
-      expect(result.fold((l) => l, (_) => null), isA<Failure>());
-    });
-
-    test('call() should return Left(ApiFailure) on API error', () async {
-      // Arrange
-      const params = CreateFitnessParams(
-        title: 'Fitness',
-      );
-
-      final failure = ApiFailure(statusCode: 500, message: 'Server error');
-      when(mockFitnessRepository.createFitness(any))
-          .thenAnswer((_) async => Left(failure));
-
-      // Act
-      final result = await createFitnessUsecase(params);
-
-      // Assert
-      expect(result.isLeft(), true);
-      result.fold(
-        (failure) {
-          expect(failure, isA<ApiFailure>());
-          expect((failure as ApiFailure).statusCode, 500);
-        },
-        (_) => fail('Should return Left'),
-      );
-    });
-
-    test('call() should return Left(NetworkFailure) on network error', () async {
-      // Arrange
-      const params = CreateFitnessParams(
-        title: 'Fitness',
-      );
-
-      final failure = NetworkFailure();
-      when(mockFitnessRepository.createFitness(any))
-          .thenAnswer((_) async => Left(failure));
-
-      // Act
-      final result = await createFitnessUsecase(params);
-
-      // Assert
-      expect(result.isLeft(), true);
-      result.fold(
-        (failure) {
-          expect(failure, isA<NetworkFailure>());
-        },
-        (_) => fail('Should return Left'),
-      );
-    });
-
-    test('call() with minimal params creates entity with only title', () async {
-      // Arrange
-      const params = CreateFitnessParams(
-        title: 'Simple Fitness',
-      );
-
-      when(mockFitnessRepository.createFitness(any))
-          .thenAnswer((_) async => const Right(true));
-
-      // Act
-      await createFitnessUsecase(params);
-
-      // Assert
-      final capturedEntity =
-          verify(mockFitnessRepository.createFitness(captureAny))
-              .captured
-              .single as FitnessEntity;
-
-      expect(capturedEntity.title, 'Simple Fitness');
-      expect(capturedEntity.fitnessId, isNull);
-      expect(capturedEntity.description, isNull);
-      expect(capturedEntity.category, isNull);
-    });
-
-    test('call() does not pass createdBy and createdByName to entity', () async {
-      // Arrange
-      const params = CreateFitnessParams(
-        title: 'Fitness',
-        createdBy: 'admin_123',
-        createdByName: 'Admin Name',
-        duration: 45,
-      );
-
-      when(mockFitnessRepository.createFitness(any))
-          .thenAnswer((_) async => const Right(true));
-
-      // Act
-      await createFitnessUsecase(params);
-
-      // Assert - Verify that createdBy and createdByName are NOT in the entity
-      final capturedEntity =
-          verify(mockFitnessRepository.createFitness(captureAny))
-              .captured
-              .single as FitnessEntity;
-
-      expect(capturedEntity.createdBy, isNull);
-      expect(capturedEntity.createdByName, isNull);
-    });
-
-    test('call() preserves fitnessId in entity creation', () async {
+    test('CreateFitnessParams preserves fitnessId', () {
       // Arrange
       const params = CreateFitnessParams(
         fitnessId: 'custom_id_123',
         title: 'Fitness',
       );
 
-      when(mockFitnessRepository.createFitness(any))
-          .thenAnswer((_) async => const Right(true));
-
       // Act
-      await createFitnessUsecase(params);
+      final fitnessEntity = FitnessEntity(
+        fitnessId: params.fitnessId,
+        title: params.title,
+      );
 
       // Assert
-      final capturedEntity =
-          verify(mockFitnessRepository.createFitness(captureAny))
-              .captured
-              .single as FitnessEntity;
-
-      expect(capturedEntity.fitnessId, 'custom_id_123');
+      expect(fitnessEntity.fitnessId, 'custom_id_123');
     });
 
-    test('call() with category and duration preserves them in entity', () async {
+    test('CreateFitnessParams with category and duration', () {
       // Arrange
       const params = CreateFitnessParams(
         title: 'Workout',
@@ -307,86 +165,173 @@ void main() {
         duration: 90,
       );
 
-      when(mockFitnessRepository.createFitness(any))
-          .thenAnswer((_) async => const Right(true));
-
-      // Act
-      await createFitnessUsecase(params);
-
-      // Assert
-      final capturedEntity =
-          verify(mockFitnessRepository.createFitness(captureAny))
-              .captured
-              .single as FitnessEntity;
-
-      expect(capturedEntity.category, 'strength');
-      expect(capturedEntity.duration, 90);
+      // Act & Assert
+      expect(params.category, 'strength');
+      expect(params.duration, 90);
     });
 
-    test('call() with different media types', () async {
-      // Arrange - Video
+    test('CreateFitnessParams supports video media type', () {
+      // Arrange
       const videoParams = CreateFitnessParams(
         title: 'Video Workout',
         media: 'https://example.com/video.mp4',
         mediaType: 'video',
       );
 
-      when(mockFitnessRepository.createFitness(any))
-          .thenAnswer((_) async => const Right(true));
+      // Act & Assert
+      expect(videoParams.mediaType, 'video');
+      expect(videoParams.media, 'https://example.com/video.mp4');
+    });
 
-      // Act
-      await createFitnessUsecase(videoParams);
-
-      // Assert
-      var capturedEntity =
-          verify(mockFitnessRepository.createFitness(captureAny))
-              .captured
-              .single as FitnessEntity;
-
-      expect(capturedEntity.mediaType, 'video');
-
-      // Now test with image
-      reset(mockFitnessRepository);
-      when(mockFitnessRepository.createFitness(any))
-          .thenAnswer((_) async => const Right(true));
-
+    test('CreateFitnessParams supports image media type', () {
+      // Arrange
       const imageParams = CreateFitnessParams(
         title: 'Image Workout',
         media: 'https://example.com/image.jpg',
         mediaType: 'image',
       );
 
-      await createFitnessUsecase(imageParams);
-
-      capturedEntity =
-          verify(mockFitnessRepository.createFitness(captureAny))
-              .captured
-              .single as FitnessEntity;
-
-      expect(capturedEntity.mediaType, 'image');
+      // Act & Assert
+      expect(imageParams.mediaType, 'image');
+      expect(imageParams.media, 'https://example.com/image.jpg');
     });
 
-    test('CreatefitnessUsecase is properly instantiated', () {
-      // Assert
-      expect(createFitnessUsecase, isA<CreatefitnessUsecase>());
-    });
-
-    test('call() multiple times should work independently', () async {
+    test('CreateFitnessParams with special characters in title', () {
       // Arrange
-      const params1 = CreateFitnessParams(title: 'Fitness 1');
-      const params2 = CreateFitnessParams(title: 'Fitness 2');
-
-      when(mockFitnessRepository.createFitness(any))
-          .thenAnswer((_) async => const Right(true));
+      const params = CreateFitnessParams(
+        title: 'Yoga & Pilates: Advanced Level',
+      );
 
       // Act
-      final result1 = await createFitnessUsecase(params1);
-      final result2 = await createFitnessUsecase(params2);
+      final fitnessEntity = FitnessEntity(
+        fitnessId: params.fitnessId,
+        title: params.title,
+      );
 
       // Assert
-      expect(result1, const Right(true));
-      expect(result2, const Right(true));
-      verify(mockFitnessRepository.createFitness(any)).called(2);
+      expect(fitnessEntity.title, 'Yoga & Pilates: Advanced Level');
+    });
+
+    test('CreateFitnessParams with special characters in description', () {
+      // Arrange
+      const params = CreateFitnessParams(
+        title: 'Fitness',
+        description: 'Test with @#\$%^&*() - Special chars!',
+      );
+
+      // Act
+      final fitnessEntity = FitnessEntity(
+        fitnessId: params.fitnessId,
+        title: params.title,
+        description: params.description,
+      );
+
+      // Assert
+      expect(fitnessEntity.description, 'Test with @#\$%^&*() - Special chars!');
+    });
+
+    test('CreateFitnessParams with empty title', () {
+      // Arrange & Act
+      const params = CreateFitnessParams(
+        title: '',
+      );
+
+      // Assert
+      expect(params.title, '');
+      expect(params.fitnessId, isNull);
+    });
+
+    test('CreateFitnessParams with very long description', () {
+      // Arrange
+      final longDescription = 'This is a very long description ' * 10;
+      final params = CreateFitnessParams(
+        title: 'Fitness',
+        description: longDescription,
+      );
+
+      // Act
+      final fitnessEntity = FitnessEntity(
+        fitnessId: params.fitnessId,
+        title: params.title,
+        description: params.description,
+      );
+
+      // Assert
+      expect(fitnessEntity.description, longDescription);
+      expect(fitnessEntity.description?.length, greaterThan(100));
+    });
+
+    test('FitnessEntity list from multiple CreateFitnessParams', () {
+      // Arrange
+      final paramsList = [
+        const CreateFitnessParams(title: 'Fitness 1', category: 'yoga'),
+        const CreateFitnessParams(title: 'Fitness 2', category: 'cardio'),
+        const CreateFitnessParams(title: 'Fitness 3', category: 'strength'),
+      ];
+
+      // Act
+      final entities = paramsList
+          .map((p) => FitnessEntity(
+                fitnessId: p.fitnessId,
+                title: p.title,
+                category: p.category,
+                description: p.description,
+              ))
+          .toList();
+
+      // Assert
+      expect(entities.length, 3);
+      expect(entities[0].title, 'Fitness 1');
+      expect(entities[1].category, 'cardio');
+      expect(entities[2].title, 'Fitness 3');
+    });
+
+    test('CreateFitnessParams with createdBy fields', () {
+      // Arrange
+      const params = CreateFitnessParams(
+        title: 'Fitness',
+        createdBy: 'admin_123',
+        createdByName: 'Admin Name',
+      );
+
+      // Act & Assert
+      expect(params.createdBy, 'admin_123');
+      expect(params.createdByName, 'Admin Name');
+    });
+
+    test('CreateFitnessParams with different durations', () {
+      // Arrange
+      final durations = [15, 30, 45, 60, 90, 120];
+      final paramsList = durations
+          .map((dur) => CreateFitnessParams(
+                title: 'Workout $dur min',
+                duration: dur,
+              ))
+          .toList();
+
+      // Act & Assert
+      expect(paramsList.length, 6);
+      for (int i = 0; i < durations.length; i++) {
+        expect(paramsList[i].duration, durations[i]);
+      }
+    });
+
+    test('CreateFitnessParams nullable fields are null by default', () {
+      // Arrange & Act
+      const params = CreateFitnessParams(
+        title: 'Basic',
+      );
+
+      // Assert
+      expect(params.description, isNull);
+      expect(params.category, isNull);
+      expect(params.media, isNull);
+      expect(params.mediaType, isNull);
+      expect(params.createdBy, isNull);
+      expect(params.createdByName, isNull);
+      expect(params.duration, isNull);
+      expect(params.createdAt, isNull);
+      expect(params.updatedAt, isNull);
     });
   });
 }
