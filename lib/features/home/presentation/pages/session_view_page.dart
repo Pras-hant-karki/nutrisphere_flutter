@@ -12,7 +12,9 @@ class SessionViewScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final sessions = ref.watch(sessionProvider);
     final notifier = ref.read(sessionProvider.notifier);
-    final groupedSessions = notifier.sessionsByDay;
+    // Users only see active sessions
+    final activeSessions = sessions.where((s) => s.isActive).toList();
+    final groupedSessions = notifier.activeSessionsByDay;
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -62,7 +64,7 @@ class SessionViewScreen extends ConsumerWidget {
 
             // Session list grouped by day — only days with sessions
             Expanded(
-              child: sessions.isEmpty
+              child: activeSessions.isEmpty
                   ? const Center(
                       child: Text(
                         'No sessions available',

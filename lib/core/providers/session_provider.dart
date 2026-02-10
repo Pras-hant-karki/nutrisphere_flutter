@@ -7,6 +7,7 @@ class Session {
   String location;
   String workoutTitle;
   List<String> exercises;
+  bool isActive;
 
   Session({
     required this.day,
@@ -15,6 +16,7 @@ class Session {
     required this.location,
     required this.workoutTitle,
     required this.exercises,
+    this.isActive = true,
   });
 
   Session copyWith({
@@ -24,6 +26,7 @@ class Session {
     String? location,
     String? workoutTitle,
     List<String>? exercises,
+    bool? isActive,
   }) {
     return Session(
       day: day ?? this.day,
@@ -32,6 +35,7 @@ class Session {
       location: location ?? this.location,
       workoutTitle: workoutTitle ?? this.workoutTitle,
       exercises: exercises ?? this.exercises,
+      isActive: isActive ?? this.isActive,
     );
   }
 
@@ -43,6 +47,7 @@ class Session {
       'location': location,
       'workoutTitle': workoutTitle,
       'exercises': exercises,
+      'isActive': isActive,
     };
   }
 
@@ -54,6 +59,7 @@ class Session {
       location: json['location'],
       workoutTitle: json['workoutTitle'],
       exercises: List<String>.from(json['exercises']),
+      isActive: json['isActive'] ?? true,
     );
   }
 }
@@ -91,12 +97,30 @@ class SessionNotifier extends Notifier<List<Session>> {
     state = newState;
   }
 
-  /// Get sessions grouped by day, maintaining day order
+  void toggleSession(int index) {
+    final newState = List<Session>.from(state);
+    newState[index] = newState[index].copyWith(isActive: !newState[index].isActive);
+    state = newState;
+  }
+
+  /// Get all sessions grouped by day (for admin — shows all including inactive)
   Map<String, List<Session>> get sessionsByDay {
     final Map<String, List<Session>> grouped = {};
     for (final session in state) {
       grouped.putIfAbsent(session.day, () => []);
       grouped[session.day]!.add(session);
+    }
+    return grouped;
+  }
+
+  /// Get only active sessions grouped by day (for users)
+  Map<String, List<Session>> get activeSessionsByDay {
+    final Map<String, List<Session>> grouped = {};
+    for (final session in state) {
+      if (session.isActive) {
+        grouped.putIfAbsent(session.day, () => []);
+        grouped[session.day]!.add(session);
+      }
     }
     return grouped;
   }

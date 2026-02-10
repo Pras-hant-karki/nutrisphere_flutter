@@ -65,7 +65,7 @@ class SessionManagePage extends ConsumerWidget {
               child: sessions.isEmpty
                   ? const Center(
                       child: Text(
-                        'No sessions yet. Tap + to add.',
+                        'No sessions yet. Tap the gold button to add.',
                         style: TextStyle(color: AppColors.textSecondary),
                       ),
                     )
@@ -74,16 +74,46 @@ class SessionManagePage extends ConsumerWidget {
                       children: [
                         for (final day in daysOfWeek)
                           if (groupedSessions.containsKey(day)) ...[
-                            // Day header
+                            // Day header with golden add button on first day
                             Padding(
-                              padding: const EdgeInsets.only(
-                                  top: 12, bottom: 8),
-                              child: Text(
-                                day,
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .titleMedium
-                                    ?.copyWith(fontWeight: FontWeight.bold),
+                              padding:
+                                  const EdgeInsets.only(top: 12, bottom: 8),
+                              child: Row(
+                                children: [
+                                  Text(
+                                    day,
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .titleMedium
+                                        ?.copyWith(
+                                            fontWeight: FontWeight.bold),
+                                  ),
+                                  const Spacer(),
+                                  // Golden add button on the first day header
+                                  if (day ==
+                                      daysOfWeek.firstWhere(
+                                          (d) =>
+                                              groupedSessions
+                                                  .containsKey(d),
+                                          orElse: () => ''))
+                                    GestureDetector(
+                                      onTap: () => _showSessionPopup(
+                                          context, ref),
+                                      child: Container(
+                                        width: 28,
+                                        height: 28,
+                                        decoration: const BoxDecoration(
+                                          color: AppColors.gold,
+                                          shape: BoxShape.circle,
+                                        ),
+                                        child: const Icon(
+                                          Icons.add,
+                                          color: Colors.white,
+                                          size: 18,
+                                        ),
+                                      ),
+                                    ),
+                                ],
                               ),
                             ),
                             // Session cards for this day
@@ -95,10 +125,11 @@ class SessionManagePage extends ConsumerWidget {
                                 ref,
                                 session,
                                 globalIndex,
-                                isAdmin: true,
                               );
                             }),
                           ],
+                        // If there are sessions but we want the add button always visible
+                        // even when the first day header is scrolled away
                       ],
                     ),
             ),
@@ -106,237 +137,258 @@ class SessionManagePage extends ConsumerWidget {
         ),
       ),
 
-      // FAB to add session
-      floatingActionButton: FloatingActionButton(
-        backgroundColor: AppColors.primary,
-        child: const Icon(Icons.add, color: Colors.white),
-        onPressed: () => _showAddEditDialog(context, ref),
-      ),
+      // Golden FAB as a fallback when no sessions exist
+      floatingActionButton: sessions.isEmpty
+          ? FloatingActionButton(
+              backgroundColor: AppColors.gold,
+              child: const Icon(Icons.add, color: Colors.white),
+              onPressed: () => _showSessionPopup(context, ref),
+            )
+          : null,
     );
   }
 
+  // ─────────────────────────────────────────────────────
+  // Session card with edit (green pencil) & delete (red bin)
+  // ─────────────────────────────────────────────────────
   Widget _buildSessionCard(
     BuildContext context,
     WidgetRef ref,
     Session session,
-    int index, {
-    required bool isAdmin,
-  }) {
-    return GestureDetector(
-      onTap: () => _showSessionDetailPopup(context, session),
-      child: Container(
-        width: double.infinity,
-        margin: const EdgeInsets.only(bottom: 10),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-        decoration: BoxDecoration(
-          color: AppColors.cardBackground,
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: AppColors.border),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.35),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        child: Row(
-          children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    session.sessionName,
-                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                          fontWeight: FontWeight.w600,
-                        ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    "(${session.timeRange})",
-                    style: Theme.of(context)
-                        .textTheme
-                        .bodyMedium
-                        ?.copyWith(color: AppColors.textSecondary),
-                  ),
-                ],
-              ),
-            ),
-            if (isAdmin) ...[
-              IconButton(
-                icon: const Icon(Icons.edit, color: AppColors.primary),
-                onPressed: () =>
-                    _showAddEditDialog(context, ref, session: session, index: index),
-              ),
-              IconButton(
-                icon: const Icon(Icons.delete, color: AppColors.error),
-                onPressed: () => _confirmDelete(context, ref, index),
-              ),
-            ],
-          ],
-        ),
-      ),
-    );
-  }
-
-  /// Popup with blur background showing full session details
-  void _showSessionDetailPopup(BuildContext context, Session session) {
-    showDialog(
-      context: context,
-      barrierColor: Colors.transparent,
-      builder: (context) => BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
-        child: Dialog(
-          backgroundColor: AppColors.cardBackground,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
+    int index,
+  ) {
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      decoration: BoxDecoration(
+        color: AppColors.cardBackground,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: AppColors.border),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.35),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
           ),
-          child: Padding(
-            padding: const EdgeInsets.all(20),
+        ],
+      ),
+      child: Row(
+        children: [
+          Expanded(
             child: Column(
-              mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Location: ${session.location}',
-                  style: const TextStyle(
-                    color: AppColors.textPrimary,
-                    fontSize: 14,
-                  ),
-                ),
-                const SizedBox(height: 12),
-                Text(
-                  '${session.workoutTitle}  (${session.timeRange})',
-                  style: const TextStyle(
-                    color: AppColors.textPrimary,
-                    fontWeight: FontWeight.w600,
-                    fontSize: 14,
-                  ),
-                ),
-                const SizedBox(height: 12),
-                ...session.exercises.map(
-                  (e) => Padding(
-                    padding: const EdgeInsets.only(bottom: 4),
-                    child: Text(
-                      e,
-                      style: const TextStyle(
-                        color: AppColors.textPrimary,
-                        fontSize: 13,
+                  session.sessionName,
+                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                        fontWeight: FontWeight.w600,
+                        color: session.isActive
+                            ? AppColors.textPrimary
+                            : AppColors.textMuted,
                       ),
-                    ),
-                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  "(${session.timeRange})",
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: session.isActive
+                            ? AppColors.textSecondary
+                            : AppColors.textMuted,
+                      ),
                 ),
               ],
             ),
           ),
-        ),
+          // Edit button — opens popup card
+          IconButton(
+            icon: const Icon(Icons.edit, color: AppColors.primary),
+            onPressed: () =>
+                _showSessionPopup(context, ref, session: session, index: index),
+          ),
+          // Delete button — deletes session
+          IconButton(
+            icon: const Icon(Icons.delete, color: AppColors.error),
+            onPressed: () => _confirmDelete(context, ref, index),
+          ),
+        ],
       ),
     );
   }
 
-  /// Add or Edit session dialog
-  void _showAddEditDialog(
+  // ─────────────────────────────────────────────────────
+  // Popup card (Add / Edit) — matches the design image
+  // Location field, Time field with clock icon (from–to picker),
+  // Session Details large text area, Save button, On/Off toggle
+  // ─────────────────────────────────────────────────────
+  void _showSessionPopup(
     BuildContext context,
     WidgetRef ref, {
     Session? session,
     int? index,
   }) {
     final isEditing = session != null;
+
     String selectedDay = session?.day ?? daysOfWeek.first;
-    final nameCtrl =
-        TextEditingController(text: session?.sessionName ?? 'Group Workout');
-    final timeCtrl =
-        TextEditingController(text: session?.timeRange ?? '8:00 AM - 10:00 AM');
     final locationCtrl =
         TextEditingController(text: session?.location ?? '');
-    final workoutCtrl =
-        TextEditingController(text: session?.workoutTitle ?? '');
-    final exercisesCtrl =
-        TextEditingController(text: session?.exercises.join('\n') ?? '');
+    final timeCtrl =
+        TextEditingController(text: session?.timeRange ?? '');
+    final detailsCtrl = TextEditingController(
+      text: session != null
+          ? '${session.sessionName}\n${session.workoutTitle}\n${session.exercises.join('\n')}'
+          : '',
+    );
+    bool isActive = session?.isActive ?? true;
 
     showDialog(
       context: context,
+      barrierColor: Colors.transparent,
       builder: (ctx) {
         return StatefulBuilder(
           builder: (ctx, setDialogState) {
-            return AlertDialog(
-              backgroundColor: AppColors.cardBackground,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
-              ),
-              title: Text(
-                isEditing ? 'Edit Session' : 'Add Session',
-                style: const TextStyle(color: AppColors.textPrimary),
-              ),
-              content: SingleChildScrollView(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    // Day dropdown
-                    DropdownButtonFormField<String>(
-                      initialValue: selectedDay,
-                      dropdownColor: AppColors.cardBackground,
-                      decoration: _inputDecoration('Day'),
-                      style: const TextStyle(color: AppColors.textPrimary),
-                      items: daysOfWeek
-                          .map((d) => DropdownMenuItem(
-                                value: d,
-                                child: Text(d),
-                              ))
-                          .toList(),
-                      onChanged: (val) {
-                        setDialogState(() => selectedDay = val!);
-                      },
-                    ),
-                    const SizedBox(height: 10),
-                    _buildTextField(nameCtrl, 'Session Name'),
-                    const SizedBox(height: 10),
-                    _buildTextField(timeCtrl, 'Time Range (e.g. 8:00 AM - 10:00 AM)'),
-                    const SizedBox(height: 10),
-                    _buildTextField(locationCtrl, 'Location'),
-                    const SizedBox(height: 10),
-                    _buildTextField(workoutCtrl, 'Workout Title'),
-                    const SizedBox(height: 10),
-                    _buildTextField(exercisesCtrl, 'Exercises (one per line)',
-                        maxLines: 5),
-                  ],
+            return BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
+              child: Dialog(
+                backgroundColor: AppColors.cardBackground,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
                 ),
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.pop(ctx),
-                  child: const Text('Cancel',
-                      style: TextStyle(color: AppColors.textSecondary)),
-                ),
-                TextButton(
-                  onPressed: () {
-                    final newSession = Session(
-                      day: selectedDay,
-                      sessionName: nameCtrl.text,
-                      timeRange: timeCtrl.text,
-                      location: locationCtrl.text,
-                      workoutTitle: workoutCtrl.text,
-                      exercises: exercisesCtrl.text
-                          .split('\n')
-                          .where((e) => e.trim().isNotEmpty)
-                          .toList(),
-                    );
-                    if (isEditing && index != null) {
-                      ref
-                          .read(sessionProvider.notifier)
-                          .updateSession(index, newSession);
-                    } else {
-                      ref.read(sessionProvider.notifier).addSession(newSession);
-                    }
-                    Navigator.pop(ctx);
-                  },
-                  child: Text(
-                    isEditing ? 'Update' : 'Add',
-                    style: const TextStyle(color: AppColors.primary),
+                insetPadding:
+                    const EdgeInsets.symmetric(horizontal: 24, vertical: 40),
+                child: Padding(
+                  padding: const EdgeInsets.all(20),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // ── Day dropdown ──
+                      DropdownButtonFormField<String>(
+                        initialValue: selectedDay,
+                        dropdownColor: AppColors.cardBackground,
+                        decoration: _popupInputDecoration('Day'),
+                        style:
+                            const TextStyle(color: AppColors.textPrimary),
+                        items: daysOfWeek
+                            .map((d) => DropdownMenuItem(
+                                  value: d,
+                                  child: Text(d),
+                                ))
+                            .toList(),
+                        onChanged: (val) {
+                          setDialogState(() => selectedDay = val!);
+                        },
+                      ),
+                      const SizedBox(height: 14),
+
+                      // ── Location field ──
+                      TextField(
+                        controller: locationCtrl,
+                        decoration: _popupInputDecoration('Location:'),
+                        style:
+                            const TextStyle(color: AppColors.textPrimary),
+                      ),
+                      const SizedBox(height: 14),
+
+                      // ── Time field with clock icon ──
+                      TextField(
+                        controller: timeCtrl,
+                        readOnly: true,
+                        decoration: _popupInputDecoration('Time:').copyWith(
+                          suffixIcon: IconButton(
+                            icon: const Icon(Icons.access_time,
+                                color: AppColors.textPrimary),
+                            onPressed: () async {
+                              // Pick FROM time
+                              final fromTime = await showTimePicker(
+                                context: ctx,
+                                initialTime: TimeOfDay.now(),
+                                builder: (context, child) =>
+                                    _timePickerTheme(context, child),
+                              );
+                              if (fromTime == null) return;
+
+                              // Pick TO time
+                              if (!ctx.mounted) return;
+                              final toTime = await showTimePicker(
+                                context: ctx,
+                                initialTime: fromTime.replacing(
+                                    hour: (fromTime.hour + 2) % 24),
+                                builder: (context, child) =>
+                                    _timePickerTheme(context, child),
+                              );
+                              if (toTime == null) return;
+
+                              setDialogState(() {
+                                timeCtrl.text =
+                                    '${_formatTime(fromTime)} - ${_formatTime(toTime)}';
+                              });
+                            },
+                          ),
+                        ),
+                        style:
+                            const TextStyle(color: AppColors.textPrimary),
+                      ),
+                      const SizedBox(height: 14),
+
+                      // ── Session Details ──
+                      TextField(
+                        controller: detailsCtrl,
+                        maxLines: 7,
+                        decoration:
+                            _popupInputDecoration('Session Details'),
+                        style:
+                            const TextStyle(color: AppColors.textPrimary),
+                      ),
+                      const SizedBox(height: 20),
+
+                      // ── Bottom row: Save Session + Toggle ──
+                      Row(
+                        children: [
+                          // Save button
+                          ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppColors.error,
+                              foregroundColor: Colors.white,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 20, vertical: 12),
+                            ),
+                            onPressed: () {
+                              _saveSession(
+                                ref,
+                                ctx,
+                                isEditing: isEditing,
+                                index: index,
+                                day: selectedDay,
+                                locationCtrl: locationCtrl,
+                                timeCtrl: timeCtrl,
+                                detailsCtrl: detailsCtrl,
+                                isActive: isActive,
+                              );
+                            },
+                            child: const Text('Save Session'),
+                          ),
+                          const Spacer(),
+                          // On/Off toggle
+                          Switch(
+                            value: isActive,
+                            activeThumbColor: AppColors.textPrimary,
+                            activeTrackColor: AppColors.secondaryDark,
+                            inactiveThumbColor: AppColors.textMuted,
+                            inactiveTrackColor: AppColors.border,
+                            onChanged: (val) {
+                              setDialogState(() => isActive = val);
+                            },
+                          ),
+                        ],
+                      ),
+                    ],
                   ),
                 ),
-              ],
+              ),
             );
           },
         );
@@ -344,7 +396,55 @@ class SessionManagePage extends ConsumerWidget {
     );
   }
 
-  /// Confirm delete dialog
+  // ─────────────────────────────────────────────────────
+  // Save logic — parses the details text area
+  // ─────────────────────────────────────────────────────
+  void _saveSession(
+    WidgetRef ref,
+    BuildContext ctx, {
+    required bool isEditing,
+    int? index,
+    required String day,
+    required TextEditingController locationCtrl,
+    required TextEditingController timeCtrl,
+    required TextEditingController detailsCtrl,
+    required bool isActive,
+  }) {
+    final lines = detailsCtrl.text
+        .split('\n')
+        .where((l) => l.trim().isNotEmpty)
+        .toList();
+
+    // First line = session name, second line = workout title, rest = exercises
+    final sessionName =
+        lines.isNotEmpty ? lines[0] : 'Group Workout';
+    final workoutTitle =
+        lines.length > 1 ? lines[1] : '';
+    final exercises =
+        lines.length > 2 ? lines.sublist(2) : <String>[];
+
+    final newSession = Session(
+      day: day,
+      sessionName: sessionName,
+      timeRange: timeCtrl.text,
+      location: locationCtrl.text,
+      workoutTitle: workoutTitle,
+      exercises: exercises,
+      isActive: isActive,
+    );
+
+    if (isEditing && index != null) {
+      ref.read(sessionProvider.notifier).updateSession(index, newSession);
+    } else {
+      ref.read(sessionProvider.notifier).addSession(newSession);
+    }
+
+    Navigator.pop(ctx);
+  }
+
+  // ─────────────────────────────────────────────────────
+  // Confirm delete dialog
+  // ─────────────────────────────────────────────────────
   void _confirmDelete(BuildContext context, WidgetRef ref, int index) {
     showDialog(
       context: context,
@@ -368,15 +468,18 @@ class SessionManagePage extends ConsumerWidget {
               ref.read(sessionProvider.notifier).deleteSession(index);
               Navigator.pop(ctx);
             },
-            child:
-                const Text('Delete', style: TextStyle(color: AppColors.error)),
+            child: const Text('Delete',
+                style: TextStyle(color: AppColors.error)),
           ),
         ],
       ),
     );
   }
 
-  InputDecoration _inputDecoration(String label) {
+  // ─────────────────────────────────────────────────────
+  // Helpers
+  // ─────────────────────────────────────────────────────
+  InputDecoration _popupInputDecoration(String label) {
     return InputDecoration(
       labelText: label,
       labelStyle: const TextStyle(color: AppColors.textSecondary),
@@ -393,13 +496,24 @@ class SessionManagePage extends ConsumerWidget {
     );
   }
 
-  Widget _buildTextField(TextEditingController ctrl, String label,
-      {int maxLines = 1}) {
-    return TextField(
-      controller: ctrl,
-      maxLines: maxLines,
-      decoration: _inputDecoration(label),
-      style: const TextStyle(color: AppColors.textPrimary),
+  Widget _timePickerTheme(BuildContext context, Widget? child) {
+    return Theme(
+      data: Theme.of(context).copyWith(
+        colorScheme: const ColorScheme.dark(
+          primary: AppColors.primary,
+          onPrimary: Colors.white,
+          surface: AppColors.cardBackground,
+          onSurface: AppColors.textPrimary,
+        ),
+      ),
+      child: child!,
     );
+  }
+
+  String _formatTime(TimeOfDay t) {
+    final hour = t.hourOfPeriod == 0 ? 12 : t.hourOfPeriod;
+    final minute = t.minute.toString().padLeft(2, '0');
+    final period = t.period == DayPeriod.am ? 'AM' : 'PM';
+    return '$hour:$minute $period';
   }
 }
