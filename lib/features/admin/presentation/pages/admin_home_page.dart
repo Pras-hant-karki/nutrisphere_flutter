@@ -4,14 +4,14 @@ import 'package:nutrisphere_flutter/features/admin/presentation/pages/session_ma
 import 'package:nutrisphere_flutter/features/admin/presentation/pages/admin_bio_page.dart';
 import 'package:nutrisphere_flutter/features/admin/presentation/pages/user_management_page.dart';
 
-class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key});
+class AdminHomePage extends StatefulWidget {
+  const AdminHomePage({super.key});
 
   @override
-  State<HomeScreen> createState() => _HomeScreenState();
+  State<AdminHomePage> createState() => _AdminHomePageState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
+class _AdminHomePageState extends State<AdminHomePage> {
   int? _activeCardIndex;
 
   @override
