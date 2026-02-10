@@ -65,7 +65,8 @@ class _LoginPageState extends ConsumerState<LoginPage> {
 
     ref.listen<AuthState>(authViewModelProvider, (prev, next) {
       if (next.status == AuthStatus.authenticated) {
-        Navigator.of(context).pushNamedAndRemoveUntil('/dashboard', (route) => false);
+        final route = next.authEntity?.role == 'admin' ? '/admin-dashboard' : '/dashboard';
+        Navigator.of(context).pushNamedAndRemoveUntil(route, (route) => false);
       } else if (next.status == AuthStatus.error) {
         SnackbarUtils.showError(context, next.errorMessage!);
       }

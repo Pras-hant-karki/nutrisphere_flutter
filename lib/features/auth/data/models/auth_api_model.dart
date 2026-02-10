@@ -6,6 +6,8 @@ class AuthApiModel {
   final String email;
   final String? password;
   final String? confirmPassword;
+  final String? role;
+  final String? phone;
 
   AuthApiModel({
     this.authId,
@@ -13,6 +15,8 @@ class AuthApiModel {
     required this.email,
     this.password,
     this.confirmPassword,
+    this.role,
+    this.phone,
   });
 
   // =======================
@@ -35,6 +39,8 @@ class AuthApiModel {
       authId: json['id'] as String? ?? json['_authId'] as String?,
       fullName: json['fullName'] as String? ?? json['fullname'] as String? ?? 'User',
       email: json['email'] as String? ?? '',
+      role: json['role'] as String?,
+      phone: json['phone'] as String?,
     );
   }
 
@@ -47,6 +53,8 @@ class AuthApiModel {
       fullName: fullName,
       email: email, 
       password: password ?? '',
+      role: role,
+      phone: phone,
     );
   }
 

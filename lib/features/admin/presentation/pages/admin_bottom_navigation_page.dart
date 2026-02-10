@@ -57,10 +57,6 @@ class _AdminBottomNavigationPageState extends State<AdminBottomNavigationPage> {
             label: "Home",
           ),
           BottomNavigationBarItem(
-          icon: Icon(Icons.book_online),
-          label: "Guide",
-          ),
-          BottomNavigationBarItem(
             icon: Icon(Icons.calendar_month),
             label: "Appointments",
           ),
