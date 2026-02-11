@@ -67,7 +67,7 @@ class _AdminHomePageState extends State<AdminHomePage> {
                       index: 2,
                       title: 'My Bio',
                       subtitle: 'Add your certifications, experience, and specialties',
-                      icon: Icons.bar_chart_outlined,
+                      icon: Icons.person_3,
                       onTap: () {
                         Navigator.push(
                           context,
