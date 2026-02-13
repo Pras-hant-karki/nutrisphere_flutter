@@ -81,41 +81,52 @@ class SessionNotifier extends Notifier<List<Session>> {
   @override
   List<Session> build() {
     // Load sessions from Hive on initialization
-    final hiveService = ref.read(hiveServiceProvider);
-    final hiveSessions = hiveService.getAllSessions();
-    return hiveSessions.map((s) => s.toSession()).toList();
+    try {
+      final hiveService = ref.read(hiveServiceProvider);
+      final hiveSessions = hiveService.getAllSessions();
+      print('[SessionNotifier] Loaded ${hiveSessions.length} sessions from Hive');
+      return hiveSessions.map((s) => s.toSession()).toList();
+    } catch (e) {
+      print('[SessionNotifier] Error loading sessions from Hive: $e');
+      return [];
+    }
   }
 
-  void addSession(Session session) {
+  Future<void> addSession(Session session) async {
     state = [...state, session];
-    _saveToHive();
+    await _saveToHive();
   }
 
-  void updateSession(int index, Session session) {
+  Future<void> updateSession(int index, Session session) async {
     final newState = List<Session>.from(state);
     newState[index] = session;
     state = newState;
-    _saveToHive();
+    await _saveToHive();
   }
 
-  void deleteSession(int index) {
+  Future<void> deleteSession(int index) async {
     final newState = List<Session>.from(state);
     newState.removeAt(index);
     state = newState;
-    _saveToHive();
+    await _saveToHive();
   }
 
-  void toggleSession(int index) {
+  Future<void> toggleSession(int index) async {
     final newState = List<Session>.from(state);
     newState[index] = newState[index].copyWith(isActive: !newState[index].isActive);
     state = newState;
-    _saveToHive();
+    await _saveToHive();
   }
 
-  void _saveToHive() {
-    final hiveService = ref.read(hiveServiceProvider);
-    final hiveSessions = state.map((s) => SessionHiveModel.fromSession(s)).toList();
-    hiveService.saveAllSessions(hiveSessions);
+  Future<void> _saveToHive() async {
+    try {
+      final hiveService = ref.read(hiveServiceProvider);
+      final hiveSessions = state.map((s) => SessionHiveModel.fromSession(s)).toList();
+      await hiveService.saveAllSessions(hiveSessions);
+      print('[SessionNotifier] Saved ${hiveSessions.length} sessions to Hive');
+    } catch (e) {
+      print('[SessionNotifier] Error saving sessions to Hive: $e');
+    }
   }
 
   /// Get all sessions grouped by day (for admin — shows all including inactive)

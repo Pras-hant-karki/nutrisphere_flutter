@@ -324,7 +324,7 @@ Future<AuthApiModel> register({
       options: Options(headers: {'Authorization': 'Bearer $token'}),
     );
 
-    return AuthApiModel.fromJson(response.data['data']);
+    return AuthApiModel.fromJson(response.data['user']);
   }
 
   @override

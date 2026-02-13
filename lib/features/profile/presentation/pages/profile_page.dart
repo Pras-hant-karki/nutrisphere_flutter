@@ -7,8 +7,8 @@ import 'package:nutrisphere_flutter/app/theme/app_colors.dart';
 import 'package:nutrisphere_flutter/core/services/storage/user_session_service.dart';
 import 'package:nutrisphere_flutter/core/services/storage/token_service.dart';
 import 'package:nutrisphere_flutter/core/utils/snackbar_utils.dart';
-import 'package:nutrisphere_flutter/features/profile/domain/usecases/upload_profile_picture_usecase.dart';
-import 'package:permission_handler/permission_handler.dart';
+import 'package:nutrisphere_flutter/features/auth/domain/usecases/update_user_usecase.dart';
+import 'package:nutrisphere_flutter/features/auth/domain/entities/auth_entity.dart';
 
 class ProfileScreen extends ConsumerStatefulWidget {
   const ProfileScreen({super.key});
@@ -222,6 +222,48 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   }
 
   Future<void> _saveProfile() async {
+    final userSession = ref.read(userSessionServiceProvider);
+    final session = await userSession.getSession();
+    if (session == null) {
+      SnackbarUtils.showError(context, 'User session not found');
+      return;
+    }
+
+    // Update profile data
+    final authEntity = AuthEntity(
+      authId: session.userId,
+      fullName: _nameCtrl.text,
+      email: session.email, // Email shouldn't be changed
+      phone: _phoneCtrl.text,
+      profilePicture: _profileImageUrl,
+    );
+
+    final updateResult = await ref.read(updateUserUseCaseProvider)(
+      UpdateUserUsecaseParams(user: authEntity),
+    );
+
+    updateResult.fold(
+      (failure) {
+        if (mounted) {
+          SnackbarUtils.showError(context, 'Failed to update profile: ${failure.message}');
+        }
+      },
+      (updatedUser) async {
+        // Update session with new data
+        await userSession.saveSession(
+          userId: updatedUser.authId,
+          email: updatedUser.email,
+          fullName: updatedUser.fullName,
+          role: session.role,
+          phone: updatedUser.phone,
+          profilePicture: updatedUser.profilePicture,
+        );
+        if (mounted) {
+          SnackbarUtils.showSuccess(context, 'Profile updated successfully');
+        }
+      },
+    );
+
     // Upload profile picture if selected
     if (_profileImage != null) {
       final uploadResult = await ref.read(uploadProfilePictureUsecaseProvider)(File(_profileImage!.path));
@@ -244,11 +286,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           }
         },
       );
-    }
-
-    // TODO: Save other profile data (name, email, phone) to backend
-    if (mounted) {
-      SnackbarUtils.showSuccess(context, 'Profile updated successfully');
     }
   }
 

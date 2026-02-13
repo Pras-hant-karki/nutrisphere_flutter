@@ -30,6 +30,8 @@ class AuthApiModel {
       'email': email,
       'password': password,
       if (confirmPassword != null) 'confirmPassword': confirmPassword,
+      if (phone != null) 'phone': phone,
+      if (profilePicture != null) 'profilePicture': profilePicture,
     };
   }
 

@@ -170,7 +170,15 @@ class HiveService {
   }
 
   Future<void> saveAllSessions(List<SessionHiveModel> sessions) async {
-    final map = {for (var s in sessions) '${s.day}_${s.sessionName}': s};
+    // Clear old entries first, then save all current sessions
+    await _sessionBox.clear();
+    final map = <String, SessionHiveModel>{};
+    for (int i = 0; i < sessions.length; i++) {
+      // Use index in key to avoid collisions between same-day/same-name sessions
+      final s = sessions[i];
+      map['${i}_${s.day}_${s.sessionName}'] = s;
+    }
     await _sessionBox.putAll(map);
+    print('[HiveService] Saved ${sessions.length} sessions to Hive');
   }
 }

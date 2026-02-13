@@ -27,7 +27,9 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
     final isLoggedIn = userSessionService.isLoggedIn();
 
     if (isLoggedIn) {
-      Navigator.pushReplacementNamed(context, AppRoutes.dashboard);
+      final session = await userSessionService.getSession();
+      final route = session?.role == 'admin' ? AppRoutes.adminBottomNavigation : AppRoutes.dashboard;
+      Navigator.pushReplacementNamed(context, route);
     } else {
       Navigator.pushReplacementNamed(context, AppRoutes.onboarding);
     }
