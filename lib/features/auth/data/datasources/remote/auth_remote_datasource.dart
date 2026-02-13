@@ -312,8 +312,25 @@ Future<AuthApiModel> register({
   // }
 
   @override
-  Future<bool> isEmailExists(String email) {
-    // TODO: implement isEmailExists
-    throw UnimplementedError();
+  Future<AuthApiModel> updateUser(AuthApiModel user) async {
+    final token = _tokenService.getToken();
+    if (token == null) {
+      throw Exception("Token not found. Please login again.");
+    }
+
+    final response = await _apiClient.put(
+      ApiEndpoints.updateProfile(user.authId!),
+      data: user.toJson(),
+      options: Options(headers: {'Authorization': 'Bearer $token'}),
+    );
+
+    return AuthApiModel.fromJson(response.data['data']);
+  }
+
+  @override
+  Future<bool> isEmailExists(String email) async {
+    // TODO: Implement email existence check
+    // This is a stub implementation
+    return false;
   }
 }

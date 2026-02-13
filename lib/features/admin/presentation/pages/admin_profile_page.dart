@@ -8,6 +8,7 @@ import 'package:nutrisphere_flutter/core/services/storage/user_session_service.d
 import 'package:nutrisphere_flutter/core/services/storage/token_service.dart';
 import 'package:nutrisphere_flutter/core/utils/snackbar_utils.dart';
 import 'package:nutrisphere_flutter/features/profile/domain/usecases/upload_profile_picture_usecase.dart';
+import 'package:nutrisphere_flutter/features/auth/domain/usecases/update_user_usecase.dart';
 import 'package:permission_handler/permission_handler.dart';
 
 class AdminProfilePage extends ConsumerStatefulWidget {
@@ -246,9 +247,40 @@ class _AdminProfilePageState extends ConsumerState<AdminProfilePage> {
       );
     }
 
-    // TODO: Save other profile data (name, email, phone) to backend
-    if (mounted) {
-      SnackbarUtils.showSuccess(context, 'Profile updated successfully');
+    // Update profile data (name, phone) to backend
+    final userSession = ref.read(userSessionServiceProvider);
+    final session = await userSession.getSession();
+    if (session != null) {
+      final updatedUser = session.copyWith(
+        fullName: _nameCtrl.text.trim(),
+        phone: _phoneCtrl.text.trim().isNotEmpty ? _phoneCtrl.text.trim() : null,
+        profilePicture: _profileImageUrl,
+      );
+
+      final updateResult = await ref.read(updateUserUseCaseProvider)(
+        UpdateUserUsecaseParams(user: updatedUser.toEntity())
+      );
+      updateResult.fold(
+        (failure) {
+          if (mounted) {
+            SnackbarUtils.showError(context, 'Failed to update profile: ${failure.message}');
+          }
+        },
+        (updatedEntity) async {
+          // Update session with new data
+          await userSession.saveSession(
+            userId: updatedEntity.authId!,
+            email: updatedEntity.email,
+            fullName: updatedEntity.fullName,
+            role: session.role,
+            phone: updatedEntity.phone,
+            profilePicture: updatedEntity.profilePicture,
+          );
+          if (mounted) {
+            SnackbarUtils.showSuccess(context, 'Profile updated successfully');
+          }
+        },
+      );
     }
   }
 

@@ -205,15 +205,43 @@ Future<Either<Failure, bool>> register(AuthEntity user) async {
   
   @override
   Future<Either<Failure, void>> logout() async {
-    try{
-      final result = await _authDatasource.logout();
-      if (result){
-        return Right(null);
-      }
-      return Left(LocaldatabaseFailure(message: "Logout failed"));
+    try {
+      await _authDatasource.logout();
+      return const Right(null);
     } catch (e) {
       return Left(LocaldatabaseFailure(message: e.toString()));
     }
-    
+  }
+
+  @override
+  Future<Either<Failure, AuthEntity>> updateUser(AuthEntity user) async {
+    if (await _networkInfo.isConnected) {
+      try {
+        final apiModel = AuthApiModel(
+          authId: user.authId,
+          fullName: user.fullName,
+          email: user.email,
+          phone: user.phone,
+          profilePicture: user.profilePicture,
+        );
+
+        final updatedUser = await _authRemoteDatasource.updateUser(apiModel);
+
+        // Also update local storage
+        final hiveModel = AuthHiveModel(
+          fullName: updatedUser.fullName,
+          email: updatedUser.email,
+          phone: updatedUser.phone,
+          profilePicture: updatedUser.profilePicture, password: '',
+        );
+        await _authDatasource.updateUser(hiveModel);
+
+        return Right(updatedUser.toEntity());
+      } catch (e) {
+        return Left(ApiFailure(message: e.toString()));
+      }
+    } else {
+      return const Left(NetworkFailure(message: 'No internet connection'));
+    }
   }
 }

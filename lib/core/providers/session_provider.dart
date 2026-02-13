@@ -1,4 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:nutrisphere_flutter/core/models/session_hive_model.dart';
+import 'package:nutrisphere_flutter/core/services/hive/hive_service.dart';
 
 class Session {
   String day;
@@ -78,29 +80,42 @@ const List<String> daysOfWeek = [
 class SessionNotifier extends Notifier<List<Session>> {
   @override
   List<Session> build() {
-    return [];
+    // Load sessions from Hive on initialization
+    final hiveService = ref.read(hiveServiceProvider);
+    final hiveSessions = hiveService.getAllSessions();
+    return hiveSessions.map((s) => s.toSession()).toList();
   }
 
   void addSession(Session session) {
     state = [...state, session];
+    _saveToHive();
   }
 
   void updateSession(int index, Session session) {
     final newState = List<Session>.from(state);
     newState[index] = session;
     state = newState;
+    _saveToHive();
   }
 
   void deleteSession(int index) {
     final newState = List<Session>.from(state);
     newState.removeAt(index);
     state = newState;
+    _saveToHive();
   }
 
   void toggleSession(int index) {
     final newState = List<Session>.from(state);
     newState[index] = newState[index].copyWith(isActive: !newState[index].isActive);
     state = newState;
+    _saveToHive();
+  }
+
+  void _saveToHive() {
+    final hiveService = ref.read(hiveServiceProvider);
+    final hiveSessions = state.map((s) => SessionHiveModel.fromSession(s)).toList();
+    hiveService.saveAllSessions(hiveSessions);
   }
 
   /// Get all sessions grouped by day (for admin — shows all including inactive)

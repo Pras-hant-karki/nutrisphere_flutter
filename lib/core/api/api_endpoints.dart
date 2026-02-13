@@ -34,6 +34,7 @@ class ApiEndpoints {
   static const String me = '/api/auth/me';
   static const String uploadImage = '/api/auth/upload-profile-picture';
   static const String uploadProfilePicture = '/api/auth/profile-picture';
+  static String updateProfile(String id) => '/api/auth/$id';
 
   // ============ Fitness Endpoints ============
   static const String fitness = '/api/fitness';

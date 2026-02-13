@@ -20,7 +20,7 @@ class FitnessHiveModelAdapter extends TypeAdapter<FitnessHiveModel> {
       fitnessId: fields[0] as String?,
       title: fields[1] as String,
       description: fields[2] as String?,
-      category: fields[3] as String,
+      category: fields[3] as String?,
       media: fields[4] as String?,
       mediaType: fields[5] as String?,
       createdBy: fields[6] as String?,

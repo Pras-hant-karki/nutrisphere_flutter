@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:nutrisphere_flutter/features/auth/domain/entities/auth_entity.dart';
 
 // SharedPreferences provider (override in main.dart)
 final sharedPreferencesProvider = Provider<SharedPreferences>((ref) {
@@ -29,6 +30,35 @@ class UserSession {
     this.phone,
     this.profilePicture,
   });
+
+  UserSession copyWith({
+    String? userId,
+    String? email,
+    String? fullName,
+    String? role,
+    String? phone,
+    String? profilePicture,
+  }) {
+    return UserSession(
+      userId: userId ?? this.userId,
+      email: email ?? this.email,
+      fullName: fullName ?? this.fullName,
+      role: role ?? this.role,
+      phone: phone ?? this.phone,
+      profilePicture: profilePicture ?? this.profilePicture,
+    );
+  }
+
+  AuthEntity toEntity() {
+    return AuthEntity(
+      authId: userId,
+      fullName: fullName,
+      email: email,
+      password: '', // Password not stored in session service
+      phone: phone,
+      profilePicture: profilePicture,
+    );
+  }
 }
 
 class UserSessionService {
