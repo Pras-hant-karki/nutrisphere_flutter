@@ -162,32 +162,72 @@ class SessionViewScreen extends ConsumerWidget {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                // Session name
                 Text(
-                  'Location: ${session.location}',
+                  session.sessionName,
                   style: const TextStyle(
                     color: AppColors.textPrimary,
-                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 18,
                   ),
                 ),
                 const SizedBox(height: 12),
-                Text(
-                  '${session.workoutTitle}  (${session.timeRange})',
-                  style: const TextStyle(
-                    color: AppColors.textPrimary,
-                    fontWeight: FontWeight.w600,
-                    fontSize: 14,
+                // Day
+                _detailRow(Icons.calendar_today, 'Day', session.day),
+                const SizedBox(height: 8),
+                // Time
+                _detailRow(Icons.access_time, 'Time', session.timeRange),
+                const SizedBox(height: 8),
+                // Location
+                if (session.location.isNotEmpty)
+                  _detailRow(Icons.location_on, 'Location', session.location),
+                if (session.location.isNotEmpty) const SizedBox(height: 8),
+                // Workout title
+                if (session.workoutTitle.isNotEmpty)
+                  _detailRow(Icons.fitness_center, 'Workout', session.workoutTitle),
+                // Exercises
+                if (session.exercises.isNotEmpty) ...[
+                  const SizedBox(height: 14),
+                  const Text(
+                    'Exercises',
+                    style: TextStyle(
+                      color: AppColors.textSecondary,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 13,
+                    ),
                   ),
-                ),
-                const SizedBox(height: 12),
-                ...session.exercises.map(
-                  (e) => Padding(
-                    padding: const EdgeInsets.only(bottom: 4),
-                    child: Text(
-                      e,
-                      style: const TextStyle(
-                        color: AppColors.textPrimary,
-                        fontSize: 13,
+                  const SizedBox(height: 6),
+                  ...session.exercises.map(
+                    (e) => Padding(
+                      padding: const EdgeInsets.only(bottom: 4),
+                      child: Row(
+                        children: [
+                          const Text('•  ',
+                              style: TextStyle(
+                                  color: AppColors.primary, fontSize: 14)),
+                          Expanded(
+                            child: Text(
+                              e,
+                              style: const TextStyle(
+                                color: AppColors.textPrimary,
+                                fontSize: 13,
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
+                    ),
+                  ),
+                ],
+                const SizedBox(height: 14),
+                // Close button
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: TextButton(
+                    onPressed: () => Navigator.pop(context),
+                    child: const Text(
+                      'Close',
+                      style: TextStyle(color: AppColors.primary),
                     ),
                   ),
                 ),
@@ -196,6 +236,32 @@ class SessionViewScreen extends ConsumerWidget {
           ),
         ),
       ),
+    );
+  }
+
+  Widget _detailRow(IconData icon, String label, String value) {
+    return Row(
+      children: [
+        Icon(icon, size: 16, color: AppColors.textSecondary),
+        const SizedBox(width: 8),
+        Text(
+          '$label: ',
+          style: const TextStyle(
+            color: AppColors.textSecondary,
+            fontSize: 13,
+          ),
+        ),
+        Expanded(
+          child: Text(
+            value,
+            style: const TextStyle(
+              color: AppColors.textPrimary,
+              fontWeight: FontWeight.w500,
+              fontSize: 13,
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

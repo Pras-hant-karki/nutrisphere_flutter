@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:nutrisphere_flutter/features/admin/presentation/pages/admin_appointment_page.dart';
+import 'package:nutrisphere_flutter/features/admin/presentation/pages/admin_fitness_guide_page.dart';
 import 'package:nutrisphere_flutter/features/admin/presentation/pages/admin_home_page.dart';
 import 'package:nutrisphere_flutter/features/admin/presentation/pages/admin_profile_page.dart';
 import 'package:nutrisphere_flutter/app/theme/app_colors.dart';
@@ -18,6 +19,7 @@ class _AdminBottomNavigationPageState extends State<AdminBottomNavigationPage> {
   final List<Widget> lstBottomScreen = const [
     AdminHomePage(),
     AdminAppointmentPage(),
+    AdminFitnessGuidePage(),
     AdminProfilePage(),
   ];
 
@@ -59,6 +61,10 @@ class _AdminBottomNavigationPageState extends State<AdminBottomNavigationPage> {
           BottomNavigationBarItem(
             icon: Icon(Icons.calendar_month),
             label: "Appointments",
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.fitness_center),
+            label: "Fitness",
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.person),

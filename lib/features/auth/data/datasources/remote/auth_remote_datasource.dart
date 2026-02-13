@@ -81,6 +81,16 @@ class AuthRemoteDatasource implements IAuthRemoteDatasource {
           throw Exception("Login failed: token missing");
         }
 
+        // Save user session with full data from backend
+        await _userSessionService.saveSession(
+          userId: loggedInUser.authId ?? userData['_id']?.toString() ?? '',
+          email: loggedInUser.email,
+          fullName: loggedInUser.fullName,
+          role: loggedInUser.role,
+          phone: loggedInUser.phone,
+          profilePicture: loggedInUser.profilePicture,
+        );
+
         return loggedInUser;
       }
 
@@ -126,12 +136,14 @@ Future<AuthApiModel> register({
   required String email,
   required String password,
   required String name,
+  required String confirmPassword,
 }) async {
   try {
     final authModel = AuthApiModel(
       fullName: name,
       email: email,
       password: password,
+      confirmPassword: confirmPassword,
     );
 
     final response = await _apiClient.post(

@@ -8,6 +8,11 @@ import 'package:nutrisphere_flutter/core/utils/snackbar_utils.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:nutrisphere_flutter/features/fitness/domain/usecases/upload_photo_usecase.dart';
 import 'package:nutrisphere_flutter/features/fitness/domain/usecases/upload_video_usecase.dart';
+import 'package:nutrisphere_flutter/features/fitness/domain/usecases/create_fitness_usecase.dart';
+import 'package:nutrisphere_flutter/features/fitness/domain/usecases/update_fitness_usecase.dart';
+import 'package:nutrisphere_flutter/features/fitness/domain/usecases/delete_fitness_usecase.dart';
+import 'package:nutrisphere_flutter/features/fitness/domain/entities/fitness_entity.dart';
+import 'package:nutrisphere_flutter/features/fitness/presentation/providers/fitness_content_provider.dart';
 
 class AdminFitnessGuidePage extends ConsumerStatefulWidget {
   const AdminFitnessGuidePage({super.key});
@@ -18,9 +23,28 @@ class AdminFitnessGuidePage extends ConsumerStatefulWidget {
 
 class _AdminFitnessGuidePageState extends ConsumerState<AdminFitnessGuidePage> {
 
-  XFile? _pendingMedia; // Media being previewed before confirmation
-  final List<XFile> _confirmedMedia = []; // List of confirmed photos to display
   final ImagePicker _imagePicker = ImagePicker();
+
+  // Form controllers for creating/editing fitness content
+  final _formKey = GlobalKey<FormState>();
+  final _titleController = TextEditingController();
+  final _descriptionController = TextEditingController();
+  final _durationController = TextEditingController();
+  String _selectedCategory = 'cardio';
+  bool _isCreating = false;
+  FitnessEntity? _editingFitness; // For edit mode
+
+  final List<String> _categories = [
+    'cardio',
+    'strength',
+    'yoga',
+    'flexibility',
+    'hiit',
+    'pilates',
+    'meditation',
+    'nutrition',
+    'other'
+  ];
 
   Future<bool> _askPermissionWithUser(Permission permission) async {
     final status = await permission.status;
@@ -70,11 +94,6 @@ class _AdminFitnessGuidePageState extends ConsumerState<AdminFitnessGuidePage> {
     }
   }
 
-  // Media selection
-  final List<XFile> _selectedMedia = []; // images or video
-  // final ImagePicker _imagePicker = ImagePicker();
-  String? _selectedMediaType; // 'image' or 'video'
-
   void _showPermissionDeniedDialog() {
     showDialog(
       context: context, 
@@ -100,208 +119,437 @@ class _AdminFitnessGuidePageState extends ConsumerState<AdminFitnessGuidePage> {
     );
   }
 
-  void _showDeleteConfirmationDialog(int index) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text("Delete Photo"),
-        content: Text("Are you sure you want to delete this photo?"),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text("Cancel"),
-          ),
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-              setState(() {
-                _confirmedMedia.removeAt(index);
-              });
-            },
-            child: Text("Delete", style: TextStyle(color: Colors.red)),
-          ),
-        ],
-      ),
-    );
+  @override
+  void dispose() {
+    _titleController.dispose();
+    _descriptionController.dispose();
+    _durationController.dispose();
+    super.dispose();
   }
 
-  // camera code
-  Future<void> _clickFromCamera() async{
-    final hasPermission = await _askPermissionWithUser(Permission.camera);
-    if(!hasPermission) return;
+  void _resetForm() {
+    _titleController.clear();
+    _descriptionController.clear();
+    _durationController.clear();
+    _selectedCategory = 'cardio';
+    _editingFitness = null;
+  }
 
-    final XFile? photo = await _imagePicker.pickImage(
-      source: ImageSource.camera,
-      imageQuality: 80,
-    );
-    if (photo != null) {
-      setState(() {
-        _selectedMedia.clear();
-        _selectedMedia.add(photo);
-        _selectedMediaType = 'photo';
-        _pendingMedia = photo;
-      });
-      // Upload photo to server using fitness upload usecase
-      final uploadResult = await ref.read(uploadPhotoUsecaseProvider)(File(photo.path));
-      uploadResult.fold(
-        (failure) {
-          if (mounted) SnackbarUtils.showError(context, failure.message);
-        },
-        (url) {
-          if (mounted) SnackbarUtils.showSuccess(context, 'Photo uploaded');
-        },
-      );
+  void _populateFormForEdit(FitnessEntity fitness) {
+    _editingFitness = fitness;
+    _titleController.text = fitness.title ?? '';
+    _descriptionController.text = fitness.description ?? '';
+    _selectedCategory = fitness.category ?? 'cardio';
+    _durationController.text = fitness.duration?.toString() ?? '';
+  }
+
+  // Show form dialog for creating/editing fitness content
+  void _showFitnessContentForm({FitnessEntity? fitness}) {
+    if (fitness != null) {
+      _populateFormForEdit(fitness);
+    } else {
+      _resetForm();
     }
-  }
 
-  // gallery code
-  Future<void> _pickFromGallery({bool allowMultiple = false}) async {
-    try {
-      if (allowMultiple) {
-        final List<XFile> images = await _imagePicker.pickMultiImage(
-          imageQuality: 80,
-        );
+    XFile? selectedMedia; // Local variable for media selection in form
 
-        if (images.isNotEmpty) {
-          setState(() {
-            _selectedMedia.clear();
-            _selectedMedia.addAll(images);
-            _selectedMediaType = 'photo';
-            _pendingMedia = images.first;
-          });
-          // Upload first photo to server using fitness upload usecase
-          final uploadResult = await ref.read(uploadPhotoUsecaseProvider)(File(images.first.path));
-          uploadResult.fold(
-            (failure) {
-              if (mounted) SnackbarUtils.showError(context, failure.message);
-            },
-            (url) {
-              if (mounted) SnackbarUtils.showSuccess(context, 'Photo uploaded');
-            },
-          );
-        }
-      } else {
-        final XFile? image = await _imagePicker.pickImage(
-          source: ImageSource.gallery,
-          imageQuality: 80,
-        );
-
-        if (image != null) {
-          setState(() {
-            _selectedMedia.clear();
-            _selectedMedia.add(image);
-            _selectedMediaType = 'photo';
-          });
-          // Upload photo to server using fitness upload usecase
-          final uploadResult = await ref.read(uploadPhotoUsecaseProvider)(File(image.path));
-          uploadResult.fold(
-            (failure) {
-              if (mounted) SnackbarUtils.showError(context, failure.message);
-            },
-            (url) {
-              if (mounted) SnackbarUtils.showSuccess(context, 'Photo uploaded');
-            },
-          );
-        }
-      }
-    } catch (e) {
-      debugPrint('Gallery Error $e');
-
-      if (mounted) {
-        SnackbarUtils.showError(
-          context,
-          'Unable to access gallery. Please try using the camera instead.',
-        );
-      }
-    }
-  }
-
-  // video code
-  Future<void> _pickFromVideo() async {
-    try{
-      final hasPermission = await _askPermissionWithUser(
-        Permission.camera,
-      );
-      if (!hasPermission) return;
-
-      final hasMicPermission = await _askPermissionWithUser(
-        Permission.microphone,
-      );
-      if (!hasMicPermission) return;
-
-      final XFile? video = await _imagePicker.pickVideo(
-        source: ImageSource.camera,
-        maxDuration: const Duration(minutes: 1),
-      );
-
-      if (video != null) {
-        setState(() {
-          _selectedMedia.clear();
-          _selectedMedia.add(video);
-          _selectedMediaType = 'video';
-        });
-        // Upload video to server using fitness upload video usecase
-        final uploadResult = await ref.read(uploadVideoUsecaseProvider)(File(video.path));
-        uploadResult.fold(
-          (failure) {
-            if (mounted) SnackbarUtils.showError(context, failure.message);
-          },
-          (url) {
-            if (mounted) SnackbarUtils.showSuccess(context, 'Video uploaded');
-          },
-        );
-      }
-    } catch (e) {
-      _showPermissionDeniedDialog();
-    }
-  }
-
-  // code for dialogBox : showDialog for menu
-  Future<void> _pickMedia() async {
     showModalBottomSheet(
-      context: context, 
+      context: context,
+      isScrollControlled: true,
       backgroundColor: context.surfaceColor,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      ),
-      builder: (context) => SafeArea(
-        child: Padding(
-          padding:EdgeInsets.all(20),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              ListTile(
-                leading: Icon(Icons.camera), 
-                title: Text('Open Camera') , 
-                onTap: () {
-                  Navigator.pop(context);
-                  _clickFromCamera();
-                },
+      builder: (context) => StatefulBuilder(
+        builder: (context, setState) => Padding(
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(context).viewInsets.bottom,
+            left: 20,
+            right: 20,
+            top: 20,
+          ),
+          child: SingleChildScrollView(
+            child: Form(
+              key: _formKey,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Header
+                  Row(
+                    children: [
+                      Text(
+                        fitness != null ? 'Edit Fitness Content' : 'Create Fitness Content',
+                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      Spacer(),
+                      IconButton(
+                        onPressed: () => Navigator.pop(context),
+                        icon: Icon(Icons.close),
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: 20),
+
+                  // Title field
+                  TextFormField(
+                    controller: _titleController,
+                    decoration: InputDecoration(
+                      labelText: 'Title *',
+                      hintText: 'Enter fitness content title',
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      filled: true,
+                      fillColor: context.surfaceColor,
+                    ),
+                    validator: (value) {
+                      if (value == null || value.trim().isEmpty) {
+                        return 'Title is required';
+                      }
+                      if (value.length < 5) {
+                        return 'Title must be at least 5 characters';
+                      }
+                      if (value.length > 100) {
+                        return 'Title must not exceed 100 characters';
+                      }
+                      return null;
+                    },
+                  ),
+                  SizedBox(height: 16),
+
+                  // Description field
+                  TextFormField(
+                    controller: _descriptionController,
+                    maxLines: 3,
+                    decoration: InputDecoration(
+                      labelText: 'Description *',
+                      hintText: 'Enter detailed description',
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      filled: true,
+                      fillColor: context.surfaceColor,
+                    ),
+                    validator: (value) {
+                      if (value == null || value.trim().isEmpty) {
+                        return 'Description is required';
+                      }
+                      if (value.length < 10) {
+                        return 'Description must be at least 10 characters';
+                      }
+                      if (value.length > 500) {
+                        return 'Description must not exceed 500 characters';
+                      }
+                      return null;
+                    },
+                  ),
+                  SizedBox(height: 16),
+
+                  // Category dropdown
+                  DropdownButtonFormField<String>(
+                    value: _selectedCategory,
+                    decoration: InputDecoration(
+                      labelText: 'Category',
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      filled: true,
+                      fillColor: context.surfaceColor,
+                    ),
+                    items: _categories.map((category) {
+                      return DropdownMenuItem(
+                        value: category,
+                        child: Text(category.toUpperCase()),
+                      );
+                    }).toList(),
+                    onChanged: (value) {
+                      setState(() {
+                        _selectedCategory = value!;
+                      });
+                    },
+                  ),
+                  SizedBox(height: 16),
+
+                  // Duration field
+                  TextFormField(
+                    controller: _durationController,
+                    keyboardType: TextInputType.number,
+                    decoration: InputDecoration(
+                      labelText: 'Duration (minutes)',
+                      hintText: 'Optional duration in minutes',
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      filled: true,
+                      fillColor: context.surfaceColor,
+                    ),
+                    validator: (value) {
+                      if (value != null && value.isNotEmpty) {
+                        final duration = int.tryParse(value);
+                        if (duration == null || duration <= 0) {
+                          return 'Duration must be a positive number';
+                        }
+                      }
+                      return null;
+                    },
+                  ),
+                  SizedBox(height: 20),
+
+                  // Media selection (if not editing or if editing without media)
+                  if (selectedMedia == null && (fitness == null || fitness.media == null))
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Media (Optional)',
+                          style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        SizedBox(height: 8),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: OutlinedButton.icon(
+                                onPressed: () async {
+                                  final image = await _imagePicker.pickImage(
+                                    source: ImageSource.gallery,
+                                    imageQuality: 80,
+                                  );
+                                  if (image != null) {
+                                    setState(() {
+                                      selectedMedia = image;
+                                    });
+                                  }
+                                },
+                                icon: Icon(Icons.image),
+                                label: Text('Pick Image'),
+                                style: OutlinedButton.styleFrom(
+                                  padding: EdgeInsets.symmetric(vertical: 12),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                ),
+                              ),
+                            ),
+                            SizedBox(width: 12),
+                            Expanded(
+                              child: OutlinedButton.icon(
+                                onPressed: () async {
+                                  final hasPermission = await _askPermissionWithUser(Permission.camera);
+                                  if (!hasPermission) return;
+
+                                  final video = await _imagePicker.pickVideo(
+                                    source: ImageSource.camera,
+                                    maxDuration: Duration(minutes: 1),
+                                  );
+                                  if (video != null) {
+                                    setState(() {
+                                      selectedMedia = video;
+                                    });
+                                  }
+                                },
+                                icon: Icon(Icons.videocam),
+                                label: Text('Record Video'),
+                                style: OutlinedButton.styleFrom(
+                                  padding: EdgeInsets.symmetric(vertical: 12),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+
+                  // Media preview
+                  if (selectedMedia != null)
+                    Column(
+                      children: [
+                        SizedBox(height: 16),
+                        Container(
+                          height: 150,
+                          width: double.infinity,
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(12),
+                            image: DecorationImage(
+                              image: FileImage(File(selectedMedia!.path)),
+                              fit: BoxFit.cover,
+                            ),
+                          ),
+                        ),
+                        SizedBox(height: 8),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            TextButton(
+                              onPressed: () {
+                                setState(() {
+                                  selectedMedia = null;
+                                });
+                              },
+                              child: Text('Remove Media'),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+
+                  SizedBox(height: 24),
+
+                  // Action buttons
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton(
+                          onPressed: () => Navigator.pop(context),
+                          style: OutlinedButton.styleFrom(
+                            padding: EdgeInsets.symmetric(vertical: 14),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          child: Text('Cancel'),
+                        ),
+                      ),
+                      SizedBox(width: 12),
+                      Expanded(
+                        child: ElevatedButton(
+                          onPressed: _isCreating ? null : () => _saveFitnessContent(context, selectedMedia),
+                          style: ElevatedButton.styleFrom(
+                            padding: EdgeInsets.symmetric(vertical: 14),
+                            backgroundColor: AppColors.primary,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          child: _isCreating
+                              ? SizedBox(
+                                  width: 20,
+                                  height: 20,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: Colors.white,
+                                  ),
+                                )
+                              : Text(fitness != null ? 'Update' : 'Create'),
+                        ),
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: 20),
+                ],
               ),
-              ListTile(
-                leading: Icon(Icons.browse_gallery), 
-                title: Text('Open Gallery') ,
-                onTap: () {
-                  Navigator.pop(context);
-                  _pickFromGallery();
-                },
-              ),
-              ListTile(
-                leading: Icon(Icons.video_camera_back), 
-                title: Text('Record Video') , 
-                onTap: () {
-                  Navigator.pop(context);
-                  _pickFromVideo();
-                },
-              ),
-            ],
+            ),
           ),
         ),
       ),
     );
   }
 
+  // Save fitness content (create or update)
+  Future<void> _saveFitnessContent(BuildContext context, XFile? selectedMedia) async {
+    if (!_formKey.currentState!.validate()) return;
+
+    setState(() => _isCreating = true);
+
+    try {
+      String? mediaUrl;
+      String? mediaType;
+
+      // Upload media if selected
+      if (selectedMedia != null) {
+        final file = File(selectedMedia.path);
+        if (selectedMedia.path.toLowerCase().endsWith('.mp4') ||
+            selectedMedia.path.toLowerCase().endsWith('.mov') ||
+            selectedMedia.path.toLowerCase().endsWith('.avi')) {
+          // Upload video
+          final result = await ref.read(uploadVideoUsecaseProvider)(file);
+          result.fold(
+            (failure) => throw Exception('Video upload failed: ${failure.message}'),
+            (url) {
+              mediaUrl = url;
+              mediaType = 'video';
+            },
+          );
+        } else {
+          // Upload image
+          final result = await ref.read(uploadPhotoUsecaseProvider)(file);
+          result.fold(
+            (failure) => throw Exception('Image upload failed: ${failure.message}'),
+            (url) {
+              mediaUrl = url;
+              mediaType = 'image';
+            },
+          );
+        }
+      }
+
+      final params = CreateFitnessParams(
+        fitnessId: _editingFitness?.fitnessId,
+        title: _titleController.text.trim(),
+        description: _descriptionController.text.trim(),
+        category: _selectedCategory,
+        media: mediaUrl ?? _editingFitness?.media,
+        mediaType: mediaType ?? _editingFitness?.mediaType,
+        duration: _durationController.text.isNotEmpty
+            ? int.tryParse(_durationController.text)
+            : null,
+      );
+
+      if (_editingFitness != null) {
+        // Update existing content
+        final updateParams = UpdateFitnessParams(
+          fitnessId: _editingFitness!.fitnessId!,
+          title: _titleController.text.trim(),
+          description: _descriptionController.text.trim(),
+          category: _selectedCategory,
+          location: '', 
+          media: mediaUrl ?? _editingFitness?.media,
+          mediaType: mediaType ?? _editingFitness?.mediaType,
+        );
+        final result = await ref.read(updateFitnessUsecaseProvider)(updateParams);
+        result.fold(
+          (failure) => throw Exception('Update failed: ${failure.message}'),
+          (_) {
+            if (mounted) {
+              SnackbarUtils.showSuccess(context, 'Fitness content updated successfully');
+              Navigator.pop(context);
+              // Refresh the content list
+              ref.invalidate(fitnessContentProvider);
+            }
+          },
+        );
+      } else {
+        // Create new content
+        final result = await ref.read(createFitnessUsecaseProvider)(params);
+        result.fold(
+          (failure) => throw Exception('Creation failed: ${failure.message}'),
+          (success) {
+            if (mounted) {
+              SnackbarUtils.showSuccess(context, 'Fitness content created successfully');
+              Navigator.pop(context);
+              // Refresh the content list
+              ref.invalidate(fitnessContentProvider);
+            }
+          },
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        SnackbarUtils.showError(context, e.toString());
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isCreating = false);
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -329,103 +577,73 @@ class _AdminFitnessGuidePageState extends ConsumerState<AdminFitnessGuidePage> {
                   ),
                 ),
 
-                if (_pendingMedia != null) ...[
-                  Column(
-                    children: [
-                      // Preview for pending media
-                      Stack(
-                        children: [
-                          Container(
-                            width: 200,
-                            height: 200,
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(20),
-                              image: DecorationImage(
-                                image: FileImage(File(_pendingMedia!.path)),
-                                fit: BoxFit.cover,
-                              ),
-                            ),
-                          ),
-                          Positioned(
-                            top: 4,
-                            right: 4,
-                            child: GestureDetector(
-                              onTap: () {
-                                setState(() {
-                                  _pendingMedia = null;
-                                });
-                              },
-                              child: const CircleAvatar(
-                                radius: 12,
-                                backgroundColor: Colors.red,
-                                child: Icon(Icons.close, size: 14, color: Colors.white),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-
-                      const SizedBox(height: 12),
-
-                      // Confirm / Cancel buttons
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          TextButton(
-                            onPressed: () {
-                              setState(() {
-                                _pendingMedia = null;
-                              });
-                            },
-                            child: const Text("Cancel"),
-                          ),
-                          const SizedBox(width: 16),
-                          ElevatedButton(
-                            onPressed: () {
-                              setState(() {
-                                _confirmedMedia.add(_pendingMedia!);
-                                _pendingMedia = null;
-                              });
-                            },
-                            child: const Text("Confirm"),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ],
-
-
                 // scrollable content
                 Expanded(
-                  child: SingleChildScrollView(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const SizedBox(height: 20),
+                  child: Consumer(
+                    builder: (context, ref, child) {
+                      final fitnessState = ref.watch(fitnessContentProvider);
 
-                        // Show all confirmed media
-                        ..._confirmedMedia.asMap().entries.map((entry) {
-                          int index = entry.key;
-                          XFile media = entry.value;
-                          return Column(
+                      return fitnessState.when(
+                        loading: () => Center(
+                          child: CircularProgressIndicator(color: AppColors.primary),
+                        ),
+                        error: (error, stack) => Center(
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
                             children: [
-                              _imagePreviewCardWithDelete(File(media.path), index),
-                              const SizedBox(height: 20),
+                              Icon(Icons.error_outline, color: AppColors.error, size: 48),
+                              SizedBox(height: 12),
+                              Text(
+                                'Failed to load fitness content',
+                                style: textTheme.bodyMedium?.copyWith(color: AppColors.textSecondary),
+                              ),
+                              SizedBox(height: 12),
+                              ElevatedButton(
+                                onPressed: () => ref.invalidate(fitnessContentProvider),
+                                child: Text('Retry'),
+                              ),
                             ],
-                          );
-                        }).toList(),
+                          ),
+                        ),
+                        data: (fitnessList) {
+                          if (fitnessList.isEmpty) {
+                            return Center(
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    Icons.fitness_center,
+                                    size: 64,
+                                    color: AppColors.textMuted.withOpacity(0.5),
+                                  ),
+                                  SizedBox(height: 16),
+                                  Text(
+                                    'No fitness content yet.\nTap the + button to create your first content.',
+                                    textAlign: TextAlign.center,
+                                    style: textTheme.bodyMedium?.copyWith(color: AppColors.textMuted),
+                                  ),
+                                ],
+                              ),
+                            );
+                          }
 
-                        const SizedBox(height: 120), // space for floating +
-                      ],
-                    ),
+                          return ListView.builder(
+                            padding: EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+                            itemCount: fitnessList.length,
+                            itemBuilder: (context, index) {
+                              final fitness = fitnessList[index];
+                              return _buildFitnessContentCard(fitness);
+                            },
+                          );
+                        },
+                      );
+                    },
                   ),
                 ),
               ],
             ),
 
-            /// FLOATING + BUTTON (ADMIN POST)
+            /// FLOATING + BUTTON (ADMIN CREATE FITNESS CONTENT)
             Positioned(
               bottom: 16,
               left: 0,
@@ -433,13 +651,13 @@ class _AdminFitnessGuidePageState extends ConsumerState<AdminFitnessGuidePage> {
               child: Center(
                 child: GestureDetector(
                   onTap: () {
-                    _pickMedia();
+                    _showFitnessContentForm();
                   },
                   child: Container(
                     height: 64,
                     width: 64,
                     decoration: BoxDecoration(
-                      color: Colors.green,
+                      color: AppColors.gold,
                       shape: BoxShape.circle,
                       boxShadow: [
                         BoxShadow(
@@ -464,73 +682,180 @@ class _AdminFitnessGuidePageState extends ConsumerState<AdminFitnessGuidePage> {
     );
   }
 
-  // image card
-  Widget _imageCard({required String imagePath}) {
+  // Build fitness content card with edit/delete options
+  Widget _buildFitnessContentCard(FitnessEntity fitness) {
     return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(12),
+      margin: EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.cardBackground,
         borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: AppColors.gold, width: 1.5),
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.shade300,
+            color: Colors.black.withOpacity(0.35),
             blurRadius: 8,
-            offset: const Offset(0, 2),
+            offset: Offset(0, 2),
           ),
         ],
       ),
-      child: Image.asset(
-        imagePath,
-        fit: BoxFit.contain,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Media (if available)
+          if (fitness.media != null && fitness.media!.isNotEmpty)
+            Container(
+              height: 200,
+              width: double.infinity,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.vertical(top: Radius.circular(14)),
+                image: DecorationImage(
+                  image: NetworkImage(fitness.media!),
+                  fit: BoxFit.cover,
+                ),
+              ),
+            ),
+
+          // Content
+          Padding(
+            padding: EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Title and category
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        fitness.title,
+                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.textPrimary,
+                        ),
+                      ),
+                    ),
+                    // Category badge
+                    Container(
+                      padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: AppColors.primary.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Text(
+                        (fitness.category ?? 'other').toUpperCase(),
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: AppColors.primary,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+
+                SizedBox(height: 8),
+
+                // Description
+                if (fitness.description != null && fitness.description!.isNotEmpty)
+                  Text(
+                    fitness.description!,
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: AppColors.textSecondary,
+                      height: 1.5,
+                    ),
+                  ),
+
+                SizedBox(height: 12),
+
+                // Duration (if available)
+                if (fitness.duration != null && fitness.duration! > 0)
+                  Row(
+                    children: [
+                      Icon(Icons.timer, size: 16, color: AppColors.textMuted),
+                      SizedBox(width: 4),
+                      Text(
+                        '${fitness.duration} min',
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: AppColors.textMuted,
+                        ),
+                      ),
+                    ],
+                  ),
+
+                SizedBox(height: 16),
+
+                // Action buttons
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    TextButton.icon(
+                      onPressed: () => _showFitnessContentForm(fitness: fitness),
+                      icon: Icon(Icons.edit, size: 18),
+                      label: Text('Edit'),
+                      style: TextButton.styleFrom(
+                        foregroundColor: AppColors.primary,
+                      ),
+                    ),
+                    SizedBox(width: 8),
+                    TextButton.icon(
+                      onPressed: () => _showDeleteConfirmation(fitness),
+                      icon: Icon(Icons.delete, size: 18),
+                      label: Text('Delete'),
+                      style: TextButton.styleFrom(
+                        foregroundColor: AppColors.error,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
 
-Widget _imagePreviewCardWithDelete(File file, int index) {
-  return Stack(
-    children: [
-      Container(
-        width: double.infinity,
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(14),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.grey.shade300,
-              blurRadius: 8,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        child: Image.file(
-          file,
-          fit: BoxFit.contain,
-        ),
-      ),
-      Positioned(
-        top: 16,
-        right: 16,
-        child: GestureDetector(
-          onTap: () {
-            _showDeleteConfirmationDialog(index);
-          },
-          child: Container(
-            decoration: const BoxDecoration(
-              color: Colors.red,
-              shape: BoxShape.circle,
-            ),
-            padding: const EdgeInsets.all(8),
-            child: const Icon(
-              Icons.delete,
-              color: Colors.white,
-              size: 20,
-            ),
+  // Show delete confirmation for fitness content
+  void _showDeleteConfirmation(FitnessEntity fitness) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Delete Fitness Content'),
+        content: Text('Are you sure you want to delete "${fitness.title}"? This action cannot be undone.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text('Cancel'),
           ),
-        ),
+          TextButton(
+            onPressed: () => _deleteFitnessContent(fitness),
+            style: TextButton.styleFrom(foregroundColor: AppColors.error),
+            child: Text('Delete'),
+          ),
+        ],
       ),
-    ],
-  );
-}
+    );
+  }
+
+  // Delete fitness content
+  Future<void> _deleteFitnessContent(FitnessEntity fitness) async {
+    Navigator.pop(context); // Close confirmation dialog
+
+    try {
+      final result = await ref.read(deleteFitnessUsecaseProvider)(
+        DeleteFitnessParams(fitnessId: fitness.fitnessId!)
+      );
+      result.fold(
+        (failure) {
+          if (mounted) SnackbarUtils.showError(context, 'Delete failed: ${failure.message}');
+        },
+        (_) {
+          if (mounted) {
+            SnackbarUtils.showSuccess(context, 'Fitness content deleted successfully');
+            ref.invalidate(fitnessContentProvider);
+          }
+        },
+      );
+    } catch (e) {
+      if (mounted) SnackbarUtils.showError(context, 'Delete failed: $e');
+    }
+  }
 }

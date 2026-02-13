@@ -37,7 +37,7 @@ void main() {
       expect(find.byType(Scaffold), findsOneWidget);
     });
 
-    testWidgets('FitnessGuideScreen is ConsumerStatefulWidget', 
+    testWidgets('FitnessGuideScreen is StatelessWidget', 
         (WidgetTester tester) async {
       // Arrange
       await tester.pumpWidget(
@@ -92,7 +92,7 @@ void main() {
       expect(find.byType(FitnessGuideScreen), findsOneWidget);
     });
 
-    testWidgets('FitnessGuideScreen has media list area', 
+    testWidgets('FitnessGuideScreen displays loading state initially',
         (WidgetTester tester) async {
       // Arrange
       await tester.pumpWidget(
@@ -102,13 +102,13 @@ void main() {
           ),
         ),
       );
-      await tester.pumpAndSettle();
+      await tester.pump();
 
-      // Act & Assert
-      expect(find.byType(FitnessGuideScreen), findsOneWidget);
+      // Act & Assert - should show loading indicator
+      expect(find.byType(CircularProgressIndicator), findsOneWidget);
     });
 
-    testWidgets('FitnessGuideScreen initializes with empty media list', 
+    testWidgets('FitnessGuideScreen displays content when loaded',
         (WidgetTester tester) async {
       // Arrange
       await tester.pumpWidget(
@@ -120,8 +120,8 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      // Act & Assert
-      expect(find.byType(FitnessGuideScreen), findsOneWidget);
+      // Act & Assert - should show the title
+      expect(find.text('High quality fitness guidance below !'), findsOneWidget);
     });
 
     testWidgets('FitnessGuideScreen has Container widgets', 

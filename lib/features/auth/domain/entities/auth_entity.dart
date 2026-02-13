@@ -8,6 +8,7 @@ class AuthEntity extends Equatable {
   final String? confirmPassword;
   final String? role;
   final String? phone;
+  final String? profilePicture;
 
   const AuthEntity({
     this.authId,
@@ -17,6 +18,7 @@ class AuthEntity extends Equatable {
     this.confirmPassword,
     this.role,
     this.phone,
+    this.profilePicture,
   });
 
   @override
@@ -28,5 +30,6 @@ class AuthEntity extends Equatable {
         confirmPassword,
         role,
         phone,
+        profilePicture,
       ];
 }

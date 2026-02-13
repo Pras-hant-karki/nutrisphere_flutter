@@ -53,6 +53,7 @@ Future<Either<Failure, bool>> register(AuthEntity user) async {
         email: user.email,
         name: user.fullName,
         password: user.password,
+        confirmPassword: user.confirmPassword ?? '',
       );
 
       // Cache locally (non-fatal if it fails)

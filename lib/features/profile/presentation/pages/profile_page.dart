@@ -45,7 +45,13 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         _nameCtrl.text = session.fullName;
         _emailCtrl.text = session.email;
         _usernameCtrl.text = _getUsernameFromEmail(session.email);
-        _roleCtrl.text = _getRoleLabelFromEmail(session.email);
+        _roleCtrl.text = _capitalize(session.role ?? 'User');
+        _phoneCtrl.text = session.phone ?? '';
+        if (session.profilePicture != null && session.profilePicture!.isNotEmpty) {
+          _profileImageUrl = session.profilePicture!.startsWith('http')
+              ? session.profilePicture!
+              : '${ApiEndpoints.baseUrl}${session.profilePicture!}';
+        }
         _isLoading = false;
       });
     } else {
@@ -65,6 +71,11 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
 
   String _getRoleLabelFromEmail(String email) {
     return email.toLowerCase().contains('admin') ? 'Admin' : 'User';
+  }
+
+  String _capitalize(String s) {
+    if (s.isEmpty) return s;
+    return s[0].toUpperCase() + s.substring(1);
   }
 
   String _getInitials(String fullName) {
@@ -360,8 +371,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               const SizedBox(height: 20),
 
               _profileField("Full name", _nameCtrl),
-              _profileField("Username", _usernameCtrl),
-              _profileField("Email address", _emailCtrl),
+              _profileField("Username", _usernameCtrl, readOnly: true),
+              _profileField("Email address", _emailCtrl, readOnly: true),
               _profileField("Role", _roleCtrl, readOnly: true),
               _profileField("Phone number", _phoneCtrl),
 

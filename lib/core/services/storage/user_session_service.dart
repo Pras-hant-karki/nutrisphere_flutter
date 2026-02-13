@@ -17,11 +17,17 @@ class UserSession {
   final String userId;
   final String email;
   final String fullName;
+  final String? role;
+  final String? phone;
+  final String? profilePicture;
 
   UserSession({
     required this.userId,
     required this.email,
     required this.fullName,
+    this.role,
+    this.phone,
+    this.profilePicture,
   });
 }
 
@@ -32,6 +38,9 @@ class UserSessionService {
   static const _keyUserId = 'user_id';
   static const _keyEmail = 'email';
   static const _keyFullName = 'full_name';
+  static const _keyRole = 'role';
+  static const _keyPhone = 'phone';
+  static const _keyProfilePicture = 'profile_picture';
 
   UserSessionService({required SharedPreferences prefs}) : _prefs = prefs;
 
@@ -40,11 +49,17 @@ class UserSessionService {
     required String userId,
     required String email,
     required String fullName,
+    String? role,
+    String? phone,
+    String? profilePicture,
   }) async {
     await _prefs.setBool(_keyIsLoggedIn, true);
     await _prefs.setString(_keyUserId, userId);
     await _prefs.setString(_keyEmail, email);
     await _prefs.setString(_keyFullName, fullName);
+    if (role != null) await _prefs.setString(_keyRole, role);
+    if (phone != null) await _prefs.setString(_keyPhone, phone);
+    if (profilePicture != null) await _prefs.setString(_keyProfilePicture, profilePicture);
   }
 
   /// Alias for remote datasource (so nothing breaks)
@@ -77,6 +92,9 @@ class UserSessionService {
       userId: userId,
       email: email,
       fullName: fullName,
+      role: _prefs.getString(_keyRole),
+      phone: _prefs.getString(_keyPhone),
+      profilePicture: _prefs.getString(_keyProfilePicture),
     );
   }
 
@@ -86,6 +104,9 @@ class UserSessionService {
     await _prefs.remove(_keyUserId);
     await _prefs.remove(_keyEmail);
     await _prefs.remove(_keyFullName);
+    await _prefs.remove(_keyRole);
+    await _prefs.remove(_keyPhone);
+    await _prefs.remove(_keyProfilePicture);
   }
 
   /// Quick checks
