@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/legacy.dart';
 import 'package:nutrisphere_flutter/features/admin/data/models/bio_entry_model.dart';
 import 'package:nutrisphere_flutter/features/admin/data/services/bio_service.dart';
 
@@ -30,7 +31,10 @@ class BioEntriesNotifier extends StateNotifier<AsyncValue<List<BioEntryModel>>> 
 
   /// Add a text entry locally
   void addTextEntry(String text) {
-    final current = state.valueOrNull ?? [];
+    final current = state.maybeWhen(
+      data: (data) => data,
+      orElse: () => <BioEntryModel>[],
+    );
     state = AsyncValue.data([
       ...current,
       BioEntryModel(type: 'text', content: text),
@@ -39,7 +43,10 @@ class BioEntriesNotifier extends StateNotifier<AsyncValue<List<BioEntryModel>>> 
 
   /// Add an image entry locally (with uploaded URL)
   void addImageEntry(String imageUrl) {
-    final current = state.valueOrNull ?? [];
+    final current = state.maybeWhen(
+      data: (data) => data,
+      orElse: () => <BioEntryModel>[],
+    );
     state = AsyncValue.data([
       ...current,
       BioEntryModel(type: 'image', content: imageUrl),
@@ -48,7 +55,10 @@ class BioEntriesNotifier extends StateNotifier<AsyncValue<List<BioEntryModel>>> 
 
   /// Update a text entry at index
   void updateTextEntry(int index, String text) {
-    final current = state.valueOrNull ?? [];
+    final current = state.maybeWhen(
+      data: (data) => data,
+      orElse: () => <BioEntryModel>[],
+    );
     if (index >= 0 && index < current.length) {
       final updated = List<BioEntryModel>.from(current);
       updated[index] = updated[index].copyWith(content: text);
@@ -58,7 +68,10 @@ class BioEntriesNotifier extends StateNotifier<AsyncValue<List<BioEntryModel>>> 
 
   /// Remove entry at index
   void removeEntry(int index) {
-    final current = state.valueOrNull ?? [];
+    final current = state.maybeWhen(
+      data: (data) => data,
+      orElse: () => <BioEntryModel>[],
+    );
     if (index >= 0 && index < current.length) {
       final updated = List<BioEntryModel>.from(current);
       updated.removeAt(index);
@@ -68,7 +81,10 @@ class BioEntriesNotifier extends StateNotifier<AsyncValue<List<BioEntryModel>>> 
 
   /// Save all entries to backend
   Future<bool> saveBio() async {
-    final entries = state.valueOrNull ?? [];
+    final entries = state.maybeWhen(
+      data: (data) => data,
+      orElse: () => <BioEntryModel>[],
+    );
     try {
       await _bioService.saveBio(entries);
       return true;

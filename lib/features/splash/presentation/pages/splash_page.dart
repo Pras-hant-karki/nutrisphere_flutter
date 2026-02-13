@@ -40,7 +40,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
         children: [
           Positioned.fill(
             child: SvgPicture.asset(
-              "assets/images/bg.svg",
+              "assets/svg/bg.svg",
               fit: BoxFit.cover,
               placeholderBuilder: (_) => const SizedBox.expand(),
             ),

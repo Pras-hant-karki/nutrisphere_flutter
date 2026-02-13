@@ -41,6 +41,10 @@ class ApiEndpoints {
   static const String fitnessUploadPhoto = '/api/fitness/upload-photo';
   static const String fitnessUploadVideo = '/api/fitness/upload-video';
 
+  // ============ Admin Endpoints ============
+  static const String adminUsers = '/api/admin/users';
+  static String adminUserById(String id) => '/api/admin/users/$id';
+
   // ============ Admin Bio Endpoints ============
   static const String adminBio = '/api/admin/bio';
   static const String adminBioUploadImage = '/api/admin/bio/upload-image';

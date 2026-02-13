@@ -9,6 +9,8 @@ import 'package:nutrisphere_flutter/features/onboarding/presentation/pages/onboa
 import 'package:nutrisphere_flutter/features/auth/presentation/pages/register_page.dart';
 import 'package:nutrisphere_flutter/features/profile/presentation/pages/profile_page.dart';
 import 'package:nutrisphere_flutter/features/splash/presentation/pages/splash_page.dart';
+import 'package:nutrisphere_flutter/features/admin/presentation/pages/admin_dashboard_page.dart';
+import 'package:nutrisphere_flutter/features/admin/presentation/pages/admin_bottom_navigation_page.dart';
 import 'package:nutrisphere_flutter/app/theme/theme_data.dart';
 
 class App extends StatelessWidget {
@@ -32,6 +34,8 @@ class App extends StatelessWidget {
         '/appointments': (context) => const AppointmentScreen(),
         '/profile': (context) => const ProfileScreen(),
         '/forgot-password': (context) => const ForgotPasswordScreen(),
+        '/admin-dashboard': (context) => const AdminDashboardPage(),
+        '/admin-bottom-navigation': (context) => const AdminBottomNavigationPage(),
       },
     );
   }

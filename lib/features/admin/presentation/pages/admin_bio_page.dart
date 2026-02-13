@@ -181,7 +181,10 @@ class _AdminBioPageState extends ConsumerState<AdminBioPage> {
 
   Future<void> _saveBio() async {
     // Sync all text controllers back to state
-    final entries = ref.read(bioEntriesProvider).valueOrNull ?? [];
+    final entries = ref.read(bioEntriesProvider).maybeWhen(
+      data: (data) => data,
+      orElse: () => <BioEntryModel>[],
+    );
     for (int i = 0; i < entries.length; i++) {
       if (entries[i].type == 'text' && _textControllers.containsKey(i)) {
         ref
