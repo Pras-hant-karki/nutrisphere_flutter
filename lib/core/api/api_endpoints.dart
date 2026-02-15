@@ -50,5 +50,16 @@ class ApiEndpoints {
   static const String adminBio = '/api/admin/bio';
   static const String adminBioUploadImage = '/api/admin/bio/upload-image';
   static const String trainerInfo = '/api/admin/trainer-info';
+
+  // ============ Plan Request Endpoints ============
+  static const String planRequests = '/api/plan-requests';
+  static const String myPlanRequests = '/api/plan-requests/my-requests';
+  static const String adminPlanRequests = '/api/plan-requests/admin';
+  static String adminPlanRequestById(String id) =>
+      '/api/plan-requests/admin/$id';
+  static String approvePlanRequest(String id) =>
+      '/api/plan-requests/admin/$id/approve';
+  static String rejectPlanRequest(String id) =>
+      '/api/plan-requests/admin/$id/reject';
 }
 
