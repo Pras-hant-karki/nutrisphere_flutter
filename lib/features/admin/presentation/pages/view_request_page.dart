@@ -73,7 +73,7 @@ class _ViewRequestPageState extends ConsumerState<ViewRequestPage> {
             if (mounted) {
               if (success) {
                 SnackbarUtils.showSuccess(
-                    context, 'Plan sent to ${request.displayName}');
+                    context, 'Plan sent successfully to user');
               } else {
                 SnackbarUtils.showError(context, 'Failed to upload plan');
               }
@@ -87,7 +87,7 @@ class _ViewRequestPageState extends ConsumerState<ViewRequestPage> {
             if (mounted) {
               if (success) {
                 SnackbarUtils.showSuccess(
-                    context, 'Plan link sent to ${request.displayName}');
+                    context, 'Plan sent successfully to user');
               } else {
                 SnackbarUtils.showError(context, 'Failed to send link');
               }
@@ -122,7 +122,7 @@ class _ViewRequestPageState extends ConsumerState<ViewRequestPage> {
                 .rejectRequest(request.id, reason);
             if (mounted) {
               if (success) {
-                SnackbarUtils.showSuccess(context,
+                SnackbarUtils.showError(context,
                     'Request from ${request.displayName} rejected');
               } else {
                 SnackbarUtils.showError(
@@ -426,6 +426,21 @@ class _RequestDetailOverlay extends StatelessWidget {
     return '${parts[0][0]}${parts[parts.length - 1][0]}'.toUpperCase();
   }
 
+  String _formatTimestamp(DateTime dateTime) {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final yesterday = today.subtract(const Duration(days: 1));
+    final requestDate = DateTime(dateTime.year, dateTime.month, dateTime.day);
+
+    if (requestDate == today) {
+      return 'Today on ${DateFormat('h:mm a').format(dateTime)}';
+    } else if (requestDate == yesterday) {
+      return 'Yesterday on ${DateFormat('h:mm a').format(dateTime)}';
+    } else {
+      return DateFormat('M/d/yyyy h:mm a').format(dateTime);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final imageUrl = request.displayImage;
@@ -507,6 +522,19 @@ class _RequestDetailOverlay extends StatelessWidget {
                               ?.copyWith(
                                 fontWeight: FontWeight.bold,
                                 color: AppColors.textPrimary,
+                              ),
+                        ),
+
+                        const SizedBox(height: 8),
+
+                        // Requested timestamp
+                        Text(
+                          'Requested on: ${_formatTimestamp(request.createdAt)}',
+                          style: Theme.of(context)
+                              .textTheme
+                              .bodyMedium
+                              ?.copyWith(
+                                color: AppColors.textMuted,
                               ),
                         ),
 
