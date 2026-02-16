@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:nutrisphere_flutter/app/theme/app_colors.dart';
+import 'package:nutrisphere_flutter/core/api/api_endpoints.dart';
 import 'package:nutrisphere_flutter/features/fitness/domain/entities/fitness_entity.dart';
 import 'package:nutrisphere_flutter/features/fitness/presentation/providers/fitness_content_provider.dart';
 
@@ -179,7 +180,7 @@ class FitnessGuideScreen extends ConsumerWidget {
                 image: DecorationImage(
                   image: NetworkImage(content.media!.startsWith('http')
                       ? content.media!
-                      : 'http://10.0.2.2:5000${content.media!}'),
+                      : '${ApiEndpoints.baseUrl}${content.media!}'),
                   fit: BoxFit.cover,
                 ),
               ),

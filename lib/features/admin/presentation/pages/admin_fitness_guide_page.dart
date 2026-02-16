@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:nutrisphere_flutter/app/theme/app_colors.dart';
 import 'package:nutrisphere_flutter/app/theme/theme_extensions.dart';
+import 'package:nutrisphere_flutter/core/api/api_endpoints.dart';
 import 'package:nutrisphere_flutter/core/utils/snackbar_utils.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:nutrisphere_flutter/features/fitness/domain/usecases/upload_photo_usecase.dart';
@@ -709,7 +710,9 @@ class _AdminFitnessGuidePageState extends ConsumerState<AdminFitnessGuidePage> {
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.vertical(top: Radius.circular(14)),
                 image: DecorationImage(
-                  image: NetworkImage(fitness.media!),
+                  image: NetworkImage(fitness.media!.startsWith('http')
+                      ? fitness.media!
+                      : '${ApiEndpoints.baseUrl}${fitness.media!}'),
                   fit: BoxFit.cover,
                 ),
               ),

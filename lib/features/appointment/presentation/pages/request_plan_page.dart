@@ -46,17 +46,21 @@ class _RequestPlanScreenState extends ConsumerState<RequestPlanScreen> {
 
     try {
       final service = ref.read(planRequestServiceProvider);
+      String specialRequest = _specialRequestController.text;
+      if (_dietDescriptionController.text.isNotEmpty) {
+        specialRequest += (specialRequest.isNotEmpty ? '\n' : '') + 'Diet preferences: ${_dietDescriptionController.text}';
+      }
       await service.submitRequest({
         'requestType': 'diet',
         'height': _heightController.text,
         'weight': _weightController.text,
         'job': _jobController.text,
         'foodAllergy': _allergyController.text.isEmpty ? 'None' : _allergyController.text,
-        'dietType': '${dietType == 1 ? 'veg' : 'non-veg'}: ${_dietDescriptionController.text}',
+        'dietType': dietType == 1 ? 'veg' : 'non-veg',
         'medicalCondition': medical == 1 ? 'No' : _medicalConditionController.text,
         'trainingType': _trainingTypeController.text,
         'goal': _goalController.text,
-        'specialRequest': _specialRequestController.text,
+        'specialRequest': specialRequest,
       });
 
       // Clear form
