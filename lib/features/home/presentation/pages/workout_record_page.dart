@@ -20,28 +20,26 @@ class WorkoutNote {
 
   String get displayTitle {
     if (title.trim().isNotEmpty) return title;
-    // Get first 4 words from body
     final words = body.trim().split(RegExp(r'\s+'));
-    if (words.isEmpty) return 'Untitled Note';
-    final firstFourWords = words.take(4).join(' ');
-    return firstFourWords.length > 30 ? '${firstFourWords.substring(0, 30)}...' : firstFourWords;
+    if (words.isEmpty || words.first.isEmpty) return 'Untitled Note';
+    return words.take(4).join(' ');
   }
 
   Map<String, dynamic> toJson() => {
-    'id': id,
-    'title': title,
-    'body': body,
-    'createdAt': createdAt.toIso8601String(),
-    'updatedAt': updatedAt.toIso8601String(),
-  };
+        'id': id,
+        'title': title,
+        'body': body,
+        'createdAt': createdAt.toIso8601String(),
+        'updatedAt': updatedAt.toIso8601String(),
+      };
 
   factory WorkoutNote.fromJson(Map<String, dynamic> json) => WorkoutNote(
-    id: json['id'],
-    title: json['title'],
-    body: json['body'],
-    createdAt: DateTime.parse(json['createdAt']),
-    updatedAt: DateTime.parse(json['updatedAt']),
-  );
+        id: json['id'],
+        title: json['title'],
+        body: json['body'],
+        createdAt: DateTime.parse(json['createdAt']),
+        updatedAt: DateTime.parse(json['updatedAt']),
+      );
 }
 
 class WorkoutRecordScreen extends StatefulWidget {
@@ -51,253 +49,455 @@ class WorkoutRecordScreen extends StatefulWidget {
   State<WorkoutRecordScreen> createState() => _WorkoutRecordScreenState();
 }
 
-class _WorkoutRecordScreenState extends State<WorkoutRecordScreen> {
+class _WorkoutRecordScreenState extends State<WorkoutRecordScreen>
+    with SingleTickerProviderStateMixin {
   List<WorkoutNote> _notes = [];
   WorkoutNote? _currentNote;
-  final TextEditingController _titleController = TextEditingController();
-  final TextEditingController _bodyController = TextEditingController();
-  bool _isEditing = false;
+  final _titleController = TextEditingController();
+  final _bodyController = TextEditingController();
+  bool _drawerOpen = false;
+
+  late final AnimationController _animController;
+  late final Animation<double> _slideAnim;
+  late final Animation<double> _fadeAnim;
+
+  static const double _drawerWidth = 280;
 
   @override
   void initState() {
     super.initState();
+    _animController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 250),
+    );
+    _slideAnim = Tween<double>(begin: -_drawerWidth, end: 0).animate(
+      CurvedAnimation(parent: _animController, curve: Curves.easeOutCubic),
+    );
+    _fadeAnim = Tween<double>(begin: 0, end: 1).animate(_animController);
     _loadNotes();
   }
 
+  @override
+  void dispose() {
+    _animController.dispose();
+    _titleController.dispose();
+    _bodyController.dispose();
+    super.dispose();
+  }
+
+  // ── Drawer toggle ─────────────────────────────────────────────────
+  void _toggleDrawer() {
+    if (_drawerOpen) {
+      _animController.reverse().then((_) {
+        setState(() => _drawerOpen = false);
+      });
+    } else {
+      setState(() => _drawerOpen = true);
+      _animController.forward();
+    }
+  }
+
+  void _closeDrawer() {
+    if (_drawerOpen) {
+      _animController.reverse().then((_) {
+        setState(() => _drawerOpen = false);
+      });
+    }
+  }
+
+  // ── Persistence ───────────────────────────────────────────────────
   Future<void> _loadNotes() async {
     final prefs = await SharedPreferences.getInstance();
     final notesJson = prefs.getStringList('workout_notes') ?? [];
     setState(() {
-      _notes = notesJson.map((json) => WorkoutNote.fromJson(jsonDecode(json))).toList();
-      _notes.sort((a, b) => b.updatedAt.compareTo(a.updatedAt)); // Most recent first
+      _notes = notesJson
+          .map((j) => WorkoutNote.fromJson(jsonDecode(j)))
+          .toList()
+        ..sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
     });
   }
 
   Future<void> _saveNotes() async {
     final prefs = await SharedPreferences.getInstance();
-    final notesJson = _notes.map((note) => jsonEncode(note.toJson())).toList();
-    await prefs.setStringList('workout_notes', notesJson);
+    await prefs.setStringList(
+      'workout_notes',
+      _notes.map((n) => jsonEncode(n.toJson())).toList(),
+    );
   }
 
+  // ── CRUD ──────────────────────────────────────────────────────────
   void _createNewNote() {
-    final newNote = WorkoutNote(
+    final note = WorkoutNote(
       id: DateTime.now().millisecondsSinceEpoch.toString(),
       title: '',
       body: '',
       createdAt: DateTime.now(),
       updatedAt: DateTime.now(),
     );
-    setState(() {
-      _notes.insert(0, newNote);
-      _currentNote = newNote;
-      _titleController.text = newNote.title;
-      _bodyController.text = newNote.body;
-      _isEditing = true;
-    });
+    _notes.insert(0, note);
+    _openNote(note);
     _saveNotes();
+    _closeDrawer();
   }
 
-  void _selectNote(WorkoutNote note) {
+  void _openNote(WorkoutNote note) {
     setState(() {
       _currentNote = note;
       _titleController.text = note.title;
       _bodyController.text = note.body;
-      _isEditing = true;
     });
+    _closeDrawer();
   }
 
   void _deleteNote(WorkoutNote note) {
     setState(() {
       _notes.remove(note);
-      if (_currentNote == note) {
+      if (_currentNote?.id == note.id) {
         _currentNote = null;
         _titleController.clear();
         _bodyController.clear();
-        _isEditing = false;
       }
     });
     _saveNotes();
   }
 
   void _autoSave() {
-    if (_currentNote != null) {
-      _currentNote!.title = _titleController.text;
-      _currentNote!.body = _bodyController.text;
-      _currentNote!.updatedAt = DateTime.now();
-      _saveNotes();
-    }
+    if (_currentNote == null) return;
+    _currentNote!.title = _titleController.text;
+    _currentNote!.body = _bodyController.text;
+    _currentNote!.updatedAt = DateTime.now();
+    _saveNotes();
   }
 
+  // ── Build ─────────────────────────────────────────────────────────
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(
-        child: Row(
+        child: Stack(
           children: [
-            // Notes List Sidebar
-            Container(
-              width: 280,
-              decoration: BoxDecoration(
-                color: AppColors.cardBackground,
-                border: Border(
-                  right: BorderSide(color: Colors.grey.shade300, width: 1),
+            // ── Main content (always visible) ──
+            Column(
+              children: [
+                _buildTopBar(),
+                Expanded(
+                  child: _currentNote != null
+                      ? _buildEditor()
+                      : _buildEmptyState(),
+                ),
+              ],
+            ),
+
+            // ── Scrim (fades in when drawer opens) ──
+            if (_drawerOpen)
+              AnimatedBuilder(
+                animation: _fadeAnim,
+                builder: (_, __) => GestureDetector(
+                  onTap: _closeDrawer,
+                  child: Container(
+                    color: Colors.black.withValues(alpha: _fadeAnim.value * 0.45),
+                  ),
                 ),
               ),
-              child: Column(
-                children: [
-                  // Header with New Note Button
-                  Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Row(
-                      children: [
-                        const Text(
-                          "Workout Notes",
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                        const Spacer(),
-                        IconButton(
-                          icon: const Icon(Icons.add),
-                          onPressed: _createNewNote,
-                          tooltip: 'New Note',
-                        ),
-                      ],
+
+            // ── Sliding drawer ──
+            if (_drawerOpen)
+              AnimatedBuilder(
+                animation: _slideAnim,
+                builder: (_, child) => Transform.translate(
+                  offset: Offset(_slideAnim.value, 0),
+                  child: child,
+                ),
+                child: _buildDrawer(),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ── Top bar with hamburger / back ─────────────────────────────────
+  Widget _buildTopBar() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+      decoration: BoxDecoration(
+        color: AppColors.cardBackground,
+        border: Border(
+          bottom: BorderSide(color: Colors.grey.shade800, width: 0.5),
+        ),
+      ),
+      child: Row(
+        children: [
+          // Hamburger / drawer toggle
+          IconButton(
+            icon: const Icon(Icons.menu, size: 24),
+            onPressed: _toggleDrawer,
+            tooltip: 'Notes list',
+          ),
+          const SizedBox(width: 4),
+          Expanded(
+            child: Text(
+              _currentNote != null
+                  ? _currentNote!.displayTitle
+                  : 'Workout Records',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+          // Back to home
+          IconButton(
+            icon: const Icon(Icons.arrow_back),
+            onPressed: () => Navigator.pop(context),
+            tooltip: 'Back to Home',
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ── Drawer (notes list) ───────────────────────────────────────────
+  Widget _buildDrawer() {
+    return Container(
+      width: _drawerWidth,
+      height: double.infinity,
+      decoration: BoxDecoration(
+        color: AppColors.cardBackground,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.3),
+            blurRadius: 12,
+            offset: const Offset(4, 0),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          // Drawer header
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 16, 8, 8),
+            child: Row(
+              children: [
+                const Expanded(
+                  child: Text(
+                    'My Notes',
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w700,
                     ),
                   ),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.note_add, size: 22),
+                  onPressed: _createNewNote,
+                  tooltip: 'New Note',
+                ),
+                IconButton(
+                  icon: const Icon(Icons.close, size: 22),
+                  onPressed: _closeDrawer,
+                ),
+              ],
+            ),
+          ),
+          const Divider(height: 1),
 
-                  // Notes List
-                  Expanded(
-                    child: _notes.isEmpty
-                        ? const Center(
-                            child: Text(
-                              'No notes yet\nTap + to create one',
-                              textAlign: TextAlign.center,
-                              style: TextStyle(color: AppColors.textMuted),
-                            ),
-                          )
-                        : ListView.builder(
-                            itemCount: _notes.length,
-                            itemBuilder: (context, index) {
-                              final note = _notes[index];
-                              final isSelected = _currentNote?.id == note.id;
-                              return ListTile(
-                                selected: isSelected,
-                                selectedTileColor: AppColors.primary.withValues(alpha: 0.1),
-                                title: Text(
-                                  note.displayTitle,
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: TextStyle(
-                                    fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-                                  ),
-                                ),
-                                subtitle: Text(
-                                  '${note.body.split('\n').first}...',
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: const TextStyle(fontSize: 12),
-                                ),
-                                trailing: IconButton(
-                                  icon: const Icon(Icons.delete, size: 18),
-                                  onPressed: () => _deleteNote(note),
-                                  tooltip: 'Delete Note',
-                                ),
-                                onTap: () => _selectNote(note),
-                              );
-                            },
-                          ),
+          // New Note button
+          InkWell(
+            onTap: _createNewNote,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+              child: Row(
+                children: [
+                  Icon(Icons.add_circle_outline,
+                      color: AppColors.primary, size: 20),
+                  const SizedBox(width: 12),
+                  Text(
+                    'New Note',
+                    style: TextStyle(
+                      color: AppColors.primary,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 15,
+                    ),
                   ),
                 ],
               ),
             ),
+          ),
+          const Divider(height: 1),
 
-            // Editor Area
-            Expanded(
-              child: _isEditing && _currentNote != null
-                  ? Column(
+          // Notes list
+          Expanded(
+            child: _notes.isEmpty
+                ? Center(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
                       children: [
-                        // Title Field
-                        Container(
-                          padding: const EdgeInsets.all(16),
+                        Icon(Icons.note_alt_outlined,
+                            size: 48, color: AppColors.textMuted),
+                        const SizedBox(height: 12),
+                        Text(
+                          'No notes yet',
+                          style: TextStyle(color: AppColors.textMuted),
+                        ),
+                      ],
+                    ),
+                  )
+                : ListView.builder(
+                    padding: const EdgeInsets.symmetric(vertical: 8),
+                    itemCount: _notes.length,
+                    itemBuilder: (_, i) {
+                      final note = _notes[i];
+                      final isActive = _currentNote?.id == note.id;
+                      return Padding(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 10, vertical: 3),
+                        child: Container(
                           decoration: BoxDecoration(
-                            color: AppColors.cardBackground,
-                            border: Border(
-                              bottom: BorderSide(color: Colors.grey.shade300, width: 1),
-                            ),
+                            color: isActive
+                                ? AppColors.primary.withValues(alpha: 0.12)
+                                : AppColors.background,
+                            borderRadius: BorderRadius.circular(10),
                           ),
-                          child: TextField(
-                            controller: _titleController,
-                            style: const TextStyle(
-                              fontSize: 24,
-                              fontWeight: FontWeight.w600,
+                          child: ListTile(
+                            dense: true,
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10)),
+                            contentPadding: const EdgeInsets.only(
+                                left: 14, right: 4, top: 2, bottom: 2),
+                            title: Text(
+                              note.displayTitle,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontWeight: isActive
+                                    ? FontWeight.w600
+                                    : FontWeight.normal,
+                                fontSize: 15,
+                              ),
                             ),
-                            decoration: const InputDecoration(
-                              border: InputBorder.none,
-                              hintText: 'Note Title',
-                              hintStyle: TextStyle(
-                                fontSize: 24,
-                                fontWeight: FontWeight.w600,
+                            subtitle: Text(
+                              note.body.isEmpty
+                                  ? 'Empty note'
+                                  : note.body.split('\n').first,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontSize: 12,
                                 color: AppColors.textMuted,
                               ),
                             ),
-                            onChanged: (_) => _autoSave(),
-                          ),
-                        ),
-
-                        // Body Field
-                        Expanded(
-                          child: Container(
-                            padding: const EdgeInsets.all(16),
-                            color: Colors.white,
-                            child: TextField(
-                              controller: _bodyController,
-                              maxLines: null,
-                              keyboardType: TextInputType.multiline,
-                              textAlign: TextAlign.left,
-                              textAlignVertical: TextAlignVertical.top,
-                              decoration: InputDecoration(
-                                border: InputBorder.none,
-                                hintText: 'Start writing your workout notes...\n\nExample:\nWeek-1\nFriday:\n1. Leg Press - 200kg 4x12\n2. Hack Squat - 60kg 4x12\n3. Romanian Deadlift - 60kg 4x12',
-                                hintStyle: TextStyle(
-                                  fontFamily: 'Montserrat',
-                                  fontStyle: FontStyle.italic,
-                                  color: AppColors.textMuted,
-                                ),
-                                contentPadding: EdgeInsets.zero,
-                              ),
-                              style: const TextStyle(
-                                fontFamily: 'Montserrat',
-                                height: 1.5,
-                              ),
-                              onChanged: (_) => _autoSave(),
+                            trailing: IconButton(
+                              icon: Icon(Icons.delete_outline,
+                                  size: 18, color: Colors.red.shade300),
+                              onPressed: () => _deleteNote(note),
+                              tooltip: 'Delete',
+                              padding: EdgeInsets.zero,
+                              constraints: const BoxConstraints(
+                                  minWidth: 32, minHeight: 32),
                             ),
+                            onTap: () => _openNote(note),
                           ),
                         ),
-                      ],
-                    )
-                  : Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(
-                            Icons.note_alt_outlined,
-                            size: 64,
-                            color: AppColors.textMuted,
-                          ),
-                          const SizedBox(height: 16),
-                          Text(
-                            'Select a note to edit or create a new one',
-                            style: TextStyle(color: AppColors.textMuted),
-                          ),
-                        ],
-                      ),
-                    ),
+                      );
+                    },
+                  ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ── Editor (full-screen) ──────────────────────────────────────────
+  Widget _buildEditor() {
+    return Padding(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        children: [
+          // Title field
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+            decoration: BoxDecoration(
+              color: AppColors.cardBackground,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: AppColors.primary.withValues(alpha: 0.3)),
             ),
-          ],
-        ),
+            child: TextField(
+              controller: _titleController,
+              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w600),
+              decoration: const InputDecoration(
+                border: InputBorder.none,
+                hintText: 'Note Title',
+                hintStyle: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textMuted,
+                ),
+              ),
+              onChanged: (_) => _autoSave(),
+            ),
+          ),
+
+          const SizedBox(height: 14),
+
+          // Body field (takes all remaining space)
+          Expanded(
+            child: Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: AppColors.cardBackground,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: TextField(
+                controller: _bodyController,
+                maxLines: null,
+                expands: true,
+                keyboardType: TextInputType.multiline,
+                textAlignVertical: TextAlignVertical.top,
+                decoration: InputDecoration(
+                  border: InputBorder.none,
+                  hintText:
+                      'Start writing your notes...',
+                  hintStyle: TextStyle(
+                    fontFamily: 'Montserrat',
+                    fontStyle: FontStyle.italic,
+                    color: const Color.fromARGB(255, 145, 148, 126),
+                  ),
+                  contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 15),
+                ),
+                style: const TextStyle(fontFamily: 'Montserrat', height: 1.6),
+                onChanged: (_) => _autoSave(),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ── Empty state ───────────────────────────────────────────────────
+  Widget _buildEmptyState() {
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.note_alt_outlined, size: 64, color: AppColors.textMuted),
+          const SizedBox(height: 16),
+          Text(
+            'Tap the menu to view your notes\nor create a new one',
+            textAlign: TextAlign.center,
+            style: TextStyle(color: AppColors.textMuted, fontSize: 15),
+          ),
+          const SizedBox(height: 24),
+          ElevatedButton.icon(
+            onPressed: _createNewNote,
+            icon: const Icon(Icons.add),
+            label: const Text('New Note'),
+          ),
+        ],
       ),
     );
   }
