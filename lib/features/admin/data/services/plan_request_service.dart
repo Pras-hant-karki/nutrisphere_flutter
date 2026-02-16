@@ -42,6 +42,7 @@ class PlanRequestService {
       await apiClient.uploadFile(
         ApiEndpoints.approvePlanRequest(requestId),
         formData: formData,
+        method: 'PUT',
       );
     } catch (e) {
       debugPrint('Error approving request with file: $e');

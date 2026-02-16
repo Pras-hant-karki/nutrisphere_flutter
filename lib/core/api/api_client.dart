@@ -101,7 +101,7 @@ class ApiClient {
   }
 
   Future<Response> uploadFile(String path,
-      {required FormData formData, Options? options}) async {
+      {required FormData formData, Options? options, String method = 'POST'}) async {
     final opts = options ?? Options();
 
     // Ensure multipart content-type is set (Dio will set proper boundary)
@@ -110,7 +110,7 @@ class ApiClient {
       'Content-Type': 'multipart/form-data',
     };
 
-    return _dio.post(path, data: formData, options: opts);
+    return _dio.request(path, data: formData, options: opts.copyWith(method: method));
   }
 
   // setAuthToken()

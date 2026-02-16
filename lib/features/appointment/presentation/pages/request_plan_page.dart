@@ -27,6 +27,7 @@ class _RequestPlanScreenState extends ConsumerState<RequestPlanScreen> {
   final _specialRequestController = TextEditingController();
   final _medicalConditionController = TextEditingController();
   final _trainingTypeController = TextEditingController();
+  final _dietDescriptionController = TextEditingController();
 
   @override
   void initState() {
@@ -51,7 +52,7 @@ class _RequestPlanScreenState extends ConsumerState<RequestPlanScreen> {
         'weight': _weightController.text,
         'job': _jobController.text,
         'foodAllergy': _allergyController.text.isEmpty ? 'None' : _allergyController.text,
-        'dietType': dietType == 1 ? 'veg' : 'non-veg',
+        'dietType': '${dietType == 1 ? 'veg' : 'non-veg'}: ${_dietDescriptionController.text}',
         'medicalCondition': medical == 1 ? 'No' : _medicalConditionController.text,
         'trainingType': _trainingTypeController.text,
         'goal': _goalController.text,
@@ -67,6 +68,7 @@ class _RequestPlanScreenState extends ConsumerState<RequestPlanScreen> {
       _specialRequestController.clear();
       _medicalConditionController.clear();
       _trainingTypeController.clear();
+      _dietDescriptionController.clear();
 
       SnackbarUtils.showSuccess(context, 'Request sent to Trainer');
 
@@ -129,6 +131,7 @@ class _RequestPlanScreenState extends ConsumerState<RequestPlanScreen> {
                   const Text("Non-Veg"),
                 ],
               ),
+              _textField("Describe your diet preferences (e.g., I am veg but eat egg and fish, no chicken etc.)", controller: _dietDescriptionController),
 
               const Text("Any Medical Condition"),
               Row(
@@ -147,6 +150,8 @@ class _RequestPlanScreenState extends ConsumerState<RequestPlanScreen> {
                   const Text("Yes"),
                 ],
               ),
+              if (medical == 2)
+                _textField("Describe your medical condition", controller: _medicalConditionController),
 
               _textField("Your Goal", controller: _goalController),
               _textField("Any special request or suggestions ?", controller: _specialRequestController),
