@@ -61,5 +61,18 @@ class ApiEndpoints {
       '/api/plan-requests/admin/$id/approve';
   static String rejectPlanRequest(String id) =>
       '/api/plan-requests/admin/$id/reject';
+
+  // ============ Appointment Endpoints ============
+  static const String appointments = '/api/appointments';
+  static const String myAppointments = '/api/appointments/my-appointments';
+  static const String adminAppointments = '/api/appointments/admin';
+  static String adminAppointmentById(String id) =>
+      '/api/appointments/admin/$id';
+  static String approveAppointment(String id) =>
+      '/api/appointments/admin/$id/approve';
+  static String rescheduleAppointment(String id) =>
+      '/api/appointments/admin/$id/reschedule';
+  static String cancelAppointment(String id) =>
+      '/api/appointments/admin/$id/cancel';
 }
 
