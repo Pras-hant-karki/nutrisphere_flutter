@@ -42,17 +42,10 @@ Future<Either<Failure, bool>> register(AuthEntity user) async {
   // API call when online
   if (await _networkInfo.isConnected) {
     try {
-      final apiModel = AuthApiModel(
-        fullName: user.fullName,
-        email: user.email,
-        password: user.password,
-        confirmPassword: user.confirmPassword,
-      );
-
       await _authRemoteDatasource.register(
         email: user.email,
         name: user.fullName,
-        password: user.password,
+        password: user.password!,
         confirmPassword: user.confirmPassword ?? '',
       );
 
@@ -61,7 +54,7 @@ Future<Either<Failure, bool>> register(AuthEntity user) async {
         final hiveModel = AuthHiveModel(
           fullName: user.fullName,
           email: user.email,
-          password: user.password,
+          password: user.password!,
         );
         await _authDatasource.register(hiveModel);
       } catch (_) {}
@@ -121,7 +114,7 @@ Future<Either<Failure, bool>> register(AuthEntity user) async {
     final authModel = AuthHiveModel(
       fullName: user.fullName,
       email: user.email,
-      password: user.password,
+      password: user.password!,
     );
 
     await _authDatasource.register(authModel);

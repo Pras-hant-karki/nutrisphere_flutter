@@ -9,6 +9,8 @@ import 'package:nutrisphere_flutter/core/services/storage/token_service.dart';
 import 'package:nutrisphere_flutter/core/utils/snackbar_utils.dart';
 import 'package:nutrisphere_flutter/features/auth/domain/usecases/update_user_usecase.dart';
 import 'package:nutrisphere_flutter/features/auth/domain/entities/auth_entity.dart';
+import 'package:nutrisphere_flutter/features/profile/domain/usecases/upload_profile_picture_usecase.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 class ProfileScreen extends ConsumerStatefulWidget {
   const ProfileScreen({super.key});
@@ -69,9 +71,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     return "User";
   }
 
-  String _getRoleLabelFromEmail(String email) {
-    return email.toLowerCase().contains('admin') ? 'Admin' : 'User';
-  }
+  // String _getRoleLabelFromEmail(String email) {
+  //   return email.toLowerCase().contains('admin') ? 'Admin' : 'User';
+  // }
 
   String _capitalize(String s) {
     if (s.isEmpty) return s;
@@ -225,7 +227,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     final userSession = ref.read(userSessionServiceProvider);
     final session = await userSession.getSession();
     if (session == null) {
-      SnackbarUtils.showError(context, 'User session not found');
+      if (mounted) {
+        SnackbarUtils.showError(context, 'User session not found');
+      }
       return;
     }
 
@@ -233,8 +237,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     final authEntity = AuthEntity(
       authId: session.userId,
       fullName: _nameCtrl.text,
-      email: session.email, // Email shouldn't be changed
-      phone: _phoneCtrl.text,
+      email: session.email, 
+      phone: _phoneCtrl.text.trim().isNotEmpty ? _phoneCtrl.text.trim() : null,
       profilePicture: _profileImageUrl,
     );
 
@@ -242,27 +246,25 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       UpdateUserUsecaseParams(user: authEntity),
     );
 
-    updateResult.fold(
-      (failure) {
-        if (mounted) {
+    if (mounted) {
+      updateResult.fold(
+        (failure) {
           SnackbarUtils.showError(context, 'Failed to update profile: ${failure.message}');
-        }
-      },
-      (updatedUser) async {
-        // Update session with new data
-        await userSession.saveSession(
-          userId: updatedUser.authId,
-          email: updatedUser.email,
-          fullName: updatedUser.fullName,
-          role: session.role,
-          phone: updatedUser.phone,
-          profilePicture: updatedUser.profilePicture,
-        );
-        if (mounted) {
+        },
+        (updatedUser) async {
+          // Update session with new data
+          await userSession.saveSession(
+            userId: updatedUser.authId ?? session.userId,
+            email: updatedUser.email,
+            fullName: updatedUser.fullName,
+            role: session.role,
+            phone: updatedUser.phone,
+            profilePicture: updatedUser.profilePicture,
+          );
           SnackbarUtils.showSuccess(context, 'Profile updated successfully');
-        }
-      },
-    );
+        },
+      );
+    }
 
     // Upload profile picture if selected
     if (_profileImage != null) {

@@ -165,7 +165,7 @@ class HiveService {
   }
 
   Future<void> deleteSession(String day, String sessionName) async {
-    final key = '${day}_${sessionName}';
+    final key = '${day}_$sessionName';
     await _sessionBox.delete(key);
   }
 
