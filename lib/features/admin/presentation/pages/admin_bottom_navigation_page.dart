@@ -1,20 +1,22 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:nutrisphere_flutter/features/admin/presentation/pages/admin_appointment_page.dart';
 import 'package:nutrisphere_flutter/features/admin/presentation/pages/admin_fitness_guide_page.dart';
 import 'package:nutrisphere_flutter/features/admin/presentation/pages/admin_home_page.dart';
 import 'package:nutrisphere_flutter/features/admin/presentation/pages/admin_profile_page.dart';
 import 'package:nutrisphere_flutter/features/home/presentation/pages/settings_page.dart';
+import 'package:nutrisphere_flutter/features/notifications/presentation/widgets/notification_bell.dart';
 import 'package:nutrisphere_flutter/app/theme/app_colors.dart';
 
-class AdminBottomNavigationPage extends StatefulWidget {
+class AdminBottomNavigationPage extends ConsumerStatefulWidget {
   const AdminBottomNavigationPage({super.key});
 
   @override
-  State<AdminBottomNavigationPage> createState() =>
+  ConsumerState<AdminBottomNavigationPage> createState() =>
       _AdminBottomNavigationPageState();
 }
 
-class _AdminBottomNavigationPageState extends State<AdminBottomNavigationPage> {
+class _AdminBottomNavigationPageState extends ConsumerState<AdminBottomNavigationPage> {
   int _selectedIndex = 0;
 
   final List<Widget> lstBottomScreen = const [
@@ -43,6 +45,10 @@ class _AdminBottomNavigationPageState extends State<AdminBottomNavigationPage> {
                 fontSize: 26,
               ),
         ),
+        actions: const [
+          NotificationBell(),
+          SizedBox(width: 4),
+        ],
       ),
       drawer: _buildDrawer(context),
       body: IndexedStack(

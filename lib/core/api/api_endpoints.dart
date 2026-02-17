@@ -77,5 +77,12 @@ class ApiEndpoints {
       '/api/appointments/admin/$id/reschedule';
   static String cancelAppointment(String id) =>
       '/api/appointments/admin/$id/cancel';
+
+  // ============ Notification Endpoints ============
+  static const String notifications = '/api/notifications';
+  static const String notificationsUnreadCount = '/api/notifications/unread-count';
+  static const String notificationsReadAll = '/api/notifications/read-all';
+  static String notificationMarkRead(String id) => '/api/notifications/$id/read';
+  static String notificationDelete(String id) => '/api/notifications/$id';
 }
 
