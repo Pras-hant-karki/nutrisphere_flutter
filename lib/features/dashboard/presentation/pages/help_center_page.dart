@@ -48,7 +48,7 @@ class HelpCenterScreen extends StatelessWidget {
             _buildFAQItem(
               context,
               question: 'How to track my nutrition?',
-              answer: 'Use the nutrition tracker to log your meals and monitor your intake.',
+              answer: 'Use the nutrition tracker apps to log your meals and monitor your intake.',
             ),
             _buildFAQItem(
               context,
@@ -58,7 +58,7 @@ class HelpCenterScreen extends StatelessWidget {
             _buildFAQItem(
               context,
               question: 'How to view progress?',
-              answer: 'Check the dashboard for your progress charts and statistics.',
+              answer: 'Check the workout records for your progress.',
             ),
             _buildFAQItem(
               context,
@@ -68,7 +68,7 @@ class HelpCenterScreen extends StatelessWidget {
             _buildFAQItem(
               context,
               question: 'How to update profile?',
-              answer: 'Go to settings and select Edit Profile.',
+              answer: 'Go to settings and select Edit Profile or go to profile section.',
             ),
 
             const SizedBox(height: AppSpacing.xl),

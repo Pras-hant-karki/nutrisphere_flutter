@@ -44,7 +44,7 @@ class TermsOfServiceScreen extends StatelessWidget {
             // Use of Service
             _buildSection(
               title: 'Use of Service',
-              content: 'You may use our app for personal nutrition tracking and fitness goals.',
+              content: 'You may use our app for workout tracking and booking appointment with trainer or requesting plans from trainer.',
             ),
 
             // User Accounts
@@ -62,7 +62,7 @@ class TermsOfServiceScreen extends StatelessWidget {
             // Data Privacy
             _buildSection(
               title: 'Data Privacy',
-              content: 'Your nutrition data is stored securely and used only for app functionality.',
+              content: 'Your workout and request data is stored securely and used only for app functionality.',
             ),
 
             // Content Ownership
