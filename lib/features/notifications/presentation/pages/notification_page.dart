@@ -191,19 +191,43 @@ class _NotificationPageState extends ConsumerState<NotificationPage> {
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Icon
+              // Profile Picture or Icon
               Container(
                 width: 44,
                 height: 44,
                 decoration: BoxDecoration(
-                  color: _getTypeColor(notification.type).withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: Icon(
-                  _getTypeIcon(notification.type),
-                  color: _getTypeColor(notification.type),
-                  size: 22,
-                ),
+                child: notification.senderProfilePicture != null && notification.senderProfilePicture!.isNotEmpty
+                    ? ClipRRect(
+                        borderRadius: BorderRadius.circular(12),
+                        child: Image.network(
+                          notification.senderProfilePicture!,
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) => Container(
+                            decoration: BoxDecoration(
+                              color: _getTypeColor(notification.type).withValues(alpha: 0.15),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Icon(
+                              _getTypeIcon(notification.type),
+                              color: _getTypeColor(notification.type),
+                              size: 22,
+                            ),
+                          ),
+                        ),
+                      )
+                    : Container(
+                        decoration: BoxDecoration(
+                          color: _getTypeColor(notification.type).withValues(alpha: 0.15),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Icon(
+                          _getTypeIcon(notification.type),
+                          color: _getTypeColor(notification.type),
+                          size: 22,
+                        ),
+                      ),
               ),
               const SizedBox(width: 12),
               // Content
@@ -252,6 +276,17 @@ class _NotificationPageState extends ConsumerState<NotificationPage> {
                         height: 1.3,
                       ),
                     ),
+                    if (notification.senderName != null) ...[
+                      const SizedBox(height: 4),
+                      Text(
+                        'From: ${notification.senderName}',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: AppColors.textSecondary,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
                   ],
                 ),
               ),

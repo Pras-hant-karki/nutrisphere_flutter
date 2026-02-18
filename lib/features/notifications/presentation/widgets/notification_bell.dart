@@ -19,7 +19,7 @@ class NotificationBell extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final unreadAsync = ref.watch(unreadNotificationCountProvider);
-    final unreadCount = unreadAsync.valueOrNull ?? 0;
+    final unreadCount = unreadAsync.value ?? 0;
 
     return IconButton(
       icon: Stack(

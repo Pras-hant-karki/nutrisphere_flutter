@@ -20,7 +20,7 @@ class ApiEndpoints {
     if (kIsWeb) {
       return 'http://localhost:5000';
     } else if (Platform.isAndroid) {
-      return 'http://10.0.2.2:5000';
+      return 'http://10.1.26.53:5000';
     } else if (Platform.isIOS) {
       return 'http://localhost:5000';
     } else {

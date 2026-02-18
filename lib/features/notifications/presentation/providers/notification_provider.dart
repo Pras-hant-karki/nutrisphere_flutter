@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/legacy.dart';
 import 'package:nutrisphere_flutter/features/notifications/data/models/notification_model.dart';
 import 'package:nutrisphere_flutter/features/notifications/data/services/notification_api_service.dart';
 

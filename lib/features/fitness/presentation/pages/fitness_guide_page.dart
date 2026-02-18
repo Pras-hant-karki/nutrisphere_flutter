@@ -4,6 +4,7 @@ import 'package:nutrisphere_flutter/app/theme/app_colors.dart';
 import 'package:nutrisphere_flutter/core/api/api_endpoints.dart';
 import 'package:nutrisphere_flutter/features/fitness/domain/entities/fitness_entity.dart';
 import 'package:nutrisphere_flutter/features/fitness/presentation/providers/fitness_content_provider.dart';
+import 'package:nutrisphere_flutter/features/notifications/presentation/widgets/notification_bell.dart';
 
 class FitnessGuideScreen extends ConsumerWidget {
   const FitnessGuideScreen({super.key});
@@ -25,10 +26,13 @@ class FitnessGuideScreen extends ConsumerWidget {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(
-                    "High quality fitness guidance below !",
-                    style: textTheme.titleMedium,
+                  Expanded(
+                    child: Text(
+                      "High quality fitness guidance below !",
+                      style: textTheme.titleMedium,
+                    ),
                   ),
+                  NotificationBell(),
                 ],
               ),
             ),
