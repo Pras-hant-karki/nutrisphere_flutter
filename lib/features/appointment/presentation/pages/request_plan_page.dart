@@ -1,10 +1,13 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:nutrisphere_flutter/app/theme/app_colors.dart';
+import 'package:nutrisphere_flutter/core/api/api_endpoints.dart';
 import 'package:nutrisphere_flutter/features/admin/data/models/plan_request_model.dart';
 import 'package:nutrisphere_flutter/features/admin/data/services/plan_request_service.dart';
 import 'package:nutrisphere_flutter/core/utils/snackbar_utils.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class RequestPlanScreen extends ConsumerStatefulWidget {
   const RequestPlanScreen({super.key});
@@ -267,6 +270,26 @@ class _RequestPlanScreenState extends ConsumerState<RequestPlanScreen> {
     }
   }
 
+  // ─── Show Plan Detail Overlay ───
+  void _showPlanDetail(PlanRequestModel request) {
+    showGeneralDialog(
+      context: context,
+      barrierDismissible: true,
+      barrierLabel: 'Plan Detail',
+      barrierColor: Colors.transparent,
+      transitionDuration: const Duration(milliseconds: 300),
+      pageBuilder: (context, anim1, anim2) {
+        return _PlanDetailOverlay(request: request);
+      },
+      transitionBuilder: (context, anim1, anim2, child) {
+        return FadeTransition(
+          opacity: CurvedAnimation(parent: anim1, curve: Curves.easeOut),
+          child: child,
+        );
+      },
+    );
+  }
+
   Widget _planCard(BuildContext context, PlanRequestModel request) {
     String statusText;
     Color statusColor;
@@ -298,71 +321,476 @@ class _RequestPlanScreenState extends ConsumerState<RequestPlanScreen> {
         timestampText = '';
     }
 
-    return Container(
-      margin: const EdgeInsets.only(bottom: 16),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppColors.cardBackground,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.border, width: 1),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                '${request.requestType.toUpperCase()} Plan',
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.textPrimary,
-                ),
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: statusColor.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Text(
-                  statusText,
-                  style: TextStyle(
-                    color: statusColor,
+    return InkWell(
+      onTap: () => _showPlanDetail(request),
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 16),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: AppColors.cardBackground,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: AppColors.border, width: 1),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.3),
+              blurRadius: 6,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  '${request.requestType.toUpperCase()} Plan',
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.bold,
-                    fontSize: 12,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: statusColor.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(
+                    statusText,
+                    style: TextStyle(
+                      color: statusColor,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 12,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Text(
+              timestampText,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: AppColors.textMuted,
+              ),
+            ),
+            // Hint to tap
+            const SizedBox(height: 6),
+            Text(
+              'Tap to view details',
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: AppColors.textMuted,
+                fontStyle: FontStyle.italic,
+                fontSize: 11,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────
+//  Plan Detail Overlay (user views their request & admin response)
+// ─────────────────────────────────────────────────────────────
+class _PlanDetailOverlay extends StatelessWidget {
+  final PlanRequestModel request;
+
+  const _PlanDetailOverlay({required this.request});
+
+  String _formatTimestamp(DateTime dateTime) {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final yesterday = today.subtract(const Duration(days: 1));
+    final requestDate = DateTime(dateTime.year, dateTime.month, dateTime.day);
+
+    if (requestDate == today) {
+      return 'Today at ${DateFormat('h:mm a').format(dateTime)}';
+    } else if (requestDate == yesterday) {
+      return 'Yesterday at ${DateFormat('h:mm a').format(dateTime)}';
+    } else {
+      return DateFormat('M/d/yyyy h:mm a').format(dateTime);
+    }
+  }
+
+  Future<void> _openUrl(BuildContext context, String url) async {
+    // Prepend base URL for relative paths (file uploads)
+    String fullUrl = url;
+    if (!url.startsWith('http')) {
+      fullUrl = '${ApiEndpoints.baseUrl}$url';
+    }
+
+    final uri = Uri.parse(fullUrl);
+    try {
+      if (await canLaunchUrl(uri)) {
+        await launchUrl(uri, mode: LaunchMode.externalApplication);
+      } else {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Could not open: $fullUrl')),
+          );
+        }
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error opening link: $e')),
+        );
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isApproved = request.status == 'approved';
+    final isRejected = request.status == 'rejected';
+    final isPending = request.status == 'pending';
+
+    Color statusColor;
+    String statusText;
+    IconData statusIcon;
+
+    if (isApproved) {
+      statusColor = Colors.green;
+      statusText = 'Approved';
+      statusIcon = Icons.check_circle;
+    } else if (isRejected) {
+      statusColor = Colors.red;
+      statusText = 'Rejected';
+      statusIcon = Icons.cancel;
+    } else {
+      statusColor = Colors.orange;
+      statusText = 'Pending';
+      statusIcon = Icons.hourglass_top;
+    }
+
+    return Material(
+      color: Colors.transparent,
+      child: Stack(
+        children: [
+          // Blurred background
+          GestureDetector(
+            onTap: () => Navigator.pop(context),
+            child: BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 6, sigmaY: 6),
+              child: Container(color: Colors.black.withOpacity(0.5)),
+            ),
+          ),
+
+          // Centered scrollable card
+          Center(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 28),
+              child: ConstrainedBox(
+                constraints: BoxConstraints(
+                  maxHeight: MediaQuery.of(context).size.height * 0.8,
+                ),
+                child: Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.fromLTRB(20, 24, 20, 24),
+                  decoration: BoxDecoration(
+                    color: AppColors.cardBackground,
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: AppColors.border, width: 1),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.5),
+                        blurRadius: 20,
+                        offset: const Offset(0, 10),
+                      ),
+                    ],
+                  ),
+                  child: SingleChildScrollView(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        // Status icon
+                        Container(
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: statusColor.withOpacity(0.12),
+                            shape: BoxShape.circle,
+                          ),
+                          child: Icon(statusIcon, color: statusColor, size: 40),
+                        ),
+
+                        const SizedBox(height: 16),
+
+                        // Plan title
+                        Text(
+                          '${request.requestType.toUpperCase()} Plan',
+                          style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.textPrimary,
+                          ),
+                        ),
+
+                        const SizedBox(height: 8),
+
+                        // Status badge
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: statusColor.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Text(
+                            statusText,
+                            style: TextStyle(
+                              color: statusColor,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 14,
+                            ),
+                          ),
+                        ),
+
+                        const SizedBox(height: 12),
+
+                        // Requested timestamp
+                        Text(
+                          'Requested on: ${_formatTimestamp(request.createdAt)}',
+                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                            color: AppColors.textMuted,
+                          ),
+                        ),
+
+                        const SizedBox(height: 20),
+
+                        // ─── Your Request Details ───
+                        _sectionTitle(context, 'Your Request Details'),
+                        const SizedBox(height: 10),
+                        _detailField(context, 'Height, Weight, Job:',
+                            '${request.height}, ${request.weight}, ${request.job}'),
+                        const SizedBox(height: 8),
+                        _detailField(context, 'Diet type:', request.dietType),
+                        const SizedBox(height: 8),
+                        _detailField(context, 'Medical Condition:', request.medicalCondition),
+                        if (request.trainingType.isNotEmpty) ...[
+                          const SizedBox(height: 8),
+                          _detailField(context, 'Training type:', request.trainingType),
+                        ],
+                        const SizedBox(height: 8),
+                        _detailField(context, 'Goal:', request.goal),
+                        if (request.specialRequest.isNotEmpty) ...[
+                          const SizedBox(height: 8),
+                          _detailField(context, 'Special request:', request.specialRequest),
+                        ],
+                        if (request.foodAllergy.isNotEmpty && request.foodAllergy != 'None') ...[
+                          const SizedBox(height: 8),
+                          _detailField(context, 'Food Allergy:', request.foodAllergy),
+                        ],
+
+                        const SizedBox(height: 24),
+
+                        // ─── Admin Response Section ───
+                        if (isPending) ...[
+                          Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              color: Colors.orange.withOpacity(0.08),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(color: Colors.orange.withOpacity(0.3)),
+                            ),
+                            child: Row(
+                              children: [
+                                const Icon(Icons.hourglass_top, color: Colors.orange, size: 22),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Text(
+                                    'Waiting for Trainer/Admin to review your request...',
+                                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                      color: Colors.orange,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+
+                        if (isRejected) ...[
+                          _sectionTitle(context, 'Admin Response'),
+                          const SizedBox(height: 10),
+                          Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              color: Colors.red.withOpacity(0.08),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(color: Colors.red.withOpacity(0.3)),
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  children: [
+                                    const Icon(Icons.cancel, color: Colors.red, size: 20),
+                                    const SizedBox(width: 8),
+                                    Text(
+                                      'Request Rejected',
+                                      style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                                        color: Colors.red,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                if (request.rejectionReason != null &&
+                                    request.rejectionReason!.isNotEmpty) ...[
+                                  const SizedBox(height: 12),
+                                  Text(
+                                    'Reason:',
+                                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                      color: AppColors.textMuted,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    request.rejectionReason!,
+                                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                      color: AppColors.textPrimary,
+                                    ),
+                                  ),
+                                ],
+                                if (request.adminResponse?.respondedAt != null) ...[
+                                  const SizedBox(height: 12),
+                                  Text(
+                                    'Rejected on: ${_formatTimestamp(request.adminResponse!.respondedAt!)}',
+                                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                      color: AppColors.textMuted,
+                                    ),
+                                  ),
+                                ],
+                              ],
+                            ),
+                          ),
+                        ],
+
+                        if (isApproved && request.adminResponse != null) ...[
+                          _sectionTitle(context, 'Admin Response'),
+                          const SizedBox(height: 10),
+                          Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              color: Colors.green.withOpacity(0.08),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(color: Colors.green.withOpacity(0.3)),
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  children: [
+                                    const Icon(Icons.check_circle, color: Colors.green, size: 20),
+                                    const SizedBox(width: 8),
+                                    Text(
+                                      'Plan Provided',
+                                      style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                                        color: Colors.green,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                if (request.adminResponse!.respondedAt != null) ...[
+                                  const SizedBox(height: 8),
+                                  Text(
+                                    'Sent on: ${_formatTimestamp(request.adminResponse!.respondedAt!)}',
+                                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                      color: AppColors.textMuted,
+                                    ),
+                                  ),
+                                ],
+                                const SizedBox(height: 16),
+
+                                // File/Link button
+                                GestureDetector(
+                                  onTap: () => _openUrl(context, request.adminResponse!.url),
+                                  child: Container(
+                                    width: double.infinity,
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 16, vertical: 14),
+                                    decoration: BoxDecoration(
+                                      color: AppColors.primary.withOpacity(0.12),
+                                      borderRadius: BorderRadius.circular(12),
+                                      border: Border.all(
+                                          color: AppColors.primary.withOpacity(0.3)),
+                                    ),
+                                    child: Row(
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      children: [
+                                        Icon(
+                                          request.adminResponse!.type == 'file'
+                                              ? Icons.file_download
+                                              : Icons.open_in_new,
+                                          color: AppColors.primary,
+                                          size: 22,
+                                        ),
+                                        const SizedBox(width: 10),
+                                        Text(
+                                          request.adminResponse!.type == 'file'
+                                              ? 'Download Plan File'
+                                              : 'Open Plan Link',
+                                          style: const TextStyle(
+                                            color: AppColors.primary,
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 15,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
                   ),
                 ),
               ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Text(
-            timestampText,
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: AppColors.textMuted,
             ),
           ),
-          if (request.rejectionReason != null && request.rejectionReason!.isNotEmpty) ...[
-            const SizedBox(height: 8),
-            Text(
-              'Reason: ${request.rejectionReason}',
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: Colors.red,
-              ),
-            ),
-          ],
-          if (request.adminResponse != null) ...[
-            const SizedBox(height: 8),
-            Text(
-              request.adminResponse!.type == 'file' ? 'Plan File' : 'Plan Link',
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: AppColors.primary,
-                decoration: TextDecoration.underline,
-              ),
-            ),
-          ],
         ],
+      ),
+    );
+  }
+
+  Widget _sectionTitle(BuildContext context, String title) {
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: Text(
+        title,
+        style: Theme.of(context).textTheme.titleSmall?.copyWith(
+          color: AppColors.textSecondary,
+          fontWeight: FontWeight.w600,
+          letterSpacing: 0.5,
+        ),
+      ),
+    );
+  }
+
+  Widget _detailField(BuildContext context, String label, String value) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      decoration: BoxDecoration(
+        color: AppColors.inputFill,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: AppColors.border, width: 1),
+      ),
+      child: Text(
+        '$label $value',
+        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+          color: AppColors.textPrimary,
+        ),
       ),
     );
   }

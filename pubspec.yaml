@@ -64,6 +64,9 @@ dependencies:
   geolocator: ^14.0.2
   sensors_plus: ^7.0.0
 
+  # URL launching
+  url_launcher: ^6.2.5
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

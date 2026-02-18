@@ -4,7 +4,6 @@ import 'package:nutrisphere_flutter/app/theme/app_colors.dart';
 import 'package:nutrisphere_flutter/core/api/api_endpoints.dart';
 import 'package:nutrisphere_flutter/features/fitness/domain/entities/fitness_entity.dart';
 import 'package:nutrisphere_flutter/features/fitness/presentation/providers/fitness_content_provider.dart';
-import 'package:nutrisphere_flutter/features/notifications/presentation/widgets/notification_bell.dart';
 
 class FitnessGuideScreen extends ConsumerWidget {
   const FitnessGuideScreen({super.key});
@@ -23,17 +22,9 @@ class FitnessGuideScreen extends ConsumerWidget {
             Padding(
               padding:
                   const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Expanded(
-                    child: Text(
-                      "High quality fitness guidance below !",
-                      style: textTheme.titleMedium,
-                    ),
-                  ),
-                  NotificationBell(),
-                ],
+              child: Text(
+                "High quality fitness guidance below !",
+                style: textTheme.titleMedium,
               ),
             ),
 
@@ -101,13 +92,14 @@ class FitnessGuideScreen extends ConsumerWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.cardBackground,
         borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: AppColors.border, width: 1),
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.shade300,
-            blurRadius: 8,
-            offset: const Offset(0, 2),
+            color: Colors.black.withOpacity(0.35),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
           ),
         ],
       ),
@@ -132,7 +124,7 @@ class FitnessGuideScreen extends ConsumerWidget {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
-                    color: AppColors.primary.withOpacity(0.1),
+                    color: AppColors.primary.withOpacity(0.15),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Text(
@@ -176,27 +168,30 @@ class FitnessGuideScreen extends ConsumerWidget {
           // Media (Image/Video)
           if (content.media != null && content.media!.isNotEmpty) ...[
             const SizedBox(height: 16),
-            Container(
-              width: double.infinity,
-              height: 200,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(12),
-                image: DecorationImage(
-                  image: NetworkImage(content.media!.startsWith('http')
-                      ? content.media!
-                      : '${ApiEndpoints.baseUrl}${content.media!}'),
-                  fit: BoxFit.cover,
+            ClipRRect(
+              borderRadius: BorderRadius.circular(12),
+              child: Container(
+                width: double.infinity,
+                height: 200,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(12),
+                  image: DecorationImage(
+                    image: NetworkImage(content.media!.startsWith('http')
+                        ? content.media!
+                        : '${ApiEndpoints.baseUrl}${content.media!}'),
+                    fit: BoxFit.cover,
+                  ),
                 ),
+                child: content.mediaType == 'video'
+                    ? const Center(
+                        child: Icon(
+                          Icons.play_circle_fill,
+                          size: 48,
+                          color: Colors.white,
+                        ),
+                      )
+                    : null,
               ),
-              child: content.mediaType == 'video'
-                  ? const Center(
-                      child: Icon(
-                        Icons.play_circle_fill,
-                        size: 48,
-                        color: Colors.white,
-                      ),
-                    )
-                  : null,
             ),
           ],
 

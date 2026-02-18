@@ -3,7 +3,6 @@ import 'package:nutrisphere_flutter/app/theme/app_colors.dart';
 import 'package:nutrisphere_flutter/features/home/presentation/pages/session_view_page.dart';
 import 'package:nutrisphere_flutter/features/home/presentation/pages/trainer_detail_page.dart';
 import 'package:nutrisphere_flutter/features/home/presentation/pages/workout_record_page.dart';
-import 'package:nutrisphere_flutter/features/notifications/presentation/widgets/notification_bell.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -23,14 +22,6 @@ class _HomeScreenState extends State<HomeScreen> {
         child: Column(
           children: [
             const SizedBox(height: 20),
-            // Notification Bell in top right
-            Align(
-              alignment: Alignment.topRight,
-              child: Padding(
-                padding: const EdgeInsets.only(right: 20.0),
-                child: NotificationBell(),
-              ),
-            ),
             Expanded(
               child: SingleChildScrollView(
                 padding: const EdgeInsets.symmetric(

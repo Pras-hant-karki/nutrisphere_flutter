@@ -324,34 +324,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // TOP BAR
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    "Edit Profile",
-                    style: Theme.of(context).textTheme.titleLarge,
-                  ),
-                  Stack(
-                    children: [
-                      IconButton(
-                        icon: const Icon(Icons.notifications_none, color: AppColors.textPrimary),
-                        onPressed: () {},
-                      ),
-                      Positioned(
-                        right: 10,
-                        top: 10,
-                        child: Container(
-                          height: 10,
-                          width: 10,
-                          decoration: const BoxDecoration(
-                            color: AppColors.primary,
-                            shape: BoxShape.circle,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
+              Text(
+                "Edit Profile",
+                style: Theme.of(context).textTheme.titleLarge,
               ),
 
               const SizedBox(height: 20),
