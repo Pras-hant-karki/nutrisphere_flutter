@@ -5,6 +5,11 @@ import 'package:flutter/foundation.dart';
 class ApiEndpoints {
   ApiEndpoints._();
 
+  static const String _configuredBaseUrl = String.fromEnvironment(
+    'API_BASE_URL',
+    defaultValue: '',
+  );
+
   // static const bool isPhysicalDevice = true;
   
   static const bool isPhysicalDevice = false;
@@ -13,18 +18,24 @@ class ApiEndpoints {
   static const String compIpAddress = "172.25.0.110";
 
   static String get baseUrl {
+    if (_configuredBaseUrl.isNotEmpty) {
+      return _configuredBaseUrl;
+    }
+
     if (isPhysicalDevice) {
-      return 'http://$compIpAddress:5000';
+      return 'http://$compIpAddress:3000';
     }
     // yadi android
     if (kIsWeb) {
-      return 'http://localhost:5000';
+      final host = Uri.base.host.isNotEmpty ? Uri.base.host : 'localhost';
+      final scheme = Uri.base.scheme.isNotEmpty ? Uri.base.scheme : 'http';
+      return '$scheme://$host:3000';
     } else if (Platform.isAndroid) {
-      return 'http://10.1.26.53:5000';
+      return 'http://10.0.2.2:3000';
     } else if (Platform.isIOS) {
-      return 'http://localhost:5000';
+      return 'http://localhost:3000';
     } else {
-      return 'http://localhost:5000';
+      return 'http://localhost:3000';
     }
   }
 
@@ -84,5 +95,11 @@ class ApiEndpoints {
   static const String notificationsReadAll = '/api/notifications/read-all';
   static String notificationMarkRead(String id) => '/api/notifications/$id/read';
   static String notificationDelete(String id) => '/api/notifications/$id';
+
+  // ============ Session Endpoints ============
+  static const String sessions = '/api/sessions';
+  static const String adminSessions = '/api/sessions/admin';
+  static String adminSessionById(String id) => '/api/sessions/admin/$id';
+  static String toggleAdminSession(String id) => '/api/sessions/admin/$id/toggle';
 }
 

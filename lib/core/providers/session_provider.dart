@@ -1,8 +1,12 @@
+import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:nutrisphere_flutter/core/api/api_client.dart';
+import 'package:nutrisphere_flutter/core/api/api_endpoints.dart';
 import 'package:nutrisphere_flutter/core/models/session_hive_model.dart';
 import 'package:nutrisphere_flutter/core/services/hive/hive_service.dart';
 
 class Session {
+  String? id;
   String day;
   String sessionName;
   String timeRange;
@@ -12,6 +16,7 @@ class Session {
   bool isActive;
 
   Session({
+    this.id,
     required this.day,
     required this.sessionName,
     required this.timeRange,
@@ -22,6 +27,7 @@ class Session {
   });
 
   Session copyWith({
+    String? id,
     String? day,
     String? sessionName,
     String? timeRange,
@@ -31,6 +37,7 @@ class Session {
     bool? isActive,
   }) {
     return Session(
+      id: id ?? this.id,
       day: day ?? this.day,
       sessionName: sessionName ?? this.sessionName,
       timeRange: timeRange ?? this.timeRange,
@@ -55,12 +62,13 @@ class Session {
 
   factory Session.fromJson(Map<String, dynamic> json) {
     return Session(
-      day: json['day'],
-      sessionName: json['sessionName'],
-      timeRange: json['timeRange'],
-      location: json['location'],
-      workoutTitle: json['workoutTitle'],
-      exercises: List<String>.from(json['exercises']),
+      id: (json['_id'] ?? json['id'])?.toString(),
+      day: (json['day'] ?? '').toString(),
+      sessionName: (json['sessionName'] ?? '').toString(),
+      timeRange: (json['timeRange'] ?? '').toString(),
+      location: (json['location'] ?? '').toString(),
+      workoutTitle: (json['workoutTitle'] ?? '').toString(),
+      exercises: List<String>.from(json['exercises'] ?? []),
       isActive: json['isActive'] ?? true,
     );
   }
@@ -78,44 +86,149 @@ const List<String> daysOfWeek = [
 ];
 
 class SessionNotifier extends Notifier<List<Session>> {
+  List<Session> _parseSessionsFromResponse(dynamic data) {
+    final list =
+        (data is Map<String, dynamic> ? data['data'] : null) as List<dynamic>? ?? [];
+    return list
+        .whereType<Map<String, dynamic>>()
+        .map(Session.fromJson)
+        .toList();
+  }
+
   @override
   List<Session> build() {
-    // Load sessions from Hive on initialization
+    // Start with cached sessions for instant UI, then sync with backend.
+    List<Session> cached = [];
     try {
       final hiveService = ref.read(hiveServiceProvider);
       final hiveSessions = hiveService.getAllSessions();
-      print('[SessionNotifier] Loaded ${hiveSessions.length} sessions from Hive');
-      return hiveSessions.map((s) => s.toSession()).toList();
+      cached = hiveSessions.map((s) => s.toSession()).toList();
+      print('[SessionNotifier] Loaded ${cached.length} cached sessions from Hive');
     } catch (e) {
       print('[SessionNotifier] Error loading sessions from Hive: $e');
-      return [];
+    }
+
+    Future.microtask(refreshFromServer);
+    return cached;
+  }
+
+  Future<void> refreshFromServer() async {
+    try {
+      final api = ref.read(apiClientProvider);
+      final cachedBeforeSync = List<Session>.from(state);
+      var usedAdminEndpoint = true;
+
+      // Admin app flow first; if unauthorized, fallback to user active sessions endpoint.
+      Response response;
+      try {
+        response = await api.get(ApiEndpoints.adminSessions);
+      } on DioException catch (e) {
+        if (e.response?.statusCode == 403 || e.response?.statusCode == 401) {
+          usedAdminEndpoint = false;
+          response = await api.get(ApiEndpoints.sessions);
+        } else {
+          rethrow;
+        }
+      }
+
+      var serverSessions = _parseSessionsFromResponse(response.data);
+
+      // One-time migration path: if admin has local cached sessions but backend is empty,
+      // push local sessions to backend so web + mobile immediately share the same source.
+      if (usedAdminEndpoint && serverSessions.isEmpty && cachedBeforeSync.isNotEmpty) {
+        for (final session in cachedBeforeSync) {
+          await api.post(ApiEndpoints.adminSessions, data: session.toJson());
+        }
+        final refreshed = await api.get(ApiEndpoints.adminSessions);
+        serverSessions = _parseSessionsFromResponse(refreshed.data);
+      }
+
+      state = serverSessions;
+      await _saveToHive();
+      print('[SessionNotifier] Synced ${state.length} sessions from backend');
+    } catch (e) {
+      print('[SessionNotifier] Backend sync failed: $e');
     }
   }
 
   Future<void> addSession(Session session) async {
-    state = [...state, session];
-    await _saveToHive();
+    try {
+      final api = ref.read(apiClientProvider);
+      final response = await api.post(ApiEndpoints.adminSessions, data: session.toJson());
+      final data = response.data as Map<String, dynamic>;
+      final created = Session.fromJson(data['data'] as Map<String, dynamic>);
+      state = [...state, created];
+      await _saveToHive();
+    } catch (e) {
+      print('[SessionNotifier] Error adding session: $e');
+    }
   }
 
   Future<void> updateSession(int index, Session session) async {
-    final newState = List<Session>.from(state);
-    newState[index] = session;
-    state = newState;
-    await _saveToHive();
+    if (index < 0 || index >= state.length) return;
+
+    final existing = state[index];
+    if (existing.id == null) {
+      await refreshFromServer();
+      return;
+    }
+
+    try {
+      final api = ref.read(apiClientProvider);
+      final response = await api.put(
+        ApiEndpoints.adminSessionById(existing.id!),
+        data: session.toJson(),
+      );
+      final data = response.data as Map<String, dynamic>;
+      final updated = Session.fromJson(data['data'] as Map<String, dynamic>);
+      final newState = List<Session>.from(state);
+      newState[index] = updated;
+      state = newState;
+      await _saveToHive();
+    } catch (e) {
+      print('[SessionNotifier] Error updating session: $e');
+    }
   }
 
   Future<void> deleteSession(int index) async {
-    final newState = List<Session>.from(state);
-    newState.removeAt(index);
-    state = newState;
-    await _saveToHive();
+    if (index < 0 || index >= state.length) return;
+    final existing = state[index];
+    if (existing.id == null) {
+      await refreshFromServer();
+      return;
+    }
+
+    try {
+      final api = ref.read(apiClientProvider);
+      await api.delete(ApiEndpoints.adminSessionById(existing.id!));
+      final newState = List<Session>.from(state)..removeAt(index);
+      state = newState;
+      await _saveToHive();
+    } catch (e) {
+      print('[SessionNotifier] Error deleting session: $e');
+    }
   }
 
   Future<void> toggleSession(int index) async {
-    final newState = List<Session>.from(state);
-    newState[index] = newState[index].copyWith(isActive: !newState[index].isActive);
-    state = newState;
-    await _saveToHive();
+    if (index < 0 || index >= state.length) return;
+    final existing = state[index];
+    if (existing.id == null) {
+      await refreshFromServer();
+      return;
+    }
+
+    try {
+      final api = ref.read(apiClientProvider);
+      final response = await api.patch(ApiEndpoints.toggleAdminSession(existing.id!));
+      final data = response.data as Map<String, dynamic>;
+      final updated = Session.fromJson(data['data'] as Map<String, dynamic>);
+      final newState = List<Session>.from(state);
+      newState[index] = updated;
+      state = newState;
+      await _saveToHive();
+    } catch (e) {
+      print('[SessionNotifier] Error toggling session: $e');
+    }
   }
 
   Future<void> _saveToHive() async {
@@ -152,7 +265,6 @@ class SessionNotifier extends Notifier<List<Session>> {
   }
 }
 
-final sessionProvider =
-    NotifierProvider<SessionNotifier, List<Session>>(() {
+final sessionProvider = NotifierProvider<SessionNotifier, List<Session>>(() {
   return SessionNotifier();
 });

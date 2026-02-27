@@ -419,32 +419,6 @@ class _AdminProfilePageState extends ConsumerState<AdminProfilePage> {
                 ),
               ),
 
-              const Spacer(),
-
-              // LOGOUT BUTTON
-              SizedBox(
-                width: double.infinity,
-                child: OutlinedButton.icon(
-                  onPressed: () async {
-                    // Logout and clear session + token
-                    final userSession = ref.read(userSessionServiceProvider);
-                    final tokenService = ref.read(tokenServiceProvider);
-                    
-                    await userSession.logout();
-                    await tokenService.removeToken();
-                    
-                    if (mounted) {
-                      Navigator.pushNamedAndRemoveUntil(
-                        context,
-                        "/login",
-                        (route) => false,
-                      );
-                    }
-                  },
-                  icon: const Icon(Icons.logout),
-                  label: const Text("Log Out"),
-                ),
-              ),
             ],
           ),
         ),

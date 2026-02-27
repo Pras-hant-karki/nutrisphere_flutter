@@ -154,21 +154,6 @@ class _SettingScreenState extends ConsumerState<SettingScreen> {
 
             const SizedBox(height: AppSpacing.xl),
 
-            // Appearance Section
-            _buildSectionHeader('Appearance'),
-            const SizedBox(height: AppSpacing.sm),
-            _buildSwitchTile(
-              icon: Icons.dark_mode_outlined,
-              title: 'Dark Mode',
-              subtitle: 'Enable dark theme',
-              value: themeMode == ThemeMode.dark,
-              onChanged: (value) {
-                ref.read(themeModeProvider.notifier).toggleTheme();
-              },
-            ),
-
-            const SizedBox(height: AppSpacing.xl),
-
             // Support Section
             _buildSectionHeader('Support'),
             const SizedBox(height: AppSpacing.sm),
