@@ -10,28 +10,27 @@ class ApiEndpoints {
     defaultValue: '',
   );
 
-  // static const bool isPhysicalDevice = true;
-  
-  static const bool isPhysicalDevice = false;
-  // static const String compIpAddress = "192.168.1.1";
+  static const bool _useAndroidEmulatorHost = bool.fromEnvironment(
+    'USE_ANDROID_EMULATOR_HOST',
+    defaultValue: false,
+  );
 
-  static const String compIpAddress = "172.25.0.110";
+  // Set this to your machine LAN IP when testing from a real Android device.
+  static const String compIpAddress = '172.25.0.110';
 
   static String get baseUrl {
     if (_configuredBaseUrl.isNotEmpty) {
       return _configuredBaseUrl;
     }
 
-    if (isPhysicalDevice) {
-      return 'http://$compIpAddress:5000';
-    }
-    // yadi android
     if (kIsWeb) {
       final host = Uri.base.host.isNotEmpty ? Uri.base.host : 'localhost';
       final scheme = Uri.base.scheme.isNotEmpty ? Uri.base.scheme : 'http';
       return '$scheme://$host:5000';
     } else if (Platform.isAndroid) {
-      return 'http://10.0.2.2:5000';
+      return _useAndroidEmulatorHost
+          ? 'http://10.0.2.2:5000'
+          : 'http://$compIpAddress:5000';
     } else if (Platform.isIOS) {
       return 'http://localhost:5000';
     } else {
@@ -91,15 +90,17 @@ class ApiEndpoints {
 
   // ============ Notification Endpoints ============
   static const String notifications = '/api/notifications';
-  static const String notificationsUnreadCount = '/api/notifications/unread-count';
+  static const String notificationsUnreadCount =
+      '/api/notifications/unread-count';
   static const String notificationsReadAll = '/api/notifications/read-all';
-  static String notificationMarkRead(String id) => '/api/notifications/$id/read';
+  static String notificationMarkRead(String id) =>
+      '/api/notifications/$id/read';
   static String notificationDelete(String id) => '/api/notifications/$id';
 
   // ============ Session Endpoints ============
   static const String sessions = '/api/sessions';
   static const String adminSessions = '/api/sessions/admin';
   static String adminSessionById(String id) => '/api/sessions/admin/$id';
-  static String toggleAdminSession(String id) => '/api/sessions/admin/$id/toggle';
+  static String toggleAdminSession(String id) =>
+      '/api/sessions/admin/$id/toggle';
 }
-

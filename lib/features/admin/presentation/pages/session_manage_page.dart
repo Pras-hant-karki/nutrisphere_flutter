@@ -286,12 +286,17 @@ class _SessionManagePageState extends ConsumerState<SessionManagePage> {
                 ),
                 insetPadding:
                     const EdgeInsets.symmetric(horizontal: 24, vertical: 40),
-                child: Padding(
-                  padding: const EdgeInsets.all(20),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(
+                    maxWidth: 640,
+                    maxHeight: MediaQuery.of(ctx).size.height * 0.85,
+                  ),
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.all(20),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
                       // ── Day dropdown ──
                       DropdownButtonFormField<String>(
                         initialValue: selectedDay,
@@ -416,6 +421,7 @@ class _SessionManagePageState extends ConsumerState<SessionManagePage> {
                         ],
                       ),
                     ],
+                    ),
                   ),
                 ),
               ),
