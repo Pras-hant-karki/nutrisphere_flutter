@@ -23,19 +23,19 @@ class ApiEndpoints {
     }
 
     if (isPhysicalDevice) {
-      return 'http://$compIpAddress:3000';
+      return 'http://$compIpAddress:5000';
     }
     // yadi android
     if (kIsWeb) {
       final host = Uri.base.host.isNotEmpty ? Uri.base.host : 'localhost';
       final scheme = Uri.base.scheme.isNotEmpty ? Uri.base.scheme : 'http';
-      return '$scheme://$host:3000';
+      return '$scheme://$host:5000';
     } else if (Platform.isAndroid) {
-      return 'http://10.0.2.2:3000';
+      return 'http://10.0.2.2:5000';
     } else if (Platform.isIOS) {
-      return 'http://localhost:3000';
+      return 'http://localhost:5000';
     } else {
-      return 'http://localhost:3000';
+      return 'http://localhost:5000';
     }
   }
 

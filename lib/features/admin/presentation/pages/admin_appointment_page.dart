@@ -32,26 +32,7 @@ class _AdminAppointmentPageState extends State<AdminAppointmentPage> {
                     "View Members Requests",
                     style: textTheme.titleMedium,
                   ),
-                  Stack(
-                    children: [
-                      IconButton(
-                        icon: const Icon(Icons.notifications_none, color: AppColors.textPrimary),
-                        onPressed: () {},
-                      ),
-                      Positioned(
-                        right: 10,
-                        top: 10,
-                        child: Container(
-                          height: 10,
-                          width: 10,
-                          decoration: const BoxDecoration(
-                            color: AppColors.primary,
-                            shape: BoxShape.circle,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
+                  const SizedBox.shrink(),
                 ],
               ),
 

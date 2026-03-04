@@ -9,6 +9,7 @@ import 'package:nutrisphere_flutter/core/services/storage/token_service.dart';
 import 'package:nutrisphere_flutter/core/utils/snackbar_utils.dart';
 import 'package:nutrisphere_flutter/features/profile/domain/usecases/upload_profile_picture_usecase.dart';
 import 'package:nutrisphere_flutter/features/auth/domain/usecases/update_user_usecase.dart';
+import 'package:nutrisphere_flutter/features/auth/data/datasources/remote/auth_remote_datasource.dart';
 import 'package:permission_handler/permission_handler.dart';
 
 class AdminProfilePage extends ConsumerStatefulWidget {
@@ -55,10 +56,52 @@ class _AdminProfilePageState extends ConsumerState<AdminProfilePage> {
         }
         _isLoading = false;
       });
+
+      await _syncUserFromServer();
     } else {
       setState(() {
         _isLoading = false;
       });
+    }
+  }
+
+  Future<void> _syncUserFromServer() async {
+    try {
+      final remoteUser = await ref.read(authRemoteDatasourceProvider).getCurrentUser();
+      if (remoteUser == null) {
+        return;
+      }
+
+      final normalizedPicture =
+          (remoteUser.profilePicture != null && remoteUser.profilePicture!.isNotEmpty)
+              ? (remoteUser.profilePicture!.startsWith('http')
+                  ? remoteUser.profilePicture!
+                  : '${ApiEndpoints.baseUrl}${remoteUser.profilePicture!}')
+              : null;
+
+      if (mounted) {
+        setState(() {
+          _nameCtrl.text = remoteUser.fullName;
+          _emailCtrl.text = remoteUser.email;
+          _usernameCtrl.text = _getUsernameFromEmail(remoteUser.email);
+          _roleCtrl.text = _capitalize(remoteUser.role ?? _roleCtrl.text);
+          _phoneCtrl.text = remoteUser.phone ?? '';
+          _profileImageUrl = normalizedPicture;
+        });
+      }
+
+      final userSession = ref.read(userSessionServiceProvider);
+      final oldSession = await userSession.getSession();
+      await userSession.saveSession(
+        userId: remoteUser.authId ?? oldSession?.userId ?? '',
+        email: remoteUser.email,
+        fullName: remoteUser.fullName,
+        role: remoteUser.role ?? oldSession?.role,
+        phone: remoteUser.phone,
+        profilePicture: remoteUser.profilePicture,
+      );
+    } catch (_) {
+      // keep UI on cached session data if remote sync fails
     }
   }
 
@@ -274,7 +317,7 @@ class _AdminProfilePageState extends ConsumerState<AdminProfilePage> {
             fullName: updatedEntity.fullName,
             role: session.role,
             phone: updatedEntity.phone,
-            profilePicture: updatedEntity.profilePicture,
+            profilePicture: updatedEntity.profilePicture ?? _profileImageUrl,
           );
           if (mounted) {
             SnackbarUtils.showSuccess(context, 'Profile updated successfully');
@@ -282,6 +325,8 @@ class _AdminProfilePageState extends ConsumerState<AdminProfilePage> {
         },
       );
     }
+
+    await _syncUserFromServer();
   }
 
   @override
@@ -324,26 +369,7 @@ class _AdminProfilePageState extends ConsumerState<AdminProfilePage> {
                     "Edit Profile",
                     style: Theme.of(context).textTheme.titleLarge,
                   ),
-                  Stack(
-                    children: [
-                      IconButton(
-                        icon: const Icon(Icons.notifications_none, color: AppColors.textPrimary),
-                        onPressed: () {},
-                      ),
-                      Positioned(
-                        right: 10,
-                        top: 10,
-                        child: Container(
-                          height: 10,
-                          width: 10,
-                          decoration: const BoxDecoration(
-                            color: AppColors.primary,
-                            shape: BoxShape.circle,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
+                  const SizedBox.shrink(),
                 ],
               ),
 

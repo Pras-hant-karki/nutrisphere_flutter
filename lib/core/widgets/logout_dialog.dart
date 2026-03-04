@@ -12,98 +12,94 @@ class LogoutDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cardColor = Color.lerp(AppColors.background, Colors.white, 0.10)!;
+
     return Dialog(
       backgroundColor: Colors.transparent,
       elevation: 0,
       child: Container(
-        padding: const EdgeInsets.all(AppSpacing.lg),
+        padding: const EdgeInsets.fromLTRB(20, 24, 20, 20),
         decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(20),
+          color: cardColor,
+          borderRadius: BorderRadius.circular(18),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.08),
-              blurRadius: 24,
-              offset: const Offset(0, 8),
+              color: Colors.black.withOpacity(0.12),
+              blurRadius: 26,
+              offset: const Offset(0, 10),
             ),
           ],
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // Icon
             Container(
-              width: 56,
-              height: 56,
+              width: 58,
+              height: 58,
               decoration: BoxDecoration(
-                color: Colors.red.withOpacity(0.1),
+                color: const Color(0xFFFBE8E8),
                 shape: BoxShape.circle,
               ),
               child: const Icon(
-                Icons.logout_rounded,
-                color: Colors.red,
-                size: 28,
+                Icons.logout,
+                color: Color(0xFFEF4444),
+                size: 27,
               ),
             ),
-            const SizedBox(height: AppSpacing.lg),
+            const SizedBox(height: 20),
 
-            // Title
-            const Text(
-              'Logout',
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.w700,
-                color: AppColors.textPrimary,
-              ),
-            ),
-            const SizedBox(height: AppSpacing.sm),
-
-            // Description
             Text(
               'Are you sure you want to logout?\nYour data will be saved.',
               textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 14,
-                color: AppColors.textSecondary,
-                height: 1.5,
+              style: const TextStyle(
+                fontSize: 20,
+                color: Color(0xFFB9B9B9),
+                height: 1.35,
+                fontWeight: FontWeight.w500,
               ),
             ),
-            const SizedBox(height: AppSpacing.xl),
+            const SizedBox(height: 22),
 
-            // Buttons
             Row(
               children: [
                 Expanded(
-                  child: OutlinedButton(
+                  child: SizedBox(
+                    height: 44,
+                    child: OutlinedButton(
                     onPressed: () => Navigator.pop(context),
                     style: OutlinedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      side: const BorderSide(color: AppColors.border),
+                      padding: EdgeInsets.zero,
+                      backgroundColor: Colors.white,
+                      side: const BorderSide(color: Color(0xFF314039), width: 1.2),
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: BorderRadius.circular(11),
                       ),
                     ),
                     child: const Text(
                       'Cancel',
                       style: TextStyle(
-                        color: AppColors.textPrimary,
+                        color: Color(0xFF314039),
                         fontWeight: FontWeight.w600,
+                        fontSize: 16,
                       ),
                     ),
                   ),
+                  ),
                 ),
-                const SizedBox(width: AppSpacing.md),
+                const SizedBox(width: 14),
                 Expanded(
-                  child: ElevatedButton(
+                  child: SizedBox(
+                    height: 44,
+                    child: ElevatedButton(
                     onPressed: () {
                       Navigator.pop(context);
                       onConfirm();
                     },
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.red,
-                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      backgroundColor: const Color(0xFFFF4B3A),
+                      padding: EdgeInsets.zero,
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: BorderRadius.circular(11),
                       ),
                       elevation: 0,
                     ),
@@ -112,8 +108,10 @@ class LogoutDialog extends StatelessWidget {
                       style: TextStyle(
                         color: Colors.white,
                         fontWeight: FontWeight.w600,
+                        fontSize: 18,
                       ),
                     ),
+                  ),
                   ),
                 ),
               ],

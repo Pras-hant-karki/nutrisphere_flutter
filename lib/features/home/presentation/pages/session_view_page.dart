@@ -5,11 +5,22 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:nutrisphere_flutter/app/theme/app_colors.dart';
 import 'package:nutrisphere_flutter/core/providers/session_provider.dart';
 
-class SessionViewScreen extends ConsumerWidget {
+class SessionViewScreen extends ConsumerStatefulWidget {
   const SessionViewScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<SessionViewScreen> createState() => _SessionViewScreenState();
+}
+
+class _SessionViewScreenState extends ConsumerState<SessionViewScreen> {
+  @override
+  void initState() {
+    super.initState();
+    Future.microtask(() => ref.read(sessionProvider.notifier).refreshUserSessions());
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final sessions = ref.watch(sessionProvider);
     final notifier = ref.read(sessionProvider.notifier);
     // Users only see active sessions

@@ -9,6 +9,7 @@ import 'package:nutrisphere_flutter/core/services/storage/token_service.dart';
 import 'package:nutrisphere_flutter/core/utils/snackbar_utils.dart';
 import 'package:nutrisphere_flutter/features/auth/domain/usecases/update_user_usecase.dart';
 import 'package:nutrisphere_flutter/features/auth/domain/entities/auth_entity.dart';
+import 'package:nutrisphere_flutter/features/auth/data/datasources/remote/auth_remote_datasource.dart';
 import 'package:nutrisphere_flutter/features/profile/domain/usecases/upload_profile_picture_usecase.dart';
 import 'package:permission_handler/permission_handler.dart';
 
@@ -56,10 +57,52 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         }
         _isLoading = false;
       });
+
+      await _syncUserFromServer();
     } else {
       setState(() {
         _isLoading = false;
       });
+    }
+  }
+
+  Future<void> _syncUserFromServer() async {
+    try {
+      final remoteUser = await ref.read(authRemoteDatasourceProvider).getCurrentUser();
+      if (remoteUser == null) {
+        return;
+      }
+
+      final normalizedPicture =
+          (remoteUser.profilePicture != null && remoteUser.profilePicture!.isNotEmpty)
+              ? (remoteUser.profilePicture!.startsWith('http')
+                  ? remoteUser.profilePicture!
+                  : '${ApiEndpoints.baseUrl}${remoteUser.profilePicture!}')
+              : null;
+
+      if (mounted) {
+        setState(() {
+          _nameCtrl.text = remoteUser.fullName;
+          _emailCtrl.text = remoteUser.email;
+          _usernameCtrl.text = _getUsernameFromEmail(remoteUser.email);
+          _roleCtrl.text = _capitalize(remoteUser.role ?? _roleCtrl.text);
+          _phoneCtrl.text = remoteUser.phone ?? '';
+          _profileImageUrl = normalizedPicture;
+        });
+      }
+
+      final userSession = ref.read(userSessionServiceProvider);
+      final oldSession = await userSession.getSession();
+      await userSession.saveSession(
+        userId: remoteUser.authId ?? oldSession?.userId ?? '',
+        email: remoteUser.email,
+        fullName: remoteUser.fullName,
+        role: remoteUser.role ?? oldSession?.role,
+        phone: remoteUser.phone,
+        profilePicture: remoteUser.profilePicture,
+      );
+    } catch (_) {
+      // keep cached data when server sync fails
     }
   }
 
@@ -233,6 +276,26 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       return;
     }
 
+    // Upload profile picture first if selected
+    if (_profileImage != null) {
+      final uploadResult = await ref.read(uploadProfilePictureUsecaseProvider)(File(_profileImage!.path));
+      uploadResult.fold(
+        (failure) {
+          if (mounted) {
+            SnackbarUtils.showError(context, 'Failed to upload profile picture: ${failure.message}');
+          }
+        },
+        (imageUrl) {
+          setState(() {
+            _profileImageUrl = imageUrl.startsWith('http')
+                ? imageUrl
+                : '${ApiEndpoints.baseUrl}$imageUrl';
+            _profileImage = null;
+          });
+        },
+      );
+    }
+
     // Update profile data
     final authEntity = AuthEntity(
       authId: session.userId,
@@ -259,36 +322,14 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             fullName: updatedUser.fullName,
             role: session.role,
             phone: updatedUser.phone,
-            profilePicture: updatedUser.profilePicture,
+            profilePicture: updatedUser.profilePicture ?? _profileImageUrl,
           );
           SnackbarUtils.showSuccess(context, 'Profile updated successfully');
         },
       );
     }
 
-    // Upload profile picture if selected
-    if (_profileImage != null) {
-      final uploadResult = await ref.read(uploadProfilePictureUsecaseProvider)(File(_profileImage!.path));
-      uploadResult.fold(
-        (failure) {
-          if (mounted) {
-            SnackbarUtils.showError(context, 'Failed to upload profile picture: ${failure.message}');
-          }
-        },
-        (imageUrl) {
-          setState(() {
-            // Prepend base URL if the path is relative
-            _profileImageUrl = imageUrl.startsWith('http') 
-                ? imageUrl 
-                : '${ApiEndpoints.baseUrl}$imageUrl';
-            _profileImage = null; // Clear the local image after upload
-          });
-          if (mounted) {
-            SnackbarUtils.showSuccess(context, 'Profile picture uploaded successfully');
-          }
-        },
-      );
-    }
+    await _syncUserFromServer();
   }
 
   @override

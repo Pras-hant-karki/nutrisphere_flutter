@@ -1,15 +1,28 @@
 import 'dart:ui';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:nutrisphere_flutter/app/theme/app_colors.dart';
+import 'package:nutrisphere_flutter/core/api/api_endpoints.dart';
 import 'package:nutrisphere_flutter/core/providers/session_provider.dart';
 
-class SessionManagePage extends ConsumerWidget {
+class SessionManagePage extends ConsumerStatefulWidget {
   const SessionManagePage({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<SessionManagePage> createState() => _SessionManagePageState();
+}
+
+class _SessionManagePageState extends ConsumerState<SessionManagePage> {
+  @override
+  void initState() {
+    super.initState();
+    Future.microtask(() => ref.read(sessionProvider.notifier).refreshAdminSessions());
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final sessions = ref.watch(sessionProvider);
     final notifier = ref.read(sessionProvider.notifier);
     final groupedSessions = notifier.sessionsByDay;
@@ -39,6 +52,23 @@ class SessionManagePage extends ConsumerWidget {
                 ],
               ),
             ),
+
+            if (kDebugMode)
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    'API: ${ApiEndpoints.baseUrl}',
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: AppColors.textMuted,
+                          fontSize: 11,
+                        ),
+                  ),
+                ),
+              ),
+
+            if (kDebugMode) const SizedBox(height: 8),
 
             // "Sessions" banner
             Container(
@@ -409,7 +439,7 @@ class SessionManagePage extends ConsumerWidget {
     required TextEditingController timeCtrl,
     required TextEditingController detailsCtrl,
     required bool isActive,
-  }) {
+  }) async {
     final lines = detailsCtrl.text
         .split('\n')
         .where((l) => l.trim().isNotEmpty)
@@ -433,13 +463,34 @@ class SessionManagePage extends ConsumerWidget {
       isActive: isActive,
     );
 
-    if (isEditing && index != null) {
-      ref.read(sessionProvider.notifier).updateSession(index, newSession);
-    } else {
-      ref.read(sessionProvider.notifier).addSession(newSession);
-    }
+    try {
+      if (isEditing && index != null) {
+        await ref.read(sessionProvider.notifier).updateSession(index, newSession);
+      } else {
+        await ref.read(sessionProvider.notifier).addSession(newSession);
+      }
 
-    Navigator.pop(ctx);
+      if (ctx.mounted) {
+        Navigator.pop(ctx);
+      }
+      if (ctx.mounted) {
+        ScaffoldMessenger.of(ctx).showSnackBar(
+          SnackBar(
+            content: Text(isEditing ? 'Session updated successfully' : 'Session added successfully'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } catch (e) {
+      if (ctx.mounted) {
+        ScaffoldMessenger.of(ctx).showSnackBar(
+          SnackBar(
+            content: Text('Failed to save session: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 
   // ─────────────────────────────────────────────────────
@@ -464,9 +515,30 @@ class SessionManagePage extends ConsumerWidget {
                 style: TextStyle(color: AppColors.textSecondary)),
           ),
           TextButton(
-            onPressed: () {
-              ref.read(sessionProvider.notifier).deleteSession(index);
-              Navigator.pop(ctx);
+            onPressed: () async {
+              try {
+                await ref.read(sessionProvider.notifier).deleteSession(index);
+                if (ctx.mounted) {
+                  Navigator.pop(ctx);
+                }
+                if (ctx.mounted) {
+                  ScaffoldMessenger.of(ctx).showSnackBar(
+                    const SnackBar(
+                      content: Text('Session deleted successfully'),
+                      backgroundColor: Colors.green,
+                    ),
+                  );
+                }
+              } catch (e) {
+                if (ctx.mounted) {
+                  ScaffoldMessenger.of(ctx).showSnackBar(
+                    SnackBar(
+                      content: Text('Failed to delete session: $e'),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
+                }
+              }
             },
             child: const Text('Delete',
                 style: TextStyle(color: AppColors.error)),
