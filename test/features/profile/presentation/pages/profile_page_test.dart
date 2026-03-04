@@ -1,15 +1,38 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:nutrisphere_flutter/core/services/storage/user_session_service.dart';
+import 'package:nutrisphere_flutter/features/profile/presentation/pages/profile_page.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
-  test('ProfileScreen test placeholder', () {
-    expect(true, true);
-  });
+  group('ProfileScreen', () {
+    testWidgets('renders loading indicator initially', (tester) async {
+      SharedPreferences.setMockInitialValues({});
+      final prefs = await SharedPreferences.getInstance();
 
-  test('ProfileScreen simple test', () {
-    expect(1 + 1, equals(2));
-  });
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [sharedPreferencesProvider.overrideWithValue(prefs)],
+          child: const MaterialApp(home: ProfileScreen()),
+        ),
+      );
 
-  test('ProfileScreen ready for implementation', () {
-    expect(true, isTrue);
+      expect(find.byType(CircularProgressIndicator), findsOneWidget);
+    });
+
+    testWidgets('mounts profile screen', (tester) async {
+      SharedPreferences.setMockInitialValues({});
+      final prefs = await SharedPreferences.getInstance();
+
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [sharedPreferencesProvider.overrideWithValue(prefs)],
+          child: const MaterialApp(home: ProfileScreen()),
+        ),
+      );
+
+      expect(find.byType(ProfileScreen), findsOneWidget);
+    });
   });
 }

@@ -5,53 +5,34 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:nutrisphere_flutter/core/error/failures.dart';
 import 'package:nutrisphere_flutter/features/fitness/domain/entities/fitness_entity.dart';
 import 'package:nutrisphere_flutter/features/fitness/domain/repositories/fitness_repository.dart';
-import 'package:nutrisphere_flutter/features/fitness/domain/usecases/create_fitness_usecase.dart';
+import 'package:nutrisphere_flutter/features/fitness/domain/usecases/upload_photo_usecase.dart';
 
 class _FakeFitnessRepository implements IFitnessRepository {
-  _FakeFitnessRepository(this.result);
-
-  final Either<Failure, bool> result;
-  FitnessEntity? received;
+  @override
+  Future<Either<Failure, String>> uploadPhoto(File photo) async => const Right('/uploads/photo.png');
 
   @override
-  Future<Either<Failure, bool>> createFitness(FitnessEntity fitness) async {
-    received = fitness;
-    return result;
-  }
-
+  Future<Either<Failure, bool>> createFitness(FitnessEntity fitness) => throw UnimplementedError();
   @override
   Future<Either<Failure, bool>> deleteFitness(String fitnessId) => throw UnimplementedError();
-
   @override
   Future<Either<Failure, List<FitnessEntity>>> getAllFitness() => throw UnimplementedError();
-
   @override
   Future<Either<Failure, List<FitnessEntity>>> getFitnessByCategory(String categoryId) => throw UnimplementedError();
-
   @override
   Future<Either<Failure, FitnessEntity>> getFitnessById(String fitnessId) => throw UnimplementedError();
-
-  @override
-  Future<Either<Failure, String>> uploadPhoto(File photo) => throw UnimplementedError();
-
   @override
   Future<Either<Failure, String>> uploadVideo(File video) => throw UnimplementedError();
-
   @override
   Future<Either<Failure, bool>> updateFitness(FitnessEntity fitness) => throw UnimplementedError();
 }
 
 void main() {
-  group('CreatefitnessUsecase', () {
-    test('returns Right(true) and maps title', () async {
-      final repo = _FakeFitnessRepository(const Right(true));
-      final usecase = CreatefitnessUsecase(fitnessRepository: repo);
+  test('UploadPhotoUsecase returns uploaded path', () async {
+    final usecase = UploadPhotoUsecase(fitnessRepository: _FakeFitnessRepository());
 
-      final result = await usecase(const CreateFitnessParams(title: 'Yoga'));
+    final result = await usecase(File('photo.png'));
 
-      expect(result, const Right(true));
-      expect(repo.received?.title, 'Yoga');
-    });
-
+    expect(result, const Right('/uploads/photo.png'));
   });
 }
