@@ -26,10 +26,7 @@ class App extends ConsumerStatefulWidget {
 
 class _AppState extends ConsumerState<App> {
   final GlobalKey<NavigatorState> _navigatorKey = GlobalKey<NavigatorState>();
-  StreamSubscription<bool>? _earSub;
   StreamSubscription<bool>? _safetySub;
-  DateTime _lastEarNoticeAt =
-      DateTime.fromMillisecondsSinceEpoch(0);
   bool _isAppLockedForSafety = false;
 
   @override
@@ -37,26 +34,6 @@ class _AppState extends ConsumerState<App> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final sensorService = ref.read(sensorServiceProvider);
-
-      _earSub = sensorService.earStream.listen((atEar) {
-        if (!atEar) return;
-
-        final now = DateTime.now();
-        if (now.difference(_lastEarNoticeAt) < const Duration(seconds: 8)) {
-          return;
-        }
-        _lastEarNoticeAt = now;
-
-        final context = _navigatorKey.currentContext;
-        if (context == null || !mounted) return;
-
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Ear detection active'),
-            duration: Duration(seconds: 2),
-          ),
-        );
-      });
 
       _safetySub = sensorService.safetyStream.listen((shouldLock) {
         if (!mounted) return;
@@ -69,7 +46,6 @@ class _AppState extends ConsumerState<App> {
 
   @override
   void dispose() {
-    _earSub?.cancel();
     _safetySub?.cancel();
     super.dispose();
   }

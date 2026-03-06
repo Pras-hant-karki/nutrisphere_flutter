@@ -199,6 +199,7 @@ Future<Either<Failure, bool>> register(AuthEntity user) async {
   @override
   Future<Either<Failure, void>> logout() async {
     try {
+      await _authRemoteDatasource.logout();
       await _authDatasource.logout();
       return const Right(null);
     } catch (e) {

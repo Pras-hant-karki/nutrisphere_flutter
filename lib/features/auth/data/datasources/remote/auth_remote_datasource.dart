@@ -86,7 +86,9 @@ class AuthRemoteDatasource implements IAuthRemoteDatasource {
           userId: loggedInUser.authId ?? userData['_id']?.toString() ?? '',
           email: loggedInUser.email,
           fullName: loggedInUser.fullName,
-          role: loggedInUser.role,
+          role: (loggedInUser.role == null || loggedInUser.role!.isEmpty)
+              ? 'user'
+              : loggedInUser.role,
           phone: loggedInUser.phone,
           profilePicture: loggedInUser.profilePicture,
         );
@@ -139,6 +141,10 @@ Future<AuthApiModel> register({
   required String confirmPassword,
 }) async {
   try {
+    // Clear any stale auth context before creating a new account.
+    await _tokenService.removeToken();
+    _apiClient.removeAuthToken();
+
     final authModel = AuthApiModel(
       fullName: name,
       email: email,
@@ -174,7 +180,21 @@ Future<AuthApiModel> register({
       if (token != null && token is String && token.isNotEmpty) {
         _apiClient.setAuthToken(token);
         await _tokenService.saveToken(token);
+      } else {
+        // Some backends don't issue token on register; login to establish session.
+        return await login(email, password);
       }
+
+      await _userSessionService.saveSession(
+        userId: registeredUser.authId ?? userData['_id']?.toString() ?? email,
+        email: registeredUser.email,
+        fullName: registeredUser.fullName.isNotEmpty ? registeredUser.fullName : name,
+        role: (registeredUser.role == null || registeredUser.role!.isEmpty)
+            ? 'user'
+            : registeredUser.role,
+        phone: registeredUser.phone,
+        profilePicture: registeredUser.profilePicture,
+      );
 
       return registeredUser;
     }

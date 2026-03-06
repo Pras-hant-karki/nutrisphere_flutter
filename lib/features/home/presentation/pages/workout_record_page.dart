@@ -62,6 +62,7 @@ class _WorkoutRecordScreenState extends State<WorkoutRecordScreen>
   late final Animation<double> _fadeAnim;
 
   static const double _drawerWidth = 280;
+  String _notesStorageKey = 'workout_notes_guest';
 
   @override
   void initState() {
@@ -74,7 +75,19 @@ class _WorkoutRecordScreenState extends State<WorkoutRecordScreen>
       CurvedAnimation(parent: _animController, curve: Curves.easeOutCubic),
     );
     _fadeAnim = Tween<double>(begin: 0, end: 1).animate(_animController);
-    _loadNotes();
+    _initializeStorageAndLoadNotes();
+  }
+
+  Future<void> _initializeStorageAndLoadNotes() async {
+    final prefs = await SharedPreferences.getInstance();
+    final userId = prefs.getString('user_id');
+    final email = prefs.getString('email');
+    final ownerKey = (userId != null && userId.isNotEmpty)
+        ? userId
+        : ((email != null && email.isNotEmpty) ? email : 'guest');
+
+    _notesStorageKey = 'workout_notes_$ownerKey';
+    await _loadNotes();
   }
 
   @override
@@ -108,7 +121,7 @@ class _WorkoutRecordScreenState extends State<WorkoutRecordScreen>
   // ── Persistence ───────────────────────────────────────────────────
   Future<void> _loadNotes() async {
     final prefs = await SharedPreferences.getInstance();
-    final notesJson = prefs.getStringList('workout_notes') ?? [];
+    final notesJson = prefs.getStringList(_notesStorageKey) ?? [];
     setState(() {
       _notes = notesJson
           .map((j) => WorkoutNote.fromJson(jsonDecode(j)))
@@ -120,7 +133,7 @@ class _WorkoutRecordScreenState extends State<WorkoutRecordScreen>
   Future<void> _saveNotes() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setStringList(
-      'workout_notes',
+      _notesStorageKey,
       _notes.map((n) => jsonEncode(n.toJson())).toList(),
     );
   }

@@ -10,9 +10,11 @@ class FitnessSensorService {
   static const double SHAKE_THRESHOLD = 13.0;
   static const double FLAT_Z_THRESHOLD = 9.0;
   // Approximation for "close to face" using orientation/accel only (no distance sensor).
-  static const double EYE_CARE_ENTER_Z_THRESHOLD = 9.4;
-  static const double EYE_CARE_EXIT_Z_THRESHOLD = 8.6;
-  static const int EYE_CARE_STABLE_SAMPLES = 4;
+  static const double EYE_CARE_ENTER_Z_THRESHOLD = 8.7;
+  static const double EYE_CARE_EXIT_Z_THRESHOLD = 8.1;
+  static const int EYE_CARE_STABLE_SAMPLES = 1;
+  static const double EAR_PROXIMITY_MAGNITUDE_THRESHOLD = 10.0;
+  static const double EAR_LOW_MOVEMENT_THRESHOLD = 10.0;
 
   final _shakeController = StreamController<bool>.broadcast();
   final _eyeCareController = StreamController<bool>.broadcast();
@@ -21,13 +23,15 @@ class FitnessSensorService {
 
   StreamSubscription<AccelerometerEvent>? _accelSub;
   Timer? _safetyTimer;
-  double _baseBrightness = 0.5;
-  bool _isDimmed = false;
+  double _normalBrightness = 0.5;
+  bool _isEyeDimmed = false;
+  bool _isAtEar = false;
   bool _eyeCareCandidate = false;
   int _eyeCareStableCount = 0;
   bool _isListening = false;
   bool _isDisposed = false;
   DateTime _lastShake = DateTime.now();
+  DateTime _lastBrightnessSampleAt = DateTime.fromMillisecondsSinceEpoch(0);
 
   Stream<bool> get shakeStream => _shakeController.stream;
   Stream<bool> get eyeCareStream => _eyeCareController.stream;
@@ -39,7 +43,7 @@ class FitnessSensorService {
     _isListening = true;
 
     try {
-      _baseBrightness = await ScreenBrightness().application;
+      _normalBrightness = await ScreenBrightness().application;
     } catch (error) {
       if (kDebugMode) {
         debugPrint('Could not read screen brightness: $error');
@@ -50,6 +54,7 @@ class FitnessSensorService {
       (event) {
         if (_isDisposed) return;
         _handleShake(event);
+        _refreshNormalBrightnessIfNeeded();
         _handleEyeCare(event);
         _handleEar(event);
         _handleSafety(event);
@@ -79,9 +84,9 @@ class FitnessSensorService {
 
   void _handleEyeCare(AccelerometerEvent event) {
     // Enter/exit thresholds reduce flicker around a single boundary value.
-    final nextCandidate = _isDimmed
-        ? (event.z > EYE_CARE_EXIT_Z_THRESHOLD && event.x.abs() < 1.8)
-        : (event.z > EYE_CARE_ENTER_Z_THRESHOLD && event.x.abs() < 1.8);
+    final nextCandidate = _isEyeDimmed
+      ? (event.z > EYE_CARE_EXIT_Z_THRESHOLD && event.x.abs() < 3.6 && event.y.abs() < 6.2)
+      : (event.z > EYE_CARE_ENTER_Z_THRESHOLD && event.x.abs() < 4.0 && event.y.abs() < 6.8);
 
     if (nextCandidate == _eyeCareCandidate) {
       _eyeCareStableCount++;
@@ -94,22 +99,33 @@ class FitnessSensorService {
       return;
     }
 
-    if (_eyeCareCandidate == _isDimmed) {
+    if (_eyeCareCandidate == _isEyeDimmed) {
       return;
     }
 
-    _isDimmed = _eyeCareCandidate;
-    _eyeCareController.add(_isDimmed);
+    _isEyeDimmed = _eyeCareCandidate;
+    _eyeCareController.add(_isEyeDimmed);
     if (kDebugMode) {
-      debugPrint('Sensor event: eye-care ${_isDimmed ? 'ON' : 'OFF'}');
+      debugPrint('Sensor event: eye-care ${_isEyeDimmed ? 'ON' : 'OFF'}');
     }
-    unawaited(_setEyeCareBrightness(_isDimmed));
+    unawaited(_applyBrightnessMode());
   }
 
-  Future<void> _setEyeCareBrightness(bool dimmed) async {
+  Future<void> _applyBrightnessMode() async {
     try {
-      if (dimmed) {
-        await ScreenBrightness().setApplicationScreenBrightness(_baseBrightness * 0.5);
+      if (_isAtEar) {
+        // Ear mode should behave like a call: screen nearly off.
+        await ScreenBrightness().setApplicationScreenBrightness(0.0);
+        return;
+      }
+
+      if (_isEyeDimmed) {
+        final target = _normalBrightness <= 0.25
+            ? _normalBrightness
+            : _normalBrightness * 0.5;
+        await ScreenBrightness().setApplicationScreenBrightness(
+          target.clamp(0.02, 1.0),
+        );
       } else {
         await ScreenBrightness().resetApplicationScreenBrightness();
       }
@@ -120,12 +136,46 @@ class FitnessSensorService {
     }
   }
 
-  void _handleEar(AccelerometerEvent event) {
-    final atEar = event.y > 8.5 && event.z.abs() < 2.5;
-    _earDetectionController.add(atEar);
-    if (kDebugMode && atEar) {
-      debugPrint('Sensor event: ear detected');
+  void _refreshNormalBrightnessIfNeeded() {
+    if (_isAtEar || _isEyeDimmed) return;
+
+    final now = DateTime.now();
+    if (now.difference(_lastBrightnessSampleAt) < const Duration(seconds: 2)) {
+      return;
     }
+    _lastBrightnessSampleAt = now;
+
+    unawaited(() async {
+      try {
+        _normalBrightness = await ScreenBrightness().application;
+      } catch (_) {
+        // keep previous value
+      }
+    }());
+  }
+
+  void _handleEar(AccelerometerEvent event) {
+    final magnitude =
+        sqrt(event.x * event.x + event.y * event.y + event.z * event.z) - 9.8;
+
+    final isVeryStable = magnitude < EAR_PROXIMITY_MAGNITUDE_THRESHOLD;
+    final isFaceUp = event.z < 0.0;
+    final hasLowMovement =
+        event.x.abs() < EAR_LOW_MOVEMENT_THRESHOLD &&
+            event.y.abs() < EAR_LOW_MOVEMENT_THRESHOLD;
+
+    final isNearFace = isVeryStable && isFaceUp && hasLowMovement;
+
+    if (isNearFace == _isAtEar) {
+      return;
+    }
+
+    _isAtEar = isNearFace;
+    _earDetectionController.add(_isAtEar);
+    if (kDebugMode) {
+      debugPrint('Sensor event: ear ${_isAtEar ? 'ON' : 'OFF'}');
+    }
+    unawaited(_applyBrightnessMode());
   }
 
   void _handleSafety(AccelerometerEvent event) {
@@ -151,10 +201,9 @@ class FitnessSensorService {
     _isListening = false;
     _accelSub?.cancel();
     _safetyTimer?.cancel();
-    if (_isDimmed) {
-      unawaited(_setEyeCareBrightness(false));
-      _isDimmed = false;
-    }
+    _isEyeDimmed = false;
+    _isAtEar = false;
+    unawaited(ScreenBrightness().resetApplicationScreenBrightness());
     _shakeController.close();
     _eyeCareController.close();
     _earDetectionController.close();

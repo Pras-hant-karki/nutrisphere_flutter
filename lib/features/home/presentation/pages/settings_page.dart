@@ -12,7 +12,7 @@ import 'package:nutrisphere_flutter/core/widgets/logout_dialog.dart';
 import 'package:nutrisphere_flutter/app/theme/theme_provider.dart';
 import '../../../../core/services/notification_service.dart'; 
 import 'package:nutrisphere_flutter/features/dashboard/presentation/pages/terms_of_service_page.dart';
-import 'package:nutrisphere_flutter/core/services/storage/user_session_service.dart'; 
+import 'package:nutrisphere_flutter/features/auth/domain/usecases/logout_usecase.dart';
 
 class SettingScreen extends ConsumerStatefulWidget {
   const SettingScreen({super.key});
@@ -401,10 +401,7 @@ class _SettingScreenState extends ConsumerState<SettingScreen> {
       context: context,
       builder: (context) => LogoutDialog(
         onConfirm: () async {
-          await ref.read(userSessionServiceProvider).logout();
-          // Update auth state
-          // Assuming authViewModel has a method to set state to unauthenticated
-          // For now, just navigate
+          await ref.read(logoutUseCaseProvider).call();
           if (context.mounted) {
             Navigator.pushNamedAndRemoveUntil(
               context,

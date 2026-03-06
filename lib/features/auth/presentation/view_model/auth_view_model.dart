@@ -44,12 +44,13 @@ class AuthViewModel extends Notifier<AuthState> {
         );
       },
       (isRegistered) {
-        // After successful registration, create a temporary user entity for display
+        // Session/token is persisted in datasource; keep lightweight state here.
         if (isRegistered) {
           final tempUser = AuthEntity(
             fullName: fullName,
             email: email,
-            password: password,
+            password: '',
+            role: 'user',
           );
           // Set authenticated status - token is already saved in secure storage
           state = state.copyWith(
