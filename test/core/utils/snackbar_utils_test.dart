@@ -45,3 +45,6 @@ void main() {
     });
   });
 }
+
+// (show test pass with coverage) flutter pub run test_cov_console
+// flutter test --coverage (generate coverage file)

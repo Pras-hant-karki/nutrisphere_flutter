@@ -5,6 +5,8 @@ import 'package:flutter/foundation.dart';
 class ApiEndpoints {
   ApiEndpoints._();
 
+  static bool get isAndroidNative => !kIsWeb && Platform.isAndroid;
+
   static const String _configuredBaseUrl = String.fromEnvironment(
     'API_BASE_URL',
     defaultValue: '',
@@ -16,7 +18,7 @@ class ApiEndpoints {
   );
 
   // Set this to your machine LAN IP when testing from a real Android device.
-  static const String compIpAddress = '172.25.0.110';
+  static const String compIpAddress = '192.168.18.12';
 
   static String get baseUrl {
     if (_configuredBaseUrl.isNotEmpty) {
@@ -38,12 +40,14 @@ class ApiEndpoints {
     }
   }
 
-  static const Duration connectionTimeout = Duration(seconds: 30);
+  static const Duration connectionTimeout = Duration(seconds: 8);
   static const Duration receiveTimeout = Duration(seconds: 30);
 
   // ============ Auth Endpoints ============
   static const String login = '/api/auth/login';
   static const String register = '/api/auth/register';
+  static const String requestPasswordReset = '/api/auth/request-password-reset';
+  static const String resetPassword = '/api/auth/reset-password';
   static const String me = '/api/auth/me';
   static const String uploadImage = '/api/auth/upload-profile-picture';
   static const String uploadProfilePicture = '/api/auth/profile-picture';

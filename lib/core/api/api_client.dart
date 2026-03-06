@@ -21,7 +21,8 @@ class ApiClient {
     _dio = Dio(
       BaseOptions(
         baseUrl: ApiEndpoints.baseUrl,
-        connectTimeout: ApiEndpoints.connectionTimeout,
+        // Keep connect timeout tighter to avoid a long "spinning" login UX.
+        connectTimeout: const Duration(seconds: 8),
         receiveTimeout: ApiEndpoints.receiveTimeout,
         headers: const {
           'Content-Type': 'application/json',
@@ -33,15 +34,16 @@ class ApiClient {
     // Auth interceptor
     _dio.interceptors.add(_AuthInterceptor());
 
+    // Android host failover: if one host is unreachable, retry once with the other.
+    _dio.interceptors.add(_AndroidHostFailoverInterceptor(_dio));
+
     // Retry interceptor
     _dio.interceptors.add(
       RetryInterceptor(
         dio: _dio,
-        retries: 3,
+        retries: 1,
         retryDelays: const [
           Duration(seconds: 1),
-          Duration(seconds: 2),
-          Duration(seconds: 3),
         ],
         retryEvaluator: (error, attempt) {
           return error.type == DioExceptionType.connectionTimeout ||
@@ -55,6 +57,7 @@ class ApiClient {
 
     // Logger (debug only)
     if (kDebugMode) {
+      debugPrint('ApiClient base URL: ${ApiEndpoints.baseUrl}');
       _dio.interceptors.add(
         PrettyDioLogger(
           requestHeader: true,
@@ -80,8 +83,73 @@ class ApiClient {
       {dynamic data,
       Map<String, dynamic>? queryParameters,
       Options? options}) {
-    return _dio.post(path,
-        data: data, queryParameters: queryParameters, options: options);
+    return _postWithAndroidFailover(
+      path,
+      data: data,
+      queryParameters: queryParameters,
+      options: options,
+    );
+  }
+
+  Future<Response> _postWithAndroidFailover(
+    String path, {
+    dynamic data,
+    Map<String, dynamic>? queryParameters,
+    Options? options,
+  }) async {
+    // Updating instance options here makes hot-reload sessions pick up new timeout.
+    _dio.options.connectTimeout = ApiEndpoints.connectionTimeout;
+    final mergedOptions = options ?? Options();
+
+    try {
+      return await _dio.post(
+        path,
+        data: data,
+        queryParameters: queryParameters,
+        options: mergedOptions,
+      );
+    } on DioException catch (err) {
+      if (!ApiEndpoints.isAndroidNative || !_isRetryableConnectionError(err)) {
+        rethrow;
+      }
+
+      final altBaseUrl = _alternateBaseUrlFrom(_dio.options.baseUrl);
+      if (altBaseUrl == null) {
+        rethrow;
+      }
+
+      if (kDebugMode) {
+        debugPrint('POST failover: ${_dio.options.baseUrl} -> $altBaseUrl');
+      }
+
+      return _dio.post(
+        '$altBaseUrl$path',
+        data: data,
+        queryParameters: queryParameters,
+        options: mergedOptions,
+      );
+    }
+  }
+
+  bool _isRetryableConnectionError(DioException err) {
+    return err.type == DioExceptionType.connectionTimeout ||
+        err.type == DioExceptionType.connectionError ||
+        err.type == DioExceptionType.unknown;
+  }
+
+  String? _alternateBaseUrlFrom(String currentBaseUrl) {
+    final uri = Uri.tryParse(currentBaseUrl);
+    if (uri == null) return null;
+
+    if (uri.host == '10.0.2.2') {
+      return '${uri.scheme}://${ApiEndpoints.compIpAddress}:${uri.port}';
+    }
+
+    if (uri.host == ApiEndpoints.compIpAddress) {
+      return '${uri.scheme}://10.0.2.2:${uri.port}';
+    }
+
+    return null;
   }
 
   Future<Response> put(String path,
@@ -148,7 +216,9 @@ class _AuthInterceptor extends Interceptor {
     // Public auth endpoints (NO TOKEN)
     final isAuthEndpoint =
         options.path == ApiEndpoints.login ||
-        options.path == ApiEndpoints.register;
+      options.path == ApiEndpoints.register ||
+      options.path == ApiEndpoints.requestPasswordReset ||
+      options.path == ApiEndpoints.resetPassword;
 
     if (!isAuthEndpoint) {
       final token = await _storage.read(key: _tokenKey);
@@ -175,6 +245,84 @@ class _AuthInterceptor extends Interceptor {
       _storage.delete(key: _tokenKey);
     }
     handler.next(err);
+  }
+}
+
+class _AndroidHostFailoverInterceptor extends Interceptor {
+  _AndroidHostFailoverInterceptor(this._dio);
+
+  static const _failoverAttemptedKey = '__android_host_failover_attempted';
+  final Dio _dio;
+
+  bool _isRetryableConnectionError(DioException err) {
+    return err.type == DioExceptionType.connectionTimeout ||
+        err.type == DioExceptionType.connectionError ||
+        err.type == DioExceptionType.unknown;
+  }
+
+  String? _alternateBaseUrl(RequestOptions requestOptions) {
+    final currentHost = requestOptions.uri.host;
+    final currentScheme = requestOptions.uri.scheme;
+    final currentPort = requestOptions.uri.port;
+
+    // Failover only applies to Android local dev hosts.
+    if (currentHost == '10.0.2.2') {
+      return '$currentScheme://${ApiEndpoints.compIpAddress}:$currentPort';
+    }
+
+    if (currentHost == ApiEndpoints.compIpAddress) {
+      return '$currentScheme://10.0.2.2:$currentPort';
+    }
+
+    return null;
+  }
+
+  @override
+  Future<void> onError(
+    DioException err,
+    ErrorInterceptorHandler handler,
+  ) async {
+    if (!_isRetryableConnectionError(err)) {
+      return handler.next(err);
+    }
+
+    if (!ApiEndpoints.isAndroidNative) {
+      return handler.next(err);
+    }
+
+    final requestOptions = err.requestOptions;
+    final alreadyAttempted =
+        requestOptions.extra[_failoverAttemptedKey] == true;
+
+    if (alreadyAttempted) {
+      return handler.next(err);
+    }
+
+    final altBaseUrl = _alternateBaseUrl(requestOptions);
+    if (altBaseUrl == null) {
+      return handler.next(err);
+    }
+
+    if (kDebugMode) {
+      debugPrint(
+        'Android host failover: ${requestOptions.uri} -> $altBaseUrl',
+      );
+    }
+
+    try {
+      final newOptions = requestOptions.copyWith(
+        baseUrl: altBaseUrl,
+        extra: {
+          ...requestOptions.extra,
+          _failoverAttemptedKey: true,
+        },
+      );
+
+      final response = await _dio.fetch(newOptions);
+      return handler.resolve(response);
+    } catch (_) {
+      return handler.next(err);
+    }
   }
 }
 

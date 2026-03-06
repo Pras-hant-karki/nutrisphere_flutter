@@ -417,18 +417,37 @@ class _PlanDetailOverlay extends StatelessWidget {
   }
 
   Future<void> _openUrl(BuildContext context, String url) async {
-    // Prepend base URL for relative paths (file uploads)
-    String fullUrl = url;
-    if (!url.startsWith('http')) {
-      fullUrl = '${ApiEndpoints.baseUrl}$url';
+    // Normalize input so both file paths and raw links can be opened.
+    String fullUrl = url.trim();
+
+    // If admin pastes `www.example.com`, assume https.
+    if (fullUrl.startsWith('www.')) {
+      fullUrl = 'https://$fullUrl';
     }
 
-    final uri = Uri.parse(fullUrl);
+    // Prepend base URL for relative paths returned by backend uploads.
+    if (!fullUrl.startsWith('http://') && !fullUrl.startsWith('https://')) {
+      final normalizedPath = fullUrl.startsWith('/') ? fullUrl : '/$fullUrl';
+      fullUrl = '${ApiEndpoints.baseUrl}$normalizedPath';
+    }
+
+    final uri = Uri.tryParse(fullUrl);
+    if (uri == null) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Invalid link: $fullUrl')),
+        );
+      }
+      return;
+    }
+
     try {
-      if (await canLaunchUrl(uri)) {
-        await launchUrl(uri, mode: LaunchMode.externalApplication);
-      } else {
-        if (context.mounted) {
+      // Try browser/app first, then fallback to platform default launch mode.
+      final launchedExternal =
+          await launchUrl(uri, mode: LaunchMode.externalApplication);
+      if (!launchedExternal) {
+        final launchedDefault = await launchUrl(uri);
+        if (!launchedDefault && context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text('Could not open: $fullUrl')),
           );
