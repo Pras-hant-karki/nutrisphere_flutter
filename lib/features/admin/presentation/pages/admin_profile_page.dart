@@ -1,9 +1,11 @@
+import 'dart:async';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:nutrisphere_flutter/core/api/api_endpoints.dart';
 import 'package:nutrisphere_flutter/app/theme/app_colors.dart';
+import 'package:nutrisphere_flutter/core/providers/sensor_provider.dart';
 import 'package:nutrisphere_flutter/core/services/storage/user_session_service.dart';
 import 'package:nutrisphere_flutter/core/services/storage/token_service.dart';
 import 'package:nutrisphere_flutter/core/utils/snackbar_utils.dart';
@@ -31,11 +33,31 @@ class _AdminProfilePageState extends ConsumerState<AdminProfilePage> {
   XFile? _profileImage;
   String? _profileImageUrl;
   bool _isLoading = true;
+  StreamSubscription<bool>? _shakeSub;
+  DateTime _lastShakeSaveAt = DateTime.fromMillisecondsSinceEpoch(0);
+  bool _isSavingProfile = false;
 
   @override
   void initState() {
     super.initState();
     _loadUserData();
+    _attachShakeAutosave();
+  }
+
+  void _attachShakeAutosave() {
+    _shakeSub = ref.read(sensorServiceProvider).shakeStream.listen((detected) async {
+      if (!detected || !mounted) return;
+      if (!TickerMode.of(context)) return;
+      if (_isSavingProfile) return;
+
+      final now = DateTime.now();
+      if (now.difference(_lastShakeSaveAt) < const Duration(seconds: 4)) {
+        return;
+      }
+      _lastShakeSaveAt = now;
+
+      await _saveProfile(triggeredByShake: true);
+    });
   }
 
   Future<void> _loadUserData() async {
@@ -265,7 +287,10 @@ class _AdminProfilePageState extends ConsumerState<AdminProfilePage> {
     );
   }
 
-  Future<void> _saveProfile() async {
+  Future<void> _saveProfile({bool triggeredByShake = false}) async {
+    if (_isSavingProfile) return;
+    _isSavingProfile = true;
+
     // Upload profile picture if selected
     if (_profileImage != null) {
       final uploadResult = await ref.read(uploadProfilePictureUsecaseProvider)(File(_profileImage!.path));
@@ -320,17 +345,24 @@ class _AdminProfilePageState extends ConsumerState<AdminProfilePage> {
             profilePicture: updatedEntity.profilePicture ?? _profileImageUrl,
           );
           if (mounted) {
-            SnackbarUtils.showSuccess(context, 'Profile updated successfully');
+            SnackbarUtils.showSuccess(
+              context,
+              triggeredByShake
+                  ? 'Shake detected: profile saved'
+                  : 'Profile updated successfully',
+            );
           }
         },
       );
     }
 
     await _syncUserFromServer();
+    _isSavingProfile = false;
   }
 
   @override
   void dispose() {
+    _shakeSub?.cancel();
     _nameCtrl.dispose();
     _usernameCtrl.dispose();
     _emailCtrl.dispose();
@@ -356,97 +388,109 @@ class _AdminProfilePageState extends ConsumerState<AdminProfilePage> {
     return Material(
       color: AppColors.background,
       child: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // TOP BAR
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    "Edit Profile",
-                    style: Theme.of(context).textTheme.titleLarge,
-                  ),
-                  const SizedBox.shrink(),
-                ],
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            return SingleChildScrollView(
+              keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+              padding: EdgeInsets.fromLTRB(
+                16,
+                16,
+                16,
+                16 + MediaQuery.of(context).viewInsets.bottom,
               ),
-
-              const SizedBox(height: 20),
-
-              // PROFILE PICTURE
-              Center(
-                child: Stack(
+              child: ConstrainedBox(
+                constraints: BoxConstraints(minHeight: constraints.maxHeight - 32),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    CircleAvatar(
-                      radius: 50,
-                      backgroundColor: AppColors.secondaryDark,
-                      backgroundImage: _profileImage != null
-                          ? FileImage(File(_profileImage!.path))
-                          : _profileImageUrl != null
-                              ? NetworkImage(_profileImageUrl!)
-                              : null,
-                      child: (_profileImage == null && _profileImageUrl == null)
-                          ? Text(
-                              _getInitials(_nameCtrl.text.isEmpty ? "User" : _nameCtrl.text),
-                              style: const TextStyle(
-                                color: AppColors.textPrimary,
-                                fontSize: 28,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            )
-                          : null,
+                    // TOP BAR
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          "Edit Profile",
+                          style: Theme.of(context).textTheme.titleLarge,
+                        ),
+                        const SizedBox.shrink(),
+                      ],
                     ),
-                    Positioned(
-                      bottom: 0,
-                      right: 0,
-                      child: GestureDetector(
-                        onTap: _showImageSourceDialog,
-                        child: Container(
-                          height: 35,
-                          width: 35,
-                          decoration: BoxDecoration(
-                            color: AppColors.primary,
-                            shape: BoxShape.circle,
-                            border: Border.all(
-                              color: AppColors.textPrimary,
-                              width: 2,
+
+                    const SizedBox(height: 20),
+
+                    // PROFILE PICTURE
+                    Center(
+                      child: Stack(
+                        children: [
+                          CircleAvatar(
+                            radius: 50,
+                            backgroundColor: AppColors.secondaryDark,
+                            backgroundImage: _profileImage != null
+                                ? FileImage(File(_profileImage!.path))
+                                : _profileImageUrl != null
+                                    ? NetworkImage(_profileImageUrl!)
+                                    : null,
+                            child: (_profileImage == null && _profileImageUrl == null)
+                                ? Text(
+                                    _getInitials(_nameCtrl.text.isEmpty ? "User" : _nameCtrl.text),
+                                    style: const TextStyle(
+                                      color: AppColors.textPrimary,
+                                      fontSize: 28,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  )
+                                : null,
+                          ),
+                          Positioned(
+                            bottom: 0,
+                            right: 0,
+                            child: GestureDetector(
+                              onTap: _showImageSourceDialog,
+                              child: Container(
+                                height: 35,
+                                width: 35,
+                                decoration: BoxDecoration(
+                                  color: AppColors.primary,
+                                  shape: BoxShape.circle,
+                                  border: Border.all(
+                                    color: AppColors.textPrimary,
+                                    width: 2,
+                                  ),
+                                ),
+                                child: const Icon(
+                                  Icons.camera_alt,
+                                  size: 18,
+                                  color: AppColors.textPrimary,
+                                ),
+                              ),
                             ),
                           ),
-                          child: const Icon(
-                            Icons.camera_alt,
-                            size: 18,
-                            color: AppColors.textPrimary,
-                          ),
-                        ),
+                        ],
+                      ),
+                    ),
+
+                    const SizedBox(height: 20),
+
+                    _profileField("Full name", _nameCtrl),
+                    _profileField("Username", _usernameCtrl, readOnly: true),
+                    _profileField("Email address", _emailCtrl, readOnly: true),
+                    _profileField("Role", _roleCtrl, readOnly: true),
+                    _profileField("Phone number", _phoneCtrl),
+
+                    const SizedBox(height: 10),
+
+                    // SAVE BUTTON
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: _saveProfile,
+                        child: const Text("Save Changes"),
                       ),
                     ),
                   ],
                 ),
               ),
-
-              const SizedBox(height: 20),
-
-              _profileField("Full name", _nameCtrl),
-              _profileField("Username", _usernameCtrl, readOnly: true),
-              _profileField("Email address", _emailCtrl, readOnly: true),
-              _profileField("Role", _roleCtrl, readOnly: true),
-              _profileField("Phone number", _phoneCtrl),
-
-              const SizedBox(height: 10),
-
-              // SAVE BUTTON
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: _saveProfile,
-                  child: const Text("Save Changes"),
-                ),
-              ),
-
-            ],
-          ),
+            );
+          },
         ),
       ),
     );

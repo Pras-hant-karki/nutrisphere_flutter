@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:nutrisphere_flutter/app/theme/app_colors.dart';
 import 'package:nutrisphere_flutter/core/api/api_endpoints.dart';
+import 'package:nutrisphere_flutter/core/widgets/fullscreen_image_viewer.dart';
 import 'package:nutrisphere_flutter/features/home/presentation/providers/trainer_info_provider.dart';
 
 class TrainerDetailScreen extends ConsumerWidget {
@@ -216,28 +217,67 @@ class TrainerDetailScreen extends ConsumerWidget {
                                                 height: 1.5,
                                               ),
                                         )
-                                      : ClipRRect(
-                                          borderRadius:
-                                              BorderRadius.circular(10),
-                                          child: Image.network(
-                                            entry.content
+                                      : GestureDetector(
+                                          onTap: () {
+                                            final imageUrl = entry.content
                                                     .startsWith('http')
                                                 ? entry.content
-                                                : '${ApiEndpoints.baseUrl}${entry.content}',
-                                            width: double.infinity,
-                                            fit: BoxFit.cover,
-                                            errorBuilder:
-                                                (_, __, ___) =>
-                                                    Container(
-                                              height: 150,
-                                              color: AppColors.inputFill,
-                                              child: const Center(
-                                                child: Icon(
-                                                    Icons.broken_image,
-                                                    color: AppColors
-                                                        .textMuted,
-                                                    size: 40),
-                                              ),
+                                                : '${ApiEndpoints.baseUrl}${entry.content}';
+                                            FullScreenImageViewer.show(
+                                              context,
+                                              imageUrl: imageUrl,
+                                              title: 'Trainer Image',
+                                            );
+                                          },
+                                          child: ClipRRect(
+                                            borderRadius:
+                                                BorderRadius.circular(10),
+                                            child: Stack(
+                                              children: [
+                                                Image.network(
+                                                  entry.content
+                                                          .startsWith('http')
+                                                      ? entry.content
+                                                      : '${ApiEndpoints.baseUrl}${entry.content}',
+                                                  width: double.infinity,
+                                                  fit: BoxFit.cover,
+                                                  errorBuilder:
+                                                      (_, __, ___) =>
+                                                          Container(
+                                                    height: 150,
+                                                    color: AppColors.inputFill,
+                                                    child: const Center(
+                                                      child: Icon(
+                                                          Icons.broken_image,
+                                                          color: AppColors
+                                                              .textMuted,
+                                                          size: 40),
+                                                    ),
+                                                  ),
+                                                ),
+                                                Positioned(
+                                                  right: 8,
+                                                  bottom: 8,
+                                                  child: Container(
+                                                    padding: const EdgeInsets
+                                                        .symmetric(
+                                                        horizontal: 8,
+                                                        vertical: 5),
+                                                    decoration: BoxDecoration(
+                                                      color: Colors.black
+                                                          .withOpacity(0.5),
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                              20),
+                                                    ),
+                                                    child: const Icon(
+                                                      Icons.fullscreen,
+                                                      size: 16,
+                                                      color: Colors.white,
+                                                    ),
+                                                  ),
+                                                ),
+                                              ],
                                             ),
                                           ),
                                         ),

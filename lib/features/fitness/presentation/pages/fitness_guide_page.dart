@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:nutrisphere_flutter/app/theme/app_colors.dart';
 import 'package:nutrisphere_flutter/core/api/api_endpoints.dart';
+import 'package:nutrisphere_flutter/core/widgets/fullscreen_image_viewer.dart';
 import 'package:nutrisphere_flutter/features/fitness/domain/entities/fitness_entity.dart';
 import 'package:nutrisphere_flutter/features/fitness/presentation/providers/fitness_content_provider.dart';
 
@@ -72,7 +73,7 @@ class FitnessGuideScreen extends ConsumerWidget {
                         const SizedBox(height: 20),
                         ...fitnessContent.map((content) => Padding(
                           padding: const EdgeInsets.only(bottom: 20),
-                          child: _fitnessContentCard(content),
+                          child: _fitnessContentCard(context, content),
                         )),
                         const SizedBox(height: 30),
                       ],
@@ -87,7 +88,11 @@ class FitnessGuideScreen extends ConsumerWidget {
     );
   }
 
-  Widget _fitnessContentCard(FitnessEntity content) {
+  Widget _fitnessContentCard(BuildContext context, FitnessEntity content) {
+    final mediaUrl = content.media!.startsWith('http')
+        ? content.media!
+        : '${ApiEndpoints.baseUrl}${content.media!}';
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(16),
@@ -168,30 +173,72 @@ class FitnessGuideScreen extends ConsumerWidget {
           // Media (Image/Video)
           if (content.media != null && content.media!.isNotEmpty) ...[
             const SizedBox(height: 16),
-            ClipRRect(
-              borderRadius: BorderRadius.circular(12),
-              child: Container(
-                width: double.infinity,
-                height: 200,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(12),
-                  image: DecorationImage(
-                    image: NetworkImage(content.media!.startsWith('http')
-                        ? content.media!
-                        : '${ApiEndpoints.baseUrl}${content.media!}'),
-                    fit: BoxFit.cover,
+            Stack(
+              children: [
+                GestureDetector(
+                  onTap: () {
+                    FullScreenImageViewer.show(
+                      context,
+                      imageUrl: mediaUrl,
+                      title: content.title,
+                    );
+                  },
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(12),
+                    child: Container(
+                      width: double.infinity,
+                      height: 200,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(12),
+                        image: DecorationImage(
+                          image: NetworkImage(mediaUrl),
+                          fit: BoxFit.cover,
+                        ),
+                      ),
+                      child: content.mediaType == 'video'
+                          ? const Center(
+                              child: Icon(
+                                Icons.play_circle_fill,
+                                size: 48,
+                                color: Colors.white,
+                              ),
+                            )
+                          : null,
+                    ),
                   ),
                 ),
-                child: content.mediaType == 'video'
-                    ? const Center(
-                        child: Icon(
-                          Icons.play_circle_fill,
-                          size: 48,
+                Positioned(
+                  right: 10,
+                  bottom: 10,
+                  child: Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: Colors.black.withOpacity(0.5),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: const Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.fullscreen,
+                          size: 16,
                           color: Colors.white,
                         ),
-                      )
-                    : null,
-              ),
+                        SizedBox(width: 4),
+                        Text(
+                          'Full screen',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
             ),
           ],
 

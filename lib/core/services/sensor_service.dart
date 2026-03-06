@@ -7,8 +7,12 @@ import 'package:screen_brightness/screen_brightness.dart';
 class FitnessSensorService {
   // 10-second timeout for now
   static const Duration GYM_FLOOR_TIMEOUT = Duration(seconds: 10); 
-  static const double SHAKE_THRESHOLD = 20.0;
+  static const double SHAKE_THRESHOLD = 13.0;
   static const double FLAT_Z_THRESHOLD = 9.0;
+  // Approximation for "close to face" using orientation/accel only (no distance sensor).
+  static const double EYE_CARE_ENTER_Z_THRESHOLD = 9.4;
+  static const double EYE_CARE_EXIT_Z_THRESHOLD = 8.6;
+  static const int EYE_CARE_STABLE_SAMPLES = 4;
 
   final _shakeController = StreamController<bool>.broadcast();
   final _eyeCareController = StreamController<bool>.broadcast();
@@ -19,6 +23,8 @@ class FitnessSensorService {
   Timer? _safetyTimer;
   double _baseBrightness = 0.5;
   bool _isDimmed = false;
+  bool _eyeCareCandidate = false;
+  int _eyeCareStableCount = 0;
   bool _isListening = false;
   bool _isDisposed = false;
   DateTime _lastShake = DateTime.now();
@@ -64,17 +70,40 @@ class FitnessSensorService {
       if (DateTime.now().difference(_lastShake) > const Duration(seconds: 1)) {
         _lastShake = DateTime.now();
         _shakeController.add(true);
+        if (kDebugMode) {
+          debugPrint('Sensor event: shake detected (force=$force)');
+        }
       }
     }
   }
 
   void _handleEyeCare(AccelerometerEvent event) {
-    final tooClose = event.z > 9.2 && event.x.abs() < 1.0;
-    if (tooClose == _isDimmed) return;
+    // Enter/exit thresholds reduce flicker around a single boundary value.
+    final nextCandidate = _isDimmed
+        ? (event.z > EYE_CARE_EXIT_Z_THRESHOLD && event.x.abs() < 1.8)
+        : (event.z > EYE_CARE_ENTER_Z_THRESHOLD && event.x.abs() < 1.8);
 
-    _isDimmed = tooClose;
-    _eyeCareController.add(tooClose);
-    unawaited(_setEyeCareBrightness(tooClose));
+    if (nextCandidate == _eyeCareCandidate) {
+      _eyeCareStableCount++;
+    } else {
+      _eyeCareCandidate = nextCandidate;
+      _eyeCareStableCount = 1;
+    }
+
+    if (_eyeCareStableCount < EYE_CARE_STABLE_SAMPLES) {
+      return;
+    }
+
+    if (_eyeCareCandidate == _isDimmed) {
+      return;
+    }
+
+    _isDimmed = _eyeCareCandidate;
+    _eyeCareController.add(_isDimmed);
+    if (kDebugMode) {
+      debugPrint('Sensor event: eye-care ${_isDimmed ? 'ON' : 'OFF'}');
+    }
+    unawaited(_setEyeCareBrightness(_isDimmed));
   }
 
   Future<void> _setEyeCareBrightness(bool dimmed) async {
@@ -94,6 +123,9 @@ class FitnessSensorService {
   void _handleEar(AccelerometerEvent event) {
     final atEar = event.y > 8.5 && event.z.abs() < 2.5;
     _earDetectionController.add(atEar);
+    if (kDebugMode && atEar) {
+      debugPrint('Sensor event: ear detected');
+    }
   }
 
   void _handleSafety(AccelerometerEvent event) {
@@ -103,6 +135,9 @@ class FitnessSensorService {
     if (isFlat) {
       _safetyTimer ??= Timer(GYM_FLOOR_TIMEOUT, () {
         _safetyController.add(true);
+        if (kDebugMode) {
+          debugPrint('Sensor event: safety alert (flat timeout reached)');
+        }
       });
     } else {
       _safetyTimer?.cancel();

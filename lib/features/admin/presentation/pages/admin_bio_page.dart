@@ -1,9 +1,11 @@
+import 'dart:async';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:nutrisphere_flutter/app/theme/app_colors.dart';
 import 'package:nutrisphere_flutter/core/api/api_endpoints.dart';
+import 'package:nutrisphere_flutter/core/providers/sensor_provider.dart';
 import 'package:nutrisphere_flutter/core/services/storage/user_session_service.dart';
 import 'package:nutrisphere_flutter/core/utils/snackbar_utils.dart';
 import 'package:nutrisphere_flutter/features/admin/presentation/providers/bio_provider.dart';
@@ -20,6 +22,8 @@ class _AdminBioPageState extends ConsumerState<AdminBioPage> {
   final ImagePicker _imagePicker = ImagePicker();
   String _adminName = '';
   bool _isSaving = false;
+  StreamSubscription<bool>? _shakeSub;
+  DateTime _lastShakeSaveAt = DateTime.fromMillisecondsSinceEpoch(0);
 
   // Controllers for each text entry (managed dynamically)
   final Map<int, TextEditingController> _textControllers = {};
@@ -28,6 +32,23 @@ class _AdminBioPageState extends ConsumerState<AdminBioPage> {
   void initState() {
     super.initState();
     _loadAdminName();
+    _attachShakeAutosave();
+  }
+
+  void _attachShakeAutosave() {
+    _shakeSub = ref.read(sensorServiceProvider).shakeStream.listen((detected) async {
+      if (!detected || !mounted) return;
+      if (!TickerMode.of(context)) return;
+      if (_isSaving) return;
+
+      final now = DateTime.now();
+      if (now.difference(_lastShakeSaveAt) < const Duration(seconds: 4)) {
+        return;
+      }
+      _lastShakeSaveAt = now;
+
+      await _saveBio(triggeredByShake: true);
+    });
   }
 
   Future<void> _loadAdminName() async {
@@ -42,6 +63,7 @@ class _AdminBioPageState extends ConsumerState<AdminBioPage> {
 
   @override
   void dispose() {
+    _shakeSub?.cancel();
     for (final controller in _textControllers.values) {
       controller.dispose();
     }
@@ -179,7 +201,7 @@ class _AdminBioPageState extends ConsumerState<AdminBioPage> {
     }
   }
 
-  Future<void> _saveBio() async {
+  Future<void> _saveBio({bool triggeredByShake = false}) async {
     // Sync all text controllers back to state
     final entries = ref.read(bioEntriesProvider).maybeWhen(
       data: (data) => data,
@@ -199,7 +221,10 @@ class _AdminBioPageState extends ConsumerState<AdminBioPage> {
 
     if (mounted) {
       if (success) {
-        SnackbarUtils.showSuccess(context, 'Bio saved successfully');
+        SnackbarUtils.showSuccess(
+          context,
+          triggeredByShake ? 'Shake detected: bio saved' : 'Bio saved successfully',
+        );
       } else {
         SnackbarUtils.showError(context, 'Failed to save bio');
       }

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -5,6 +6,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:nutrisphere_flutter/app/theme/app_colors.dart';
 import 'package:nutrisphere_flutter/app/theme/theme_extensions.dart';
 import 'package:nutrisphere_flutter/core/api/api_endpoints.dart';
+import 'package:nutrisphere_flutter/core/providers/sensor_provider.dart';
 import 'package:nutrisphere_flutter/core/utils/snackbar_utils.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:nutrisphere_flutter/features/fitness/domain/usecases/upload_photo_usecase.dart';
@@ -34,6 +36,10 @@ class _AdminFitnessGuidePageState extends ConsumerState<AdminFitnessGuidePage> {
   String _selectedCategory = 'cardio';
   bool _isCreating = false;
   FitnessEntity? _editingFitness; // For edit mode
+  StreamSubscription<bool>? _shakeSub;
+  DateTime _lastShakeSaveAt = DateTime.fromMillisecondsSinceEpoch(0);
+  XFile? _selectedMediaDraft;
+  bool _isFormSheetOpen = false;
 
   final List<String> _categories = [
     'cardio',
@@ -46,6 +52,29 @@ class _AdminFitnessGuidePageState extends ConsumerState<AdminFitnessGuidePage> {
     'nutrition',
     'other'
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    _shakeSub = ref.read(sensorServiceProvider).shakeStream.listen((detected) async {
+      if (!detected || !mounted) return;
+      if (!TickerMode.of(context)) return;
+      if (!_isFormSheetOpen || _isCreating) return;
+
+      final now = DateTime.now();
+      if (now.difference(_lastShakeSaveAt) < const Duration(seconds: 4)) {
+        return;
+      }
+      _lastShakeSaveAt = now;
+
+      await _saveFitnessContent(
+        context,
+        _selectedMediaDraft,
+        triggeredByShake: true,
+        closeSheetOnSuccess: false,
+      );
+    });
+  }
 
   Future<bool> _askPermissionWithUser(Permission permission) async {
     final status = await permission.status;
@@ -63,36 +92,6 @@ class _AdminFitnessGuidePageState extends ConsumerState<AdminFitnessGuidePage> {
       return false;
     }
     return false;
-  }
-
-  Future<bool> _requestGalleryPermission() async {
-    try {
-      // Try requesting photos permission first (Android 13+)
-      PermissionStatus status = await Permission.photos.request();
-      
-      if (status.isGranted) {
-        return true;
-      }
-      
-      if (status.isDenied) {
-        // Show error message for denied permission
-        if (mounted) {
-          SnackbarUtils.showError(context, 'Please enable gallery permission');
-        }
-        return false;
-      }
-      
-      if (status.isPermanentlyDenied) {
-        // Show dialog to open settings
-        _showPermissionDeniedDialog();
-        return false;
-      }
-      
-      return false;
-    } catch (e) {
-      debugPrint('Permission Error: $e');
-      return false;
-    }
   }
 
   void _showPermissionDeniedDialog() {
@@ -122,6 +121,7 @@ class _AdminFitnessGuidePageState extends ConsumerState<AdminFitnessGuidePage> {
 
   @override
   void dispose() {
+    _shakeSub?.cancel();
     _titleController.dispose();
     _descriptionController.dispose();
     _durationController.dispose();
@@ -138,7 +138,7 @@ class _AdminFitnessGuidePageState extends ConsumerState<AdminFitnessGuidePage> {
 
   void _populateFormForEdit(FitnessEntity fitness) {
     _editingFitness = fitness;
-    _titleController.text = fitness.title ?? '';
+    _titleController.text = fitness.title;
     _descriptionController.text = fitness.description ?? '';
     _selectedCategory = fitness.category ?? 'cardio';
     _durationController.text = fitness.duration?.toString() ?? '';
@@ -152,7 +152,8 @@ class _AdminFitnessGuidePageState extends ConsumerState<AdminFitnessGuidePage> {
       _resetForm();
     }
 
-    XFile? selectedMedia; // Local variable for media selection in form
+    _selectedMediaDraft = null;
+    _isFormSheetOpen = true;
 
     showModalBottomSheet(
       context: context,
@@ -300,7 +301,7 @@ class _AdminFitnessGuidePageState extends ConsumerState<AdminFitnessGuidePage> {
                   SizedBox(height: 20),
 
                   // Media selection (if not editing or if editing without media)
-                  if (selectedMedia == null && (fitness == null || fitness.media == null))
+                  if (_selectedMediaDraft == null && (fitness == null || fitness.media == null))
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -322,7 +323,7 @@ class _AdminFitnessGuidePageState extends ConsumerState<AdminFitnessGuidePage> {
                                   );
                                   if (image != null) {
                                     setState(() {
-                                      selectedMedia = image;
+                                      _selectedMediaDraft = image;
                                     });
                                   }
                                 },
@@ -349,7 +350,7 @@ class _AdminFitnessGuidePageState extends ConsumerState<AdminFitnessGuidePage> {
                                   );
                                   if (video != null) {
                                     setState(() {
-                                      selectedMedia = video;
+                                      _selectedMediaDraft = video;
                                     });
                                   }
                                 },
@@ -369,7 +370,7 @@ class _AdminFitnessGuidePageState extends ConsumerState<AdminFitnessGuidePage> {
                     ),
 
                   // Media preview
-                  if (selectedMedia != null)
+                  if (_selectedMediaDraft != null)
                     Column(
                       children: [
                         SizedBox(height: 16),
@@ -379,7 +380,7 @@ class _AdminFitnessGuidePageState extends ConsumerState<AdminFitnessGuidePage> {
                           decoration: BoxDecoration(
                             borderRadius: BorderRadius.circular(12),
                             image: DecorationImage(
-                              image: FileImage(File(selectedMedia!.path)),
+                              image: FileImage(File(_selectedMediaDraft!.path)),
                               fit: BoxFit.cover,
                             ),
                           ),
@@ -391,7 +392,7 @@ class _AdminFitnessGuidePageState extends ConsumerState<AdminFitnessGuidePage> {
                             TextButton(
                               onPressed: () {
                                 setState(() {
-                                  selectedMedia = null;
+                                  _selectedMediaDraft = null;
                                 });
                               },
                               child: Text('Remove Media'),
@@ -421,7 +422,7 @@ class _AdminFitnessGuidePageState extends ConsumerState<AdminFitnessGuidePage> {
                       SizedBox(width: 12),
                       Expanded(
                         child: ElevatedButton(
-                          onPressed: _isCreating ? null : () => _saveFitnessContent(context, selectedMedia),
+                          onPressed: _isCreating ? null : () => _saveFitnessContent(context, _selectedMediaDraft),
                           style: ElevatedButton.styleFrom(
                             padding: EdgeInsets.symmetric(vertical: 14),
                             backgroundColor: AppColors.primary,
@@ -450,11 +451,21 @@ class _AdminFitnessGuidePageState extends ConsumerState<AdminFitnessGuidePage> {
           ),
         ),
       ),
-    );
+    ).whenComplete(() {
+      _isFormSheetOpen = false;
+      _selectedMediaDraft = null;
+      _resetForm();
+    });
   }
 
   // Save fitness content (create or update)
-  Future<void> _saveFitnessContent(BuildContext context, XFile? selectedMedia) async {
+  Future<void> _saveFitnessContent(
+    BuildContext context,
+    XFile? selectedMedia, {
+    bool triggeredByShake = false,
+    bool closeSheetOnSuccess = true,
+  }) async {
+    if (_isCreating) return;
     if (!_formKey.currentState!.validate()) return;
 
     setState(() => _isCreating = true);
@@ -519,8 +530,15 @@ class _AdminFitnessGuidePageState extends ConsumerState<AdminFitnessGuidePage> {
           (failure) => throw Exception('Update failed: ${failure.message}'),
           (_) {
             if (mounted) {
-              SnackbarUtils.showSuccess(context, 'Fitness content updated successfully');
-              Navigator.pop(context);
+              SnackbarUtils.showSuccess(
+                context,
+                triggeredByShake
+                    ? 'Shake detected: fitness changes saved'
+                    : 'Fitness content updated successfully',
+              );
+              if (closeSheetOnSuccess && Navigator.of(context).canPop()) {
+                Navigator.pop(context);
+              }
               // Refresh the content list
               ref.invalidate(fitnessContentProvider);
             }
@@ -533,8 +551,15 @@ class _AdminFitnessGuidePageState extends ConsumerState<AdminFitnessGuidePage> {
           (failure) => throw Exception('Creation failed: ${failure.message}'),
           (success) {
             if (mounted) {
-              SnackbarUtils.showSuccess(context, 'Fitness content created successfully');
-              Navigator.pop(context);
+              SnackbarUtils.showSuccess(
+                context,
+                triggeredByShake
+                    ? 'Shake detected: fitness changes saved'
+                    : 'Fitness content created successfully',
+              );
+              if (closeSheetOnSuccess && Navigator.of(context).canPop()) {
+                Navigator.pop(context);
+              }
               // Refresh the content list
               ref.invalidate(fitnessContentProvider);
             }

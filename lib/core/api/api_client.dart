@@ -13,6 +13,7 @@ final apiClientProvider = Provider<ApiClient>((ref) {
 
 class ApiClient {
   late final Dio _dio;
+  static const _disableAutoRetryKey = '__disable_auto_retry';
 
   static const _tokenKey = 'auth_token';
   final FlutterSecureStorage _storage = const FlutterSecureStorage();
@@ -34,9 +35,6 @@ class ApiClient {
     // Auth interceptor
     _dio.interceptors.add(_AuthInterceptor());
 
-    // Android host failover: if one host is unreachable, retry once with the other.
-    _dio.interceptors.add(_AndroidHostFailoverInterceptor(_dio));
-
     // Retry interceptor
     _dio.interceptors.add(
       RetryInterceptor(
@@ -46,6 +44,10 @@ class ApiClient {
           Duration(seconds: 1),
         ],
         retryEvaluator: (error, attempt) {
+          if (error.requestOptions.extra[_disableAutoRetryKey] == true) {
+            return false;
+          }
+
           return error.type == DioExceptionType.connectionTimeout ||
               error.type == DioExceptionType.sendTimeout ||
               error.type == DioExceptionType.receiveTimeout ||
@@ -99,36 +101,52 @@ class ApiClient {
   }) async {
     // Updating instance options here makes hot-reload sessions pick up new timeout.
     _dio.options.connectTimeout = ApiEndpoints.connectionTimeout;
-    final mergedOptions = options ?? Options();
+    final mergedOptions = (options ?? Options()).copyWith(
+      extra: {
+        ...?(options?.extra),
+        _disableAutoRetryKey: true,
+      },
+    );
 
-    try {
-      return await _dio.post(
-        path,
-        data: data,
-        queryParameters: queryParameters,
-        options: mergedOptions,
-      );
-    } on DioException catch (err) {
-      if (!ApiEndpoints.isAndroidNative || !_isRetryableConnectionError(err)) {
-        rethrow;
+    final primaryBaseUrl = _dio.options.baseUrl;
+    final secondaryBaseUrl =
+        ApiEndpoints.isAndroidNative ? _alternateBaseUrlFrom(primaryBaseUrl) : null;
+
+    DioException? lastError;
+    final candidateBaseUrls = [
+      primaryBaseUrl,
+      if (secondaryBaseUrl != null) secondaryBaseUrl,
+    ];
+
+    for (final baseUrl in candidateBaseUrls) {
+      try {
+        if (kDebugMode) {
+          debugPrint('POST attempt: $baseUrl$path');
+        }
+
+        return await _dio.post(
+          '$baseUrl$path',
+          data: data,
+          queryParameters: queryParameters,
+          options: mergedOptions,
+        );
+      } on DioException catch (err) {
+        lastError = err;
+        if (!_isRetryableConnectionError(err)) {
+          rethrow;
+        }
       }
-
-      final altBaseUrl = _alternateBaseUrlFrom(_dio.options.baseUrl);
-      if (altBaseUrl == null) {
-        rethrow;
-      }
-
-      if (kDebugMode) {
-        debugPrint('POST failover: ${_dio.options.baseUrl} -> $altBaseUrl');
-      }
-
-      return _dio.post(
-        '$altBaseUrl$path',
-        data: data,
-        queryParameters: queryParameters,
-        options: mergedOptions,
-      );
     }
+
+    if (lastError != null) {
+      throw lastError;
+    }
+
+    throw DioException(
+      requestOptions: RequestOptions(path: path),
+      message: 'POST request failed unexpectedly',
+      type: DioExceptionType.unknown,
+    );
   }
 
   bool _isRetryableConnectionError(DioException err) {
@@ -245,84 +263,6 @@ class _AuthInterceptor extends Interceptor {
       _storage.delete(key: _tokenKey);
     }
     handler.next(err);
-  }
-}
-
-class _AndroidHostFailoverInterceptor extends Interceptor {
-  _AndroidHostFailoverInterceptor(this._dio);
-
-  static const _failoverAttemptedKey = '__android_host_failover_attempted';
-  final Dio _dio;
-
-  bool _isRetryableConnectionError(DioException err) {
-    return err.type == DioExceptionType.connectionTimeout ||
-        err.type == DioExceptionType.connectionError ||
-        err.type == DioExceptionType.unknown;
-  }
-
-  String? _alternateBaseUrl(RequestOptions requestOptions) {
-    final currentHost = requestOptions.uri.host;
-    final currentScheme = requestOptions.uri.scheme;
-    final currentPort = requestOptions.uri.port;
-
-    // Failover only applies to Android local dev hosts.
-    if (currentHost == '10.0.2.2') {
-      return '$currentScheme://${ApiEndpoints.compIpAddress}:$currentPort';
-    }
-
-    if (currentHost == ApiEndpoints.compIpAddress) {
-      return '$currentScheme://10.0.2.2:$currentPort';
-    }
-
-    return null;
-  }
-
-  @override
-  Future<void> onError(
-    DioException err,
-    ErrorInterceptorHandler handler,
-  ) async {
-    if (!_isRetryableConnectionError(err)) {
-      return handler.next(err);
-    }
-
-    if (!ApiEndpoints.isAndroidNative) {
-      return handler.next(err);
-    }
-
-    final requestOptions = err.requestOptions;
-    final alreadyAttempted =
-        requestOptions.extra[_failoverAttemptedKey] == true;
-
-    if (alreadyAttempted) {
-      return handler.next(err);
-    }
-
-    final altBaseUrl = _alternateBaseUrl(requestOptions);
-    if (altBaseUrl == null) {
-      return handler.next(err);
-    }
-
-    if (kDebugMode) {
-      debugPrint(
-        'Android host failover: ${requestOptions.uri} -> $altBaseUrl',
-      );
-    }
-
-    try {
-      final newOptions = requestOptions.copyWith(
-        baseUrl: altBaseUrl,
-        extra: {
-          ...requestOptions.extra,
-          _failoverAttemptedKey: true,
-        },
-      );
-
-      final response = await _dio.fetch(newOptions);
-      return handler.resolve(response);
-    } catch (_) {
-      return handler.next(err);
-    }
   }
 }
 
