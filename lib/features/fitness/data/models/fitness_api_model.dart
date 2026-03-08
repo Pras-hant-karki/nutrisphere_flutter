@@ -65,10 +65,13 @@ class FitnessApiModel {
       category = (json['tags'] as List).first as String?;
     }
 
-    // Backend returns 'image', map to media and mediaType
+    // Backend returns 'image' or 'video', map to shared media fields.
     if (json['image'] != null) {
       media = json['image'] as String;
       mediaType = 'image';
+    } else if (json['video'] != null) {
+      media = json['video'] as String;
+      mediaType = 'video';
     }
 
     return FitnessApiModel(

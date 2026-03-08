@@ -196,15 +196,60 @@ class ApiClient {
 
   Future<Response> uploadFile(String path,
       {required FormData formData, Options? options, String method = 'POST'}) async {
+    _dio.options.connectTimeout = ApiEndpoints.connectionTimeout;
     final opts = options ?? Options();
+    final mergedOptions = opts.copyWith(
+      method: method,
+      headers: {
+        ...?opts.headers,
+        // Keep explicit multipart content type while letting Dio set boundaries.
+        'Content-Type': 'multipart/form-data',
+      },
+      extra: {
+        ...?opts.extra,
+        _disableAutoRetryKey: true,
+      },
+    );
 
-    // Ensure multipart content-type is set (Dio will set proper boundary)
-    opts.headers = {
-      ...?opts.headers,
-      'Content-Type': 'multipart/form-data',
-    };
+    final primaryBaseUrl = _dio.options.baseUrl;
+    final secondaryBaseUrl =
+        ApiEndpoints.isAndroidNative ? _alternateBaseUrlFrom(primaryBaseUrl) : null;
 
-    return _dio.request(path, data: formData, options: opts.copyWith(method: method));
+    DioException? lastError;
+    final candidateBaseUrls = [
+      primaryBaseUrl,
+      if (secondaryBaseUrl != null) secondaryBaseUrl,
+    ];
+
+    for (final baseUrl in candidateBaseUrls) {
+      try {
+        if (kDebugMode) {
+          debugPrint('UPLOAD attempt: $baseUrl$path');
+        }
+
+        final requestPath = '$baseUrl$path';
+        return await _dio.request(
+          requestPath,
+          data: formData,
+          options: mergedOptions,
+        );
+      } on DioException catch (err) {
+        lastError = err;
+        if (!_isRetryableConnectionError(err)) {
+          rethrow;
+        }
+      }
+    }
+
+    if (lastError != null) {
+      throw lastError;
+    }
+
+    throw DioException(
+      requestOptions: RequestOptions(path: path),
+      message: 'Upload request failed unexpectedly',
+      type: DioExceptionType.unknown,
+    );
   }
 
   // setAuthToken()

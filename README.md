@@ -1,6 +1,7 @@
-# nutrisphere_flutter
+# NutriSphere Flutter
 
-A new Flutter project.
+NutriSphere Flutter is the mobile app for the NutriSphere health and fitness platform. It helps users access fitness guidance, browse trainer-created posts, request personalized plans, book appointments, and receive timely notifications and plans. Admins can create and manage fitness content with image or video uploads from gallery or camera. The app is built with Flutter and Riverpod, connects to a Node.js backend, and supports reliable API access across real devices and emulators.
+
 
 ## Getting Started
 

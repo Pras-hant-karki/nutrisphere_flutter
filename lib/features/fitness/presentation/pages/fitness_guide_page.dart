@@ -173,73 +173,94 @@ class FitnessGuideScreen extends ConsumerWidget {
           // Media (Image/Video)
           if (content.media != null && content.media!.isNotEmpty) ...[
             const SizedBox(height: 16),
-            Stack(
-              children: [
-                GestureDetector(
-                  onTap: () {
-                    FullScreenImageViewer.show(
-                      context,
-                      imageUrl: mediaUrl,
-                      title: content.title,
-                    );
-                  },
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(12),
-                    child: Container(
-                      width: double.infinity,
-                      height: 200,
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(12),
-                        image: DecorationImage(
-                          image: NetworkImage(mediaUrl),
-                          fit: BoxFit.cover,
+            if (content.mediaType == 'video')
+              Container(
+                width: double.infinity,
+                height: 200,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(12),
+                  color: Colors.black.withOpacity(0.55),
+                ),
+                child: const Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.play_circle_fill,
+                        size: 52,
+                        color: Colors.white,
+                      ),
+                      SizedBox(height: 8),
+                      Text(
+                        'Video Post',
+                        style: TextStyle(
+                          color: Colors.white70,
+                          fontWeight: FontWeight.w600,
                         ),
                       ),
-                      child: content.mediaType == 'video'
-                          ? const Center(
-                              child: Icon(
-                                Icons.play_circle_fill,
-                                size: 48,
-                                color: Colors.white,
-                              ),
-                            )
-                          : null,
-                    ),
+                    ],
                   ),
                 ),
-                Positioned(
-                  right: 10,
-                  bottom: 10,
-                  child: Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: Colors.black.withOpacity(0.5),
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: const Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          Icons.fullscreen,
-                          size: 16,
-                          color: Colors.white,
-                        ),
-                        SizedBox(width: 4),
-                        Text(
-                          'Full screen',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 11,
-                            fontWeight: FontWeight.w600,
+              )
+            else
+              Stack(
+                children: [
+                  GestureDetector(
+                    onTap: () {
+                      FullScreenImageViewer.show(
+                        context,
+                        imageUrl: mediaUrl,
+                        title: content.title,
+                      );
+                    },
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(12),
+                      child: Container(
+                        width: double.infinity,
+                        height: 200,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(12),
+                          image: DecorationImage(
+                            image: NetworkImage(mediaUrl),
+                            fit: BoxFit.cover,
                           ),
                         ),
-                      ],
+                      ),
                     ),
                   ),
-                ),
-              ],
-            ),
+                  Positioned(
+                    right: 10,
+                    bottom: 10,
+                    child: Container(
+                      padding:
+                          const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: Colors.black.withOpacity(0.5),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: const Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.fullscreen,
+                            size: 16,
+                            color: Colors.white,
+                          ),
+                          SizedBox(width: 4),
+                          Text(
+                            'Full screen',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
           ],
 
           // Created by

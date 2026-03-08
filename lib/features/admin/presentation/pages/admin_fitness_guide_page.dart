@@ -94,6 +94,82 @@ class _AdminFitnessGuidePageState extends ConsumerState<AdminFitnessGuidePage> {
     return false;
   }
 
+  Future<bool> _requestGalleryMediaPermission() async {
+    final permissions = <Permission>[Permission.photos];
+
+    if (!Platform.isIOS) {
+      permissions.addAll([Permission.videos, Permission.storage]);
+    }
+
+    for (final permission in permissions) {
+      final granted = await _askPermissionWithUser(permission);
+      if (granted) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  Future<bool> _requestVideoCapturePermission() async {
+    final hasCamera = await _askPermissionWithUser(Permission.camera);
+    if (!hasCamera) return false;
+
+    final hasMicrophone = await _askPermissionWithUser(Permission.microphone);
+    return hasMicrophone;
+  }
+
+  bool _isVideoFile(XFile file) {
+    final mimeType = file.mimeType?.toLowerCase();
+    if (mimeType != null && mimeType.startsWith('video/')) {
+      return true;
+    }
+
+    final path = file.path.toLowerCase();
+    const videoExtensions = [
+      '.mp4',
+      '.mov',
+      '.avi',
+      '.mkv',
+      '.m4v',
+      '.3gp',
+      '.webm',
+      '.mpeg',
+      '.mpg',
+      '.wmv',
+    ];
+
+    return videoExtensions.any(path.endsWith);
+  }
+
+  bool _isVideoMediaFromEntity(FitnessEntity fitness) {
+    if (fitness.mediaType == 'video') {
+      return true;
+    }
+
+    final media = fitness.media?.toLowerCase();
+    if (media == null) return false;
+
+    const videoExtensions = [
+      '.mp4',
+      '.mov',
+      '.avi',
+      '.mkv',
+      '.m4v',
+      '.3gp',
+      '.webm',
+      '.mpeg',
+      '.mpg',
+      '.wmv',
+    ];
+    return videoExtensions.any(media.endsWith);
+  }
+
+  String _displayFileName(String path) {
+    final normalized = path.replaceAll('\\\\', '/');
+    return normalized.split('/').last;
+  }
+
   void _showPermissionDeniedDialog() {
     showDialog(
       context: context, 
@@ -317,6 +393,9 @@ class _AdminFitnessGuidePageState extends ConsumerState<AdminFitnessGuidePage> {
                             Expanded(
                               child: OutlinedButton.icon(
                                 onPressed: () async {
+                                  final hasPermission = await _requestGalleryMediaPermission();
+                                  if (!hasPermission) return;
+
                                   final image = await _imagePicker.pickImage(
                                     source: ImageSource.gallery,
                                     imageQuality: 80,
@@ -327,8 +406,8 @@ class _AdminFitnessGuidePageState extends ConsumerState<AdminFitnessGuidePage> {
                                     });
                                   }
                                 },
-                                icon: Icon(Icons.image),
-                                label: Text('Pick Image'),
+                                icon: Icon(Icons.photo_library_outlined),
+                                label: Text('Gallery Photo'),
                                 style: OutlinedButton.styleFrom(
                                   padding: EdgeInsets.symmetric(vertical: 12),
                                   shape: RoundedRectangleBorder(
@@ -344,9 +423,40 @@ class _AdminFitnessGuidePageState extends ConsumerState<AdminFitnessGuidePage> {
                                   final hasPermission = await _askPermissionWithUser(Permission.camera);
                                   if (!hasPermission) return;
 
-                                  final video = await _imagePicker.pickVideo(
+                                  final photo = await _imagePicker.pickImage(
                                     source: ImageSource.camera,
-                                    maxDuration: Duration(minutes: 1),
+                                    imageQuality: 80,
+                                  );
+                                  if (photo != null) {
+                                    setState(() {
+                                      _selectedMediaDraft = photo;
+                                    });
+                                  }
+                                },
+                                icon: Icon(Icons.camera_alt_outlined),
+                                label: Text('Take Photo'),
+                                style: OutlinedButton.styleFrom(
+                                  padding: EdgeInsets.symmetric(vertical: 12),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        SizedBox(height: 12),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: OutlinedButton.icon(
+                                onPressed: () async {
+                                  final hasPermission = await _requestGalleryMediaPermission();
+                                  if (!hasPermission) return;
+
+                                  final video = await _imagePicker.pickVideo(
+                                    source: ImageSource.gallery,
+                                    maxDuration: Duration(minutes: 2),
                                   );
                                   if (video != null) {
                                     setState(() {
@@ -354,7 +464,34 @@ class _AdminFitnessGuidePageState extends ConsumerState<AdminFitnessGuidePage> {
                                     });
                                   }
                                 },
-                                icon: Icon(Icons.videocam),
+                                icon: Icon(Icons.video_library_outlined),
+                                label: Text('Gallery Video'),
+                                style: OutlinedButton.styleFrom(
+                                  padding: EdgeInsets.symmetric(vertical: 12),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                ),
+                              ),
+                            ),
+                            SizedBox(width: 12),
+                            Expanded(
+                              child: OutlinedButton.icon(
+                                onPressed: () async {
+                                  final hasPermission = await _requestVideoCapturePermission();
+                                  if (!hasPermission) return;
+
+                                  final video = await _imagePicker.pickVideo(
+                                    source: ImageSource.camera,
+                                    maxDuration: Duration(minutes: 2),
+                                  );
+                                  if (video != null) {
+                                    setState(() {
+                                      _selectedMediaDraft = video;
+                                    });
+                                  }
+                                },
+                                icon: Icon(Icons.videocam_outlined),
                                 label: Text('Record Video'),
                                 style: OutlinedButton.styleFrom(
                                   padding: EdgeInsets.symmetric(vertical: 12),
@@ -374,17 +511,50 @@ class _AdminFitnessGuidePageState extends ConsumerState<AdminFitnessGuidePage> {
                     Column(
                       children: [
                         SizedBox(height: 16),
-                        Container(
-                          height: 150,
-                          width: double.infinity,
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(12),
-                            image: DecorationImage(
-                              image: FileImage(File(_selectedMediaDraft!.path)),
-                              fit: BoxFit.cover,
-                            ),
-                          ),
-                        ),
+                        _isVideoFile(_selectedMediaDraft!)
+                            ? Container(
+                                height: 150,
+                                width: double.infinity,
+                                decoration: BoxDecoration(
+                                  color: Colors.black.withOpacity(0.55),
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(color: AppColors.border),
+                                ),
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    const Icon(
+                                      Icons.videocam,
+                                      color: Colors.white,
+                                      size: 40,
+                                    ),
+                                    const SizedBox(height: 8),
+                                    Padding(
+                                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                                      child: Text(
+                                        _displayFileName(_selectedMediaDraft!.path),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .bodySmall
+                                            ?.copyWith(color: Colors.white70),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              )
+                            : Container(
+                                height: 150,
+                                width: double.infinity,
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(12),
+                                  image: DecorationImage(
+                                    image: FileImage(File(_selectedMediaDraft!.path)),
+                                    fit: BoxFit.cover,
+                                  ),
+                                ),
+                              ),
                         SizedBox(height: 8),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.center,
@@ -477,9 +647,7 @@ class _AdminFitnessGuidePageState extends ConsumerState<AdminFitnessGuidePage> {
       // Upload media if selected
       if (selectedMedia != null) {
         final file = File(selectedMedia.path);
-        if (selectedMedia.path.toLowerCase().endsWith('.mp4') ||
-            selectedMedia.path.toLowerCase().endsWith('.mov') ||
-            selectedMedia.path.toLowerCase().endsWith('.avi')) {
+        if (_isVideoFile(selectedMedia)) {
           // Upload video
           final result = await ref.read(uploadVideoUsecaseProvider)(file);
           result.fold(
@@ -729,19 +897,48 @@ class _AdminFitnessGuidePageState extends ConsumerState<AdminFitnessGuidePage> {
         children: [
           // Media (if available)
           if (fitness.media != null && fitness.media!.isNotEmpty)
-            Container(
-              height: 200,
-              width: double.infinity,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.vertical(top: Radius.circular(14)),
-                image: DecorationImage(
-                  image: NetworkImage(fitness.media!.startsWith('http')
-                      ? fitness.media!
-                      : '${ApiEndpoints.baseUrl}${fitness.media!}'),
-                  fit: BoxFit.cover,
-                ),
-              ),
-            ),
+            _isVideoMediaFromEntity(fitness)
+                ? Container(
+                    height: 200,
+                    width: double.infinity,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.vertical(top: Radius.circular(14)),
+                      color: Colors.black.withOpacity(0.5),
+                    ),
+                    child: Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.play_circle_fill,
+                            size: 52,
+                            color: Colors.white.withOpacity(0.9),
+                          ),
+                          SizedBox(height: 8),
+                          Text(
+                            'Video Post',
+                            style: Theme.of(context)
+                                .textTheme
+                                .bodyMedium
+                                ?.copyWith(color: Colors.white70),
+                          ),
+                        ],
+                      ),
+                    ),
+                  )
+                : Container(
+                    height: 200,
+                    width: double.infinity,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.vertical(top: Radius.circular(14)),
+                      image: DecorationImage(
+                        image: NetworkImage(fitness.media!.startsWith('http')
+                            ? fitness.media!
+                            : '${ApiEndpoints.baseUrl}${fitness.media!}'),
+                        fit: BoxFit.cover,
+                      ),
+                    ),
+                  ),
 
           // Content
           Padding(
