@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:nutrisphere_flutter/core/services/hive/hive_service.dart';
 import 'package:nutrisphere_flutter/core/services/storage/user_session_service.dart';
@@ -14,7 +16,7 @@ final authLocalDatasourceProvider = Provider<AuthLocalDatasource>((ref) {
     );  // dependency injection
 });
 
-class AuthLocalDatasource implements IAuthDatasource {
+class AuthLocalDatasource implements IAuthLocalDatasource {
   final HiveService _hiveService;
   final UserSessionService _userSessionService;
 
@@ -23,11 +25,6 @@ class AuthLocalDatasource implements IAuthDatasource {
     required UserSessionService userSessionService,
   })  : _hiveService = hiveService,
         _userSessionService = userSessionService;
-  @override
-  Future<AuthHiveModel?> getCurrentUser() {
-    // TODO: implement getCurrentUser
-    throw UnimplementedError();
-  }
 
   @override
   Future<bool> isEmailExists(String email) {
@@ -42,14 +39,12 @@ class AuthLocalDatasource implements IAuthDatasource {
   @override
   Future<AuthHiveModel?> login(String email, String password) async{
     try{
-      final user = await _hiveService.login(email, password);
+      final user = _hiveService.login(email, password);
       // user ko details lai shared prefs ma save garni
       if (user != null) {
         await _userSessionService.saveSession(
           userId: user.authId!,
           email: user.email,
-          username: user.username,
-          // phoneNumber: user.phoneNumber,
           fullName: user.fullName,
         );
       }
@@ -60,19 +55,49 @@ class AuthLocalDatasource implements IAuthDatasource {
   }
 
   @override
-  Future<bool> logout() async{
+  Future<AuthHiveModel> register(AuthHiveModel model) async {
     try{
-      await _hiveService.logoutUser();
-      return Future.value(true);
+      await _hiveService.registerUser(model);
+      return Future.value(model);
     } catch (e) {
-      return Future.value(false);
+      return model;
     }
+  }
+  
+  @override
+  Future<AuthHiveModel?> getCurrentUser() async {
+    final session = await _userSessionService.getSession();
+    if (session == null) return null;
+
+    return _hiveService.getUser(session.email);
+  }
+
+    @override
+  Future<AuthHiveModel?> getUserByEmail(String email) async {
+    return _hiveService.getUser(email);
   }
 
   @override
-  Future<bool> register(AuthHiveModel model) async {
+  Future<AuthHiveModel?> getUserById(String authId) async {
+    // Hive does NOT support ID lookup — email is the key
+    return _hiveService.getUser(authId);
+  }
+
+  @override
+  Future<bool> updateUser(AuthHiveModel user) async {
+    return await _hiveService.updateUser(user);
+  }
+
+  @override
+  Future<bool> deleteUser(AuthHiveModel user) async {
+    await _hiveService.deleteUser(user.email);
+    return true;
+  }
+
+  @override
+  Future<bool> logout() async{
     try{
-      await _hiveService.registerUser(model);
+      await _userSessionService.logout();
       return Future.value(true);
     } catch (e) {
       return Future.value(false);

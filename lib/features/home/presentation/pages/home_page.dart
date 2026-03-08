@@ -8,8 +8,9 @@ class HomeScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: Container(
+    return Material(
+      color: Colors.transparent,
+      child: Container(
         decoration: BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topLeft,
@@ -83,7 +84,6 @@ class HomeScreen extends StatelessWidget {
                           );
                         },
                       ),
-                      
                     ],
                   ),
                 ),

@@ -28,9 +28,14 @@ environment:
 # the latest version available on pub.dev. To see which dependencies have newer
 # versions available, run `flutter pub outdated`.
 dependencies:
+  dio: ^5.4.0
+  dio_smart_retry: ^6.0.0
+  flutter_secure_storage: ^9.0.0
+  pretty_dio_logger: ^1.4.0
   dartz: ^0.10.1
   flutter:
     sdk: flutter
+  connectivity_plus: ^5.0.2
 
   hive: ^2.2.3
   hive_flutter: ^1.1.0
@@ -73,14 +78,14 @@ flutter:
 
   # To add assets to your application, add an assets section, like this:
   assets:
-    - assets/svg/bg.svg 
+    - assets/svg/bg.svg
     - assets/images/logo.png
     - assets/images/plan.png
     - assets/images/pt.png
     - assets/images/track.png
     - assets/images/test.png
     - assets/images/dose.png
-    - assets/icons/
+    - assets/images/google.png
     # - images/a_dot_ham.jpeg
 
   # An image asset can refer to one or more resolution-specific "variants", see
