@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:nutrisphere_flutter/app/theme/app_colors.dart';
 
 class AppointmentBookingScreen extends StatefulWidget {
   const AppointmentBookingScreen({super.key});
@@ -16,7 +17,7 @@ class _AppointmentBookingScreenState
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F5F5),
+      backgroundColor: AppColors.background,
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(16),
@@ -55,6 +56,7 @@ class _AppointmentBookingScreenState
                   selectedDate == null
                       ? "Preferred date"
                       : selectedDate!.toLocal().toString().split(" ")[0],
+                  style: Theme.of(context).textTheme.bodyLarge,
                 ),
                 trailing: const Icon(Icons.calendar_month),
                 onTap: _pickDate,
@@ -106,7 +108,25 @@ class _AppointmentBookingScreenState
     return Padding(
       padding: const EdgeInsets.only(bottom: 16),
       child: TextField(
-        decoration: InputDecoration(hintText: hint),
+        style: const TextStyle(color: AppColors.textPrimary),
+        decoration: InputDecoration(
+          hintText: hint,
+          hintStyle: const TextStyle(color: AppColors.textMuted),
+          filled: true,
+          fillColor: AppColors.inputFill,
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(20),
+            borderSide: BorderSide.none,
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(20),
+            borderSide: BorderSide.none,
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(20),
+            borderSide: BorderSide.none,
+          ),
+        ),
       ),
     );
   }

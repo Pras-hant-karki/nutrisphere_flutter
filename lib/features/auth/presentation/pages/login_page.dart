@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:nutrisphere_flutter/app/theme/app_colors.dart';
+import 'package:nutrisphere_flutter/app/routes/app_routes.dart';
 import 'package:nutrisphere_flutter/core/utils/snackbar_utils.dart';
 import 'package:nutrisphere_flutter/features/auth/presentation/pages/register_page.dart';
 import 'package:nutrisphere_flutter/features/auth/presentation/state/auth_state.dart';
@@ -125,9 +127,10 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                 Align(
                   alignment: Alignment.centerRight,
                   child: TextButton(
-                    onPressed: () {
-                      // TODO: Implement forgot password
-                    },
+                    onPressed: () => Navigator.pushNamed(
+                        context,
+                        AppRoutes.forgotPassword,
+                      ),
                     child: const Text(
                       'Forgot password?',
                       style: TextStyle(color: Colors.orange),
@@ -261,11 +264,11 @@ class _LoginPageState extends ConsumerState<LoginPage> {
       ),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: Colors.grey),
+        borderSide: const BorderSide(color: AppColors.border),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: Colors.orange, width: 2),
+        borderSide: const BorderSide(color: AppColors.gold, width: 2),
       ),
       errorBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),

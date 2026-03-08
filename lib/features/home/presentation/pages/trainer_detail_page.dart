@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:nutrisphere_flutter/app/theme/app_colors.dart';
 
 class TrainerDetailScreen extends StatelessWidget {
   const TrainerDetailScreen({super.key});
@@ -6,7 +7,7 @@ class TrainerDetailScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F5F5),
+      backgroundColor: AppColors.background,
       body: SafeArea(
         child: Column(
           children: [
@@ -50,8 +51,8 @@ class TrainerDetailScreen extends StatelessWidget {
                           "Know your Trainer !",
                           style: Theme.of(context)
                               .textTheme
-                              .bodyMedium
-                              ?.copyWith(color: Colors.black54),
+                          .bodyMedium
+                          ?.copyWith(color: AppColors.textSecondary),
                         ),
                       ],
                     ),
@@ -87,11 +88,11 @@ class TrainerDetailScreen extends StatelessWidget {
 
   BoxDecoration _cardDecoration() {
     return BoxDecoration(
-      color: Colors.white,
+      color: AppColors.cardBackground,
       borderRadius: BorderRadius.circular(14),
       boxShadow: [
         BoxShadow(
-          color: Colors.grey.shade300,
+          color: Colors.black.withOpacity(0.35),
           blurRadius: 8,
           offset: const Offset(0, 2),
         ),

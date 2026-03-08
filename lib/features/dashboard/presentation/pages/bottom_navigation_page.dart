@@ -3,6 +3,7 @@ import 'package:nutrisphere_flutter/features/appointment/presentation/pages/appo
 import 'package:nutrisphere_flutter/features/fitness/presentation/pages/fitness_guide_page.dart';
 import 'package:nutrisphere_flutter/features/home/presentation/pages/home_page.dart';
 import 'package:nutrisphere_flutter/features/profile/presentation/pages/profile_page.dart';
+import 'package:nutrisphere_flutter/app/theme/app_colors.dart';
 
 class BottomNavigationScreen extends StatefulWidget {
   const BottomNavigationScreen({super.key});
@@ -26,7 +27,7 @@ class _BottomNavigationScreenState extends State<BottomNavigationScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: const Color.fromARGB(255, 244, 227, 169),
+        backgroundColor: AppColors.background,
         centerTitle: true,
         title: Text(
           "Dashboard",
@@ -48,9 +49,9 @@ class _BottomNavigationScreenState extends State<BottomNavigationScreen> {
         });
       },
       type: BottomNavigationBarType.fixed,
-      backgroundColor: const Color.fromARGB(255, 244, 227, 169),
-      selectedItemColor: Colors.brown,
-      unselectedItemColor: Colors.brown.withOpacity(0.6),
+      backgroundColor: AppColors.background,
+      selectedItemColor: AppColors.textPrimary,
+      unselectedItemColor: AppColors.secondaryDark,
       showUnselectedLabels: true,
       items: const [
         BottomNavigationBarItem(

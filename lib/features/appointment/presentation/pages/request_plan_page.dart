@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:nutrisphere_flutter/app/theme/app_colors.dart';
 
 class RequestPlanScreen extends StatefulWidget {
   const RequestPlanScreen({super.key});
@@ -14,7 +15,7 @@ class _RequestPlanScreenState extends State<RequestPlanScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F5F5),
+      backgroundColor: AppColors.background,
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(16),
@@ -100,7 +101,25 @@ class _RequestPlanScreenState extends State<RequestPlanScreen> {
     return Padding(
       padding: const EdgeInsets.only(bottom: 16),
       child: TextField(
-        decoration: InputDecoration(hintText: hint),
+        style: const TextStyle(color: AppColors.textPrimary),
+        decoration: InputDecoration(
+          hintText: hint,
+          hintStyle: const TextStyle(color: AppColors.textMuted),
+          filled: true,
+          fillColor: AppColors.inputFill,
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(20),
+            borderSide: BorderSide.none,
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(20),
+            borderSide: BorderSide.none,
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(20),
+            borderSide: BorderSide.none,
+          ),
+        ),
       ),
     );
   }

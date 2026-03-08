@@ -1,5 +1,4 @@
 import 'dart:async';
-
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:nutrisphere_flutter/core/services/hive/hive_service.dart';
 import 'package:nutrisphere_flutter/core/services/storage/user_session_service.dart';
@@ -103,4 +102,10 @@ class AuthLocalDatasource implements IAuthLocalDatasource {
       return Future.value(false);
     }
   }
+
+  // @override
+  // Future<String> uploadProfilePicture(File image) {
+  //   // TODO: implement uploadProfilePicture
+  //   throw UnimplementedError();
+  // }
 }

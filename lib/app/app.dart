@@ -9,6 +9,7 @@ import 'package:nutrisphere_flutter/features/onboarding/presentation/pages/onboa
 import 'package:nutrisphere_flutter/features/auth/presentation/pages/register_page.dart';
 import 'package:nutrisphere_flutter/features/profile/presentation/pages/profile_page.dart';
 import 'package:nutrisphere_flutter/features/splash/presentation/pages/splash_page.dart';
+import 'package:nutrisphere_flutter/app/theme/theme_data.dart';
 
 class App extends StatelessWidget {
   const App({super.key});
@@ -17,6 +18,7 @@ class App extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
+      theme: getApplicationTheme(),
       initialRoute: '/',
       routes: {
         '/': (context) => const SplashScreen(),
@@ -29,6 +31,7 @@ class App extends StatelessWidget {
         '/fitness': (context) => const FitnessGuideScreen(),
         '/appointments': (context) => const AppointmentScreen(),
         '/profile': (context) => const ProfileScreen(),
+        '/forgot-password': (context) => const ForgotPasswordScreen(),
       },
     );
   }
