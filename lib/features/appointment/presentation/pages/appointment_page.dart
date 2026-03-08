@@ -25,34 +25,9 @@ class _AppointmentScreenState extends State<AppointmentScreen> {
           child: Column(
             children: [
               // HEADER
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    "Choose any service below !",
-                    style: textTheme.titleMedium,
-                  ),
-                  Stack(
-                    children: [
-                      IconButton(
-                        icon: const Icon(Icons.notifications_none, color: AppColors.textPrimary),
-                        onPressed: () {},
-                      ),
-                      Positioned(
-                        right: 10,
-                        top: 10,
-                        child: Container(
-                          height: 10,
-                          width: 10,
-                          decoration: const BoxDecoration(
-                            color: AppColors.primary,
-                            shape: BoxShape.circle,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
+              Text(
+                "Choose any service below !",
+                style: textTheme.titleMedium,
               ),
 
               const SizedBox(height: 30),

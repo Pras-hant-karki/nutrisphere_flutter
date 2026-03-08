@@ -42,7 +42,9 @@ class FitnessRemoteDatasource implements IFitnessRemoteDataSource {
 
   @override
   Future<List<FitnessApiModel>> getAllFitness() async {
-    final response = await _apiClient.get(ApiEndpoints.fitness);
+    final token = _tokenService.getToken();
+    final options = token != null ? Options(headers: {'Authorization': 'Bearer $token'}) : null;
+    final response = await _apiClient.get(ApiEndpoints.fitness, options: options);
     final data = response.data['data'] as List;
     return data.map((json) => FitnessApiModel.fromJson(json)).toList();
   }

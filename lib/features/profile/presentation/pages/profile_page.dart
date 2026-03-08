@@ -1,12 +1,16 @@
+import 'dart:async';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:nutrisphere_flutter/core/api/api_endpoints.dart';
 import 'package:nutrisphere_flutter/app/theme/app_colors.dart';
+import 'package:nutrisphere_flutter/core/providers/sensor_provider.dart';
 import 'package:nutrisphere_flutter/core/services/storage/user_session_service.dart';
-import 'package:nutrisphere_flutter/core/services/storage/token_service.dart';
 import 'package:nutrisphere_flutter/core/utils/snackbar_utils.dart';
+import 'package:nutrisphere_flutter/features/auth/domain/usecases/update_user_usecase.dart';
+import 'package:nutrisphere_flutter/features/auth/domain/entities/auth_entity.dart';
+import 'package:nutrisphere_flutter/features/auth/data/datasources/remote/auth_remote_datasource.dart';
 import 'package:nutrisphere_flutter/features/profile/domain/usecases/upload_profile_picture_usecase.dart';
 import 'package:permission_handler/permission_handler.dart';
 
@@ -29,11 +33,31 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   XFile? _profileImage;
   String? _profileImageUrl;
   bool _isLoading = true;
+  StreamSubscription<bool>? _shakeSub;
+  DateTime _lastShakeSaveAt = DateTime.fromMillisecondsSinceEpoch(0);
+  bool _isSavingProfile = false;
 
   @override
   void initState() {
     super.initState();
     _loadUserData();
+    _attachShakeAutosave();
+  }
+
+  void _attachShakeAutosave() {
+    _shakeSub = ref.read(sensorServiceProvider).shakeStream.listen((detected) async {
+      if (!detected || !mounted) return;
+      if (!TickerMode.of(context)) return;
+      if (_isSavingProfile) return;
+
+      final now = DateTime.now();
+      if (now.difference(_lastShakeSaveAt) < const Duration(seconds: 4)) {
+        return;
+      }
+      _lastShakeSaveAt = now;
+
+      await _saveProfile(triggeredByShake: true);
+    });
   }
 
   Future<void> _loadUserData() async {
@@ -45,13 +69,61 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         _nameCtrl.text = session.fullName;
         _emailCtrl.text = session.email;
         _usernameCtrl.text = _getUsernameFromEmail(session.email);
-        _roleCtrl.text = _getRoleLabelFromEmail(session.email);
+        _roleCtrl.text = _capitalize(session.role ?? 'User');
+        _phoneCtrl.text = session.phone ?? '';
+        if (session.profilePicture != null && session.profilePicture!.isNotEmpty) {
+          _profileImageUrl = session.profilePicture!.startsWith('http')
+              ? session.profilePicture!
+              : '${ApiEndpoints.baseUrl}${session.profilePicture!}';
+        }
         _isLoading = false;
       });
+
+      await _syncUserFromServer();
     } else {
       setState(() {
         _isLoading = false;
       });
+    }
+  }
+
+  Future<void> _syncUserFromServer() async {
+    try {
+      final remoteUser = await ref.read(authRemoteDatasourceProvider).getCurrentUser();
+      if (remoteUser == null) {
+        return;
+      }
+
+      final normalizedPicture =
+          (remoteUser.profilePicture != null && remoteUser.profilePicture!.isNotEmpty)
+              ? (remoteUser.profilePicture!.startsWith('http')
+                  ? remoteUser.profilePicture!
+                  : '${ApiEndpoints.baseUrl}${remoteUser.profilePicture!}')
+              : null;
+
+      if (mounted) {
+        setState(() {
+          _nameCtrl.text = remoteUser.fullName;
+          _emailCtrl.text = remoteUser.email;
+          _usernameCtrl.text = _getUsernameFromEmail(remoteUser.email);
+          _roleCtrl.text = _capitalize(remoteUser.role ?? _roleCtrl.text);
+          _phoneCtrl.text = remoteUser.phone ?? '';
+          _profileImageUrl = normalizedPicture;
+        });
+      }
+
+      final userSession = ref.read(userSessionServiceProvider);
+      final oldSession = await userSession.getSession();
+      await userSession.saveSession(
+        userId: remoteUser.authId ?? oldSession?.userId ?? '',
+        email: remoteUser.email,
+        fullName: remoteUser.fullName,
+        role: remoteUser.role ?? oldSession?.role,
+        phone: remoteUser.phone,
+        profilePicture: remoteUser.profilePicture,
+      );
+    } catch (_) {
+      // keep cached data when server sync fails
     }
   }
 
@@ -63,8 +135,13 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     return "User";
   }
 
-  String _getRoleLabelFromEmail(String email) {
-    return email.toLowerCase().contains('admin') ? 'Admin' : 'User';
+  // String _getRoleLabelFromEmail(String email) {
+  //   return email.toLowerCase().contains('admin') ? 'Admin' : 'User';
+  // }
+
+  String _capitalize(String s) {
+    if (s.isEmpty) return s;
+    return s[0].toUpperCase() + s.substring(1);
   }
 
   String _getInitials(String fullName) {
@@ -210,8 +287,21 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     );
   }
 
-  Future<void> _saveProfile() async {
-    // Upload profile picture if selected
+  Future<void> _saveProfile({bool triggeredByShake = false}) async {
+    if (_isSavingProfile) return;
+    _isSavingProfile = true;
+
+    final userSession = ref.read(userSessionServiceProvider);
+    final session = await userSession.getSession();
+    if (session == null) {
+      if (mounted) {
+        SnackbarUtils.showError(context, 'User session not found');
+      }
+      _isSavingProfile = false;
+      return;
+    }
+
+    // Upload profile picture first if selected
     if (_profileImage != null) {
       final uploadResult = await ref.read(uploadProfilePictureUsecaseProvider)(File(_profileImage!.path));
       uploadResult.fold(
@@ -222,27 +312,60 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         },
         (imageUrl) {
           setState(() {
-            // Prepend base URL if the path is relative
-            _profileImageUrl = imageUrl.startsWith('http') 
-                ? imageUrl 
+            _profileImageUrl = imageUrl.startsWith('http')
+                ? imageUrl
                 : '${ApiEndpoints.baseUrl}$imageUrl';
-            _profileImage = null; // Clear the local image after upload
+            _profileImage = null;
           });
-          if (mounted) {
-            SnackbarUtils.showSuccess(context, 'Profile picture uploaded successfully');
-          }
         },
       );
     }
 
-    // TODO: Save other profile data (name, email, phone) to backend
+    // Update profile data
+    final authEntity = AuthEntity(
+      authId: session.userId,
+      fullName: _nameCtrl.text,
+      email: session.email, 
+      phone: _phoneCtrl.text.trim().isNotEmpty ? _phoneCtrl.text.trim() : null,
+      profilePicture: _profileImageUrl,
+    );
+
+    final updateResult = await ref.read(updateUserUseCaseProvider)(
+      UpdateUserUsecaseParams(user: authEntity),
+    );
+
     if (mounted) {
-      SnackbarUtils.showSuccess(context, 'Profile updated successfully');
+      updateResult.fold(
+        (failure) {
+          SnackbarUtils.showError(context, 'Failed to update profile: ${failure.message}');
+        },
+        (updatedUser) async {
+          // Update session with new data
+          await userSession.saveSession(
+            userId: updatedUser.authId ?? session.userId,
+            email: updatedUser.email,
+            fullName: updatedUser.fullName,
+            role: session.role,
+            phone: updatedUser.phone,
+            profilePicture: updatedUser.profilePicture ?? _profileImageUrl,
+          );
+          SnackbarUtils.showSuccess(
+            context,
+            triggeredByShake
+                ? 'Shake detected: profile saved'
+                : 'Profile updated successfully',
+          );
+        },
+      );
     }
+
+    await _syncUserFromServer();
+    _isSavingProfile = false;
   }
 
   @override
   void dispose() {
+    _shakeSub?.cancel();
     _nameCtrl.dispose();
     _usernameCtrl.dispose();
     _emailCtrl.dispose();
@@ -268,142 +391,103 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     return Material(
       color: AppColors.background,
       child: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // TOP BAR
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    "Edit Profile",
-                    style: Theme.of(context).textTheme.titleLarge,
-                  ),
-                  Stack(
-                    children: [
-                      IconButton(
-                        icon: const Icon(Icons.notifications_none, color: AppColors.textPrimary),
-                        onPressed: () {},
-                      ),
-                      Positioned(
-                        right: 10,
-                        top: 10,
-                        child: Container(
-                          height: 10,
-                          width: 10,
-                          decoration: const BoxDecoration(
-                            color: AppColors.primary,
-                            shape: BoxShape.circle,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            return SingleChildScrollView(
+              keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+              padding: EdgeInsets.fromLTRB(
+                16,
+                16,
+                16,
+                16 + MediaQuery.of(context).viewInsets.bottom,
               ),
-
-              const SizedBox(height: 20),
-
-              // PROFILE PICTURE
-              Center(
-                child: Stack(
+              child: ConstrainedBox(
+                constraints: BoxConstraints(minHeight: constraints.maxHeight - 32),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    CircleAvatar(
-                      radius: 50,
-                      backgroundColor: AppColors.secondaryDark,
-                      backgroundImage: _profileImage != null
-                          ? FileImage(File(_profileImage!.path))
-                          : _profileImageUrl != null
-                              ? NetworkImage(_profileImageUrl!)
-                              : null,
-                      child: (_profileImage == null && _profileImageUrl == null)
-                          ? Text(
-                              _getInitials(_nameCtrl.text.isEmpty ? "User" : _nameCtrl.text),
-                              style: const TextStyle(
-                                color: AppColors.textPrimary,
-                                fontSize: 28,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            )
-                          : null,
+                    // TOP BAR
+                    Text(
+                      "Edit Profile",
+                      style: Theme.of(context).textTheme.titleLarge,
                     ),
-                    Positioned(
-                      bottom: 0,
-                      right: 0,
-                      child: GestureDetector(
-                        onTap: _showImageSourceDialog,
-                        child: Container(
-                          height: 35,
-                          width: 35,
-                          decoration: BoxDecoration(
-                            color: AppColors.primary,
-                            shape: BoxShape.circle,
-                            border: Border.all(
-                              color: AppColors.textPrimary,
-                              width: 2,
+
+                    const SizedBox(height: 20),
+
+                    // PROFILE PICTURE
+                    Center(
+                      child: Stack(
+                        children: [
+                          CircleAvatar(
+                            radius: 50,
+                            backgroundColor: AppColors.secondaryDark,
+                            backgroundImage: _profileImage != null
+                                ? FileImage(File(_profileImage!.path))
+                                : _profileImageUrl != null
+                                    ? NetworkImage(_profileImageUrl!)
+                                    : null,
+                            child: (_profileImage == null && _profileImageUrl == null)
+                                ? Text(
+                                    _getInitials(_nameCtrl.text.isEmpty ? "User" : _nameCtrl.text),
+                                    style: const TextStyle(
+                                      color: AppColors.textPrimary,
+                                      fontSize: 28,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  )
+                                : null,
+                          ),
+                          Positioned(
+                            bottom: 0,
+                            right: 0,
+                            child: GestureDetector(
+                              onTap: _showImageSourceDialog,
+                              child: Container(
+                                height: 35,
+                                width: 35,
+                                decoration: BoxDecoration(
+                                  color: AppColors.primary,
+                                  shape: BoxShape.circle,
+                                  border: Border.all(
+                                    color: AppColors.textPrimary,
+                                    width: 2,
+                                  ),
+                                ),
+                                child: const Icon(
+                                  Icons.camera_alt,
+                                  size: 18,
+                                  color: AppColors.textPrimary,
+                                ),
+                              ),
                             ),
                           ),
-                          child: const Icon(
-                            Icons.camera_alt,
-                            size: 18,
-                            color: AppColors.textPrimary,
-                          ),
-                        ),
+                        ],
+                      ),
+                    ),
+
+                    const SizedBox(height: 20),
+
+                    _profileField("Full name", _nameCtrl),
+                    _profileField("Username", _usernameCtrl, readOnly: true),
+                    _profileField("Email address", _emailCtrl, readOnly: true),
+                    _profileField("Role", _roleCtrl, readOnly: true),
+                    _profileField("Phone number", _phoneCtrl),
+
+                    const SizedBox(height: 10),
+
+                    // SAVE BUTTON
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: _saveProfile,
+                        child: const Text("Save Changes"),
                       ),
                     ),
                   ],
                 ),
               ),
-
-              const SizedBox(height: 20),
-
-              _profileField("Full name", _nameCtrl),
-              _profileField("Username", _usernameCtrl),
-              _profileField("Email address", _emailCtrl),
-              _profileField("Role", _roleCtrl, readOnly: true),
-              _profileField("Phone number", _phoneCtrl),
-
-              const SizedBox(height: 10),
-
-              // SAVE BUTTON
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: _saveProfile,
-                  child: const Text("Save Changes"),
-                ),
-              ),
-
-              const Spacer(),
-
-              // LOGOUT BUTTON
-              SizedBox(
-                width: double.infinity,
-                child: OutlinedButton.icon(
-                  onPressed: () async {
-                    // Logout and clear session + token
-                    final userSession = ref.read(userSessionServiceProvider);
-                    final tokenService = ref.read(tokenServiceProvider);
-                    
-                    await userSession.logout();
-                    await tokenService.removeToken();
-                    
-                    if (mounted) {
-                      Navigator.pushNamedAndRemoveUntil(
-                        context,
-                        "/login",
-                        (route) => false,
-                      );
-                    }
-                  },
-                  icon: const Icon(Icons.logout),
-                  label: const Text("Log Out"),
-                ),
-              ),
-            ],
-          ),
+            );
+          },
         ),
       ),
     );

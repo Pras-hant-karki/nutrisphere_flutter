@@ -42,17 +42,11 @@ Future<Either<Failure, bool>> register(AuthEntity user) async {
   // API call when online
   if (await _networkInfo.isConnected) {
     try {
-      final apiModel = AuthApiModel(
-        fullName: user.fullName,
-        email: user.email,
-        password: user.password,
-        confirmPassword: user.confirmPassword,
-      );
-
       await _authRemoteDatasource.register(
         email: user.email,
         name: user.fullName,
-        password: user.password,
+        password: user.password!,
+        confirmPassword: user.confirmPassword ?? '',
       );
 
       // Cache locally (non-fatal if it fails)
@@ -60,7 +54,7 @@ Future<Either<Failure, bool>> register(AuthEntity user) async {
         final hiveModel = AuthHiveModel(
           fullName: user.fullName,
           email: user.email,
-          password: user.password,
+          password: user.password!,
         );
         await _authDatasource.register(hiveModel);
       } catch (_) {}
@@ -120,7 +114,7 @@ Future<Either<Failure, bool>> register(AuthEntity user) async {
     final authModel = AuthHiveModel(
       fullName: user.fullName,
       email: user.email,
-      password: user.password,
+      password: user.password!,
     );
 
     await _authDatasource.register(authModel);
@@ -204,15 +198,44 @@ Future<Either<Failure, bool>> register(AuthEntity user) async {
   
   @override
   Future<Either<Failure, void>> logout() async {
-    try{
-      final result = await _authDatasource.logout();
-      if (result){
-        return Right(null);
-      }
-      return Left(LocaldatabaseFailure(message: "Logout failed"));
+    try {
+      await _authRemoteDatasource.logout();
+      await _authDatasource.logout();
+      return const Right(null);
     } catch (e) {
       return Left(LocaldatabaseFailure(message: e.toString()));
     }
-    
+  }
+
+  @override
+  Future<Either<Failure, AuthEntity>> updateUser(AuthEntity user) async {
+    if (await _networkInfo.isConnected) {
+      try {
+        final apiModel = AuthApiModel(
+          authId: user.authId,
+          fullName: user.fullName,
+          email: user.email,
+          phone: user.phone,
+          profilePicture: user.profilePicture,
+        );
+
+        final updatedUser = await _authRemoteDatasource.updateUser(apiModel);
+
+        // Also update local storage
+        final hiveModel = AuthHiveModel(
+          fullName: updatedUser.fullName,
+          email: updatedUser.email,
+          phone: updatedUser.phone,
+          profilePicture: updatedUser.profilePicture, password: '',
+        );
+        await _authDatasource.updateUser(hiveModel);
+
+        return Right(updatedUser.toEntity());
+      } catch (e) {
+        return Left(ApiFailure(message: e.toString()));
+      }
+    } else {
+      return const Left(NetworkFailure(message: 'No internet connection'));
+    }
   }
 }

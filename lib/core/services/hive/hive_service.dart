@@ -5,6 +5,7 @@ import 'package:nutrisphere_flutter/core/constants/hive_table_constants.dart';
 import 'package:nutrisphere_flutter/features/fitness/data/models/fitness_hive_model.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:nutrisphere_flutter/features/auth/data/models/auth_hive_model.dart';
+import 'package:nutrisphere_flutter/core/models/session_hive_model.dart';
 
 final hiveServiceProvider = Provider<HiveService>((ref) {
   return HiveService();
@@ -30,12 +31,16 @@ class HiveService {
   if (!Hive.isAdapterRegistered(HiveTableConstants.fitnessTypeId)) {
     Hive.registerAdapter(FitnessHiveModelAdapter());
   }
+  if (!Hive.isAdapterRegistered(HiveTableConstants.sessionTypeId)) {
+    Hive.registerAdapter(SessionHiveModelAdapter());
+  }
 }
   
   /// Open required Hive boxes
   Future<void> _openBoxes() async {
   await Hive.openBox<AuthHiveModel>(HiveTableConstants.authTable);
   await Hive.openBox<FitnessHiveModel>(HiveTableConstants.fitnessTable);
+  await Hive.openBox<SessionHiveModel>(HiveTableConstants.sessionTable);
 }
 
   /// Close Hive
@@ -133,5 +138,47 @@ class HiveService {
 
   Future<void> deleteFitness(String fitnessId) async {
     await _fitnessBox.delete(fitnessId);
+  }
+
+  // ======================= session Queries =========================
+
+  Box<SessionHiveModel> get _sessionBox =>
+      Hive.box<SessionHiveModel>(HiveTableConstants.sessionTable);
+
+  Future<SessionHiveModel> createSession(SessionHiveModel session) async {
+    final key = '${session.day}_${session.sessionName}';
+    await _sessionBox.put(key, session);
+    return session;
+  }
+
+  List<SessionHiveModel> getAllSessions() {
+    return _sessionBox.values.toList();
+  }
+
+  Future<bool> updateSession(SessionHiveModel session) async {
+    final key = '${session.day}_${session.sessionName}';
+    if (_sessionBox.containsKey(key)) {
+      await _sessionBox.put(key, session);
+      return true;
+    }
+    return false;
+  }
+
+  Future<void> deleteSession(String day, String sessionName) async {
+    final key = '${day}_$sessionName';
+    await _sessionBox.delete(key);
+  }
+
+  Future<void> saveAllSessions(List<SessionHiveModel> sessions) async {
+    // Clear old entries first, then save all current sessions
+    await _sessionBox.clear();
+    final map = <String, SessionHiveModel>{};
+    for (int i = 0; i < sessions.length; i++) {
+      // Use index in key to avoid collisions between same-day/same-name sessions
+      final s = sessions[i];
+      map['${i}_${s.day}_${s.sessionName}'] = s;
+    }
+    await _sessionBox.putAll(map);
+    print('[HiveService] Saved ${sessions.length} sessions to Hive');
   }
 }

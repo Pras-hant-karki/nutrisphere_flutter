@@ -51,10 +51,24 @@ dependencies:
   # Media Handling
   image_picker: ^1.0.7
 
+  # Sensor handling
+  screen_brightness: ^2.1.7
+
   # Permissions
   permission_handler: ^12.0.1
   equatable: ^2.0.7
   uuid: ^4.5.2
+
+  # File picking
+  file_picker: ^8.0.0
+
+  # Date formatting
+  intl: ^0.19.0
+  geolocator: ^14.0.2
+  sensors_plus: ^7.0.0
+
+  # URL launching
+  url_launcher: ^6.2.5
 
 dev_dependencies:
   flutter_test:
@@ -71,6 +85,7 @@ dev_dependencies:
   # package. See that file for information about deactivating specific lint
   # rules and activating additional ones.
   flutter_lints: ^5.0.0
+  test_cov_console: ^0.2.2
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec

@@ -81,6 +81,18 @@ class AuthRemoteDatasource implements IAuthRemoteDatasource {
           throw Exception("Login failed: token missing");
         }
 
+        // Save user session with full data from backend
+        await _userSessionService.saveSession(
+          userId: loggedInUser.authId ?? userData['_id']?.toString() ?? '',
+          email: loggedInUser.email,
+          fullName: loggedInUser.fullName,
+          role: (loggedInUser.role == null || loggedInUser.role!.isEmpty)
+              ? 'user'
+              : loggedInUser.role,
+          phone: loggedInUser.phone,
+          profilePicture: loggedInUser.profilePicture,
+        );
+
         return loggedInUser;
       }
 
@@ -126,12 +138,18 @@ Future<AuthApiModel> register({
   required String email,
   required String password,
   required String name,
+  required String confirmPassword,
 }) async {
   try {
+    // Clear any stale auth context before creating a new account.
+    await _tokenService.removeToken();
+    _apiClient.removeAuthToken();
+
     final authModel = AuthApiModel(
       fullName: name,
       email: email,
       password: password,
+      confirmPassword: confirmPassword,
     );
 
     final response = await _apiClient.post(
@@ -162,7 +180,21 @@ Future<AuthApiModel> register({
       if (token != null && token is String && token.isNotEmpty) {
         _apiClient.setAuthToken(token);
         await _tokenService.saveToken(token);
+      } else {
+        // Some backends don't issue token on register; login to establish session.
+        return await login(email, password);
       }
+
+      await _userSessionService.saveSession(
+        userId: registeredUser.authId ?? userData['_id']?.toString() ?? email,
+        email: registeredUser.email,
+        fullName: registeredUser.fullName.isNotEmpty ? registeredUser.fullName : name,
+        role: (registeredUser.role == null || registeredUser.role!.isEmpty)
+            ? 'user'
+            : registeredUser.role,
+        phone: registeredUser.phone,
+        profilePicture: registeredUser.profilePicture,
+      );
 
       return registeredUser;
     }
@@ -300,8 +332,25 @@ Future<AuthApiModel> register({
   // }
 
   @override
-  Future<bool> isEmailExists(String email) {
-    // TODO: implement isEmailExists
-    throw UnimplementedError();
+  Future<AuthApiModel> updateUser(AuthApiModel user) async {
+    final token = _tokenService.getToken();
+    if (token == null) {
+      throw Exception("Token not found. Please login again.");
+    }
+
+    final response = await _apiClient.put(
+      ApiEndpoints.updateProfile(user.authId!),
+      data: user.toJson(),
+      options: Options(headers: {'Authorization': 'Bearer $token'}),
+    );
+
+    return AuthApiModel.fromJson(response.data['user']);
+  }
+
+  @override
+  Future<bool> isEmailExists(String email) async {
+    // TODO: Implement email existence check
+    // This is a stub implementation
+    return false;
   }
 }

@@ -26,6 +26,7 @@ class DeleteFitnessUsecase implements UsecaseWithParms<bool, DeleteFitnessParams
   DeleteFitnessUsecase({required IFitnessRepository fitnessRepository})
     : _fitnessRepository = fitnessRepository;
 
+  @override
   Future<Either<Failure, bool>> call(DeleteFitnessParams params) {
     return _fitnessRepository.deleteFitness(params.fitnessId);
   }

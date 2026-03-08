@@ -14,5 +14,8 @@ class HiveTableConstants {
 
   static const int fitnessTypeId = 3;
   static const String fitnessTable = 'fitness_table';
+
+  static const int sessionTypeId = 4;
+  static const String sessionTable = 'session_table';
 }
 

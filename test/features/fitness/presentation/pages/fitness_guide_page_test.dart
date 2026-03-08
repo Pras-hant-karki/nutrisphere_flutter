@@ -1,290 +1,33 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:nutrisphere_flutter/core/services/storage/user_session_service.dart';
 import 'package:nutrisphere_flutter/features/fitness/presentation/pages/fitness_guide_page.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
-  group('FitnessGuideScreen Widget Tests', () {
-    testWidgets('FitnessGuideScreen renders with title', 
-        (WidgetTester tester) async {
-      // Arrange
-      await tester.pumpWidget(
-        const ProviderScope(
-          child: MaterialApp(
-            home: FitnessGuideScreen(),
-          ),
-        ),
-      );
-      await tester.pumpAndSettle();
+  Future<void> pumpPage(WidgetTester tester) async {
+    SharedPreferences.setMockInitialValues({});
+    final prefs = await SharedPreferences.getInstance();
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [sharedPreferencesProvider.overrideWithValue(prefs)],
+        child: const MaterialApp(home: FitnessGuideScreen()),
+      ),
+    );
+  }
 
-      // Act & Assert
-      expect(find.byType(FitnessGuideScreen), findsOneWidget);
+  group('FitnessGuideScreen', () {
+    testWidgets('shows screen title', (tester) async {
+      await pumpPage(tester);
+
+      expect(find.text('High quality fitness guidance below !'), findsOneWidget);
     });
 
-    testWidgets('FitnessGuideScreen displays main content area', 
-        (WidgetTester tester) async {
-      // Arrange
-      await tester.pumpWidget(
-        const ProviderScope(
-          child: MaterialApp(
-            home: FitnessGuideScreen(),
-          ),
-        ),
-      );
-      await tester.pumpAndSettle();
+    testWidgets('starts in loading state', (tester) async {
+      await pumpPage(tester);
 
-      // Act & Assert
-      expect(find.byType(Scaffold), findsOneWidget);
-    });
-
-    testWidgets('FitnessGuideScreen is ConsumerStatefulWidget', 
-        (WidgetTester tester) async {
-      // Arrange
-      await tester.pumpWidget(
-        const ProviderScope(
-          child: MaterialApp(
-            home: FitnessGuideScreen(),
-          ),
-        ),
-      );
-      await tester.pumpAndSettle();
-
-      // Act & Assert
-      expect(find.byType(FitnessGuideScreen), findsOneWidget);
-    });
-
-    testWidgets('FitnessGuideScreen renders in scrollable view', 
-        (WidgetTester tester) async {
-      // Arrange
-      await tester.pumpWidget(
-        const ProviderScope(
-          child: MaterialApp(
-            home: FitnessGuideScreen(),
-          ),
-        ),
-      );
-      await tester.pumpAndSettle();
-
-      // Act & Assert
-      expect(find.byType(SingleChildScrollView), findsWidgets);
-    });
-
-    testWidgets('FitnessGuideScreen can scroll if content overflows', 
-        (WidgetTester tester) async {
-      // Arrange
-      await tester.pumpWidget(
-        const ProviderScope(
-          child: MaterialApp(
-            home: FitnessGuideScreen(),
-          ),
-        ),
-      );
-      await tester.pumpAndSettle();
-
-      // Act
-      final scrollWidget = find.byType(SingleChildScrollView);
-      if (scrollWidget.evaluate().isNotEmpty) {
-        await tester.drag(scrollWidget.first, const Offset(0, -100));
-        await tester.pumpAndSettle();
-      }
-
-      // Assert
-      expect(find.byType(FitnessGuideScreen), findsOneWidget);
-    });
-
-    testWidgets('FitnessGuideScreen has media list area', 
-        (WidgetTester tester) async {
-      // Arrange
-      await tester.pumpWidget(
-        const ProviderScope(
-          child: MaterialApp(
-            home: FitnessGuideScreen(),
-          ),
-        ),
-      );
-      await tester.pumpAndSettle();
-
-      // Act & Assert
-      expect(find.byType(FitnessGuideScreen), findsOneWidget);
-    });
-
-    testWidgets('FitnessGuideScreen initializes with empty media list', 
-        (WidgetTester tester) async {
-      // Arrange
-      await tester.pumpWidget(
-        const ProviderScope(
-          child: MaterialApp(
-            home: FitnessGuideScreen(),
-          ),
-        ),
-      );
-      await tester.pumpAndSettle();
-
-      // Act & Assert
-      expect(find.byType(FitnessGuideScreen), findsOneWidget);
-    });
-
-    testWidgets('FitnessGuideScreen has Container widgets', 
-        (WidgetTester tester) async {
-      // Arrange
-      await tester.pumpWidget(
-        const ProviderScope(
-          child: MaterialApp(
-            home: FitnessGuideScreen(),
-          ),
-        ),
-      );
-      await tester.pumpAndSettle();
-
-      // Act & Assert
-      expect(find.byType(Container), findsWidgets);
-    });
-
-    testWidgets('FitnessGuideScreen has Column widgets', 
-        (WidgetTester tester) async {
-      // Arrange
-      await tester.pumpWidget(
-        const ProviderScope(
-          child: MaterialApp(
-            home: FitnessGuideScreen(),
-          ),
-        ),
-      );
-      await tester.pumpAndSettle();
-
-      // Act & Assert
-      expect(find.byType(Column), findsWidgets);
-    });
-
-    testWidgets('FitnessGuideScreen has text widgets', 
-        (WidgetTester tester) async {
-      // Arrange
-      await tester.pumpWidget(
-        const ProviderScope(
-          child: MaterialApp(
-            home: FitnessGuideScreen(),
-          ),
-        ),
-      );
-      await tester.pumpAndSettle();
-
-      // Act & Assert
-      expect(find.byType(Text), findsWidgets);
-    });
-
-    testWidgets('FitnessGuideScreen mounts without errors', 
-        (WidgetTester tester) async {
-      // Arrange
-      await tester.pumpWidget(
-        const ProviderScope(
-          child: MaterialApp(
-            home: FitnessGuideScreen(),
-          ),
-        ),
-      );
-
-      // Act & Assert
-      expect(find.byType(FitnessGuideScreen), findsOneWidget);
-    });
-
-    testWidgets('FitnessGuideScreen builds successfully', 
-        (WidgetTester tester) async {
-      // Arrange
-      await tester.pumpWidget(
-        const ProviderScope(
-          child: MaterialApp(
-            home: FitnessGuideScreen(),
-          ),
-        ),
-      );
-      await tester.pumpAndSettle();
-
-      // Act & Assert
-      expect(find.byType(Scaffold), findsOneWidget);
-      expect(find.byType(FitnessGuideScreen), findsOneWidget);
-    });
-
-    testWidgets('FitnessGuideScreen has safe area', 
-        (WidgetTester tester) async {
-      // Arrange
-      await tester.pumpWidget(
-        const ProviderScope(
-          child: MaterialApp(
-            home: FitnessGuideScreen(),
-          ),
-        ),
-      );
-      await tester.pumpAndSettle();
-
-      // Act & Assert
-      expect(find.byType(SafeArea), findsWidgets);
-    });
-
-    testWidgets('FitnessGuideScreen displays content correctly', 
-        (WidgetTester tester) async {
-      // Arrange
-      await tester.pumpWidget(
-        const ProviderScope(
-          child: MaterialApp(
-            home: FitnessGuideScreen(),
-          ),
-        ),
-      );
-      await tester.pumpAndSettle();
-
-      // Act & Assert
-      expect(find.byType(FitnessGuideScreen), findsOneWidget);
-      expect(find.byType(Container), findsWidgets);
-    });
-
-    testWidgets('FitnessGuideScreen renders properly with ProviderScope', 
-        (WidgetTester tester) async {
-      // Arrange
-      await tester.pumpWidget(
-        const ProviderScope(
-          child: MaterialApp(
-            home: FitnessGuideScreen(),
-          ),
-        ),
-      );
-      await tester.pumpAndSettle();
-
-      // Act & Assert
-      expect(find.byType(Scaffold), findsOneWidget);
-      expect(find.byType(SingleChildScrollView), findsWidgets);
-    });
-
-    testWidgets('FitnessGuideScreen has padding layout', 
-        (WidgetTester tester) async {
-      // Arrange
-      await tester.pumpWidget(
-        const ProviderScope(
-          child: MaterialApp(
-            home: FitnessGuideScreen(),
-          ),
-        ),
-      );
-      await tester.pumpAndSettle();
-
-      // Act & Assert
-      expect(find.byType(Padding), findsWidgets);
-    });
-
-    testWidgets('FitnessGuideScreen has multiple text elements', 
-        (WidgetTester tester) async {
-      // Arrange
-      await tester.pumpWidget(
-        const ProviderScope(
-          child: MaterialApp(
-            home: FitnessGuideScreen(),
-          ),
-        ),
-      );
-      await tester.pumpAndSettle();
-
-      // Act & Assert
-      expect(find.byType(Text), findsWidgets);
-      expect(find.byType(FitnessGuideScreen), findsOneWidget);
+      expect(find.byType(CircularProgressIndicator), findsOneWidget);
     });
   });
 }

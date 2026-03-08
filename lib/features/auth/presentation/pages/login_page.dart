@@ -65,7 +65,8 @@ class _LoginPageState extends ConsumerState<LoginPage> {
 
     ref.listen<AuthState>(authViewModelProvider, (prev, next) {
       if (next.status == AuthStatus.authenticated) {
-        Navigator.of(context).pushNamedAndRemoveUntil('/dashboard', (route) => false);
+        final route = next.authEntity?.role == 'admin' ? '/admin-dashboard' : '/dashboard';
+        Navigator.of(context).pushNamedAndRemoveUntil(route, (route) => false);
       } else if (next.status == AuthStatus.error) {
         SnackbarUtils.showError(context, next.errorMessage!);
       }
@@ -168,60 +169,60 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                 const SizedBox(height: 24),
                 const SizedBox(height: 24),
 
-                SizedBox(
-                  width: double.infinity,
-                  height: 52,
-                  child: OutlinedButton.icon(
-                    onPressed: () {},
-                    icon: Image.asset(
-                      'assets/images/google.png', 
-                      height: 22,
-                    ),
-                    label: const Text(
-                      'Continue with Google',
-                      style: TextStyle(
-                        color: Colors.black87,
-                        fontSize: 16,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                    style: OutlinedButton.styleFrom(
-                      backgroundColor: Colors.white,
-                      side: const BorderSide(color: Color(0xFFDDDDDD)),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                  ),
-                ),
+                // SizedBox(
+                //   width: double.infinity,
+                //   height: 52,
+                //   child: OutlinedButton.icon(
+                //     onPressed: () {},
+                //     icon: Image.asset(
+                //       'assets/images/google.png', 
+                //       height: 22,
+                //     ),
+                //     label: const Text(
+                //       'Continue with Google',
+                //       style: TextStyle(
+                //         color: Colors.black87,
+                //         fontSize: 16,
+                //         fontWeight: FontWeight.w500,
+                //       ),
+                //     ),
+                //     style: OutlinedButton.styleFrom(
+                //       backgroundColor: Colors.white,
+                //       side: const BorderSide(color: Color(0xFFDDDDDD)),
+                //       shape: RoundedRectangleBorder(
+                //         borderRadius: BorderRadius.circular(12),
+                //       ),
+                //     ),
+                //   ),
+                // ),
 
-                const SizedBox(height: 12),
+                // const SizedBox(height: 12),
 
-                SizedBox(
-                  width: double.infinity,
-                  height: 52,
-                  child: ElevatedButton.icon(
-                    onPressed: () {},
-                    icon: const Icon(Icons.apple, color: Colors.white),
-                    label: const Text(
-                      'Continue with Apple',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.black,
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      elevation: 0,
-                    ),
-                  ),
-                ),
+                // SizedBox(
+                //   width: double.infinity,
+                //   height: 52,
+                //   child: ElevatedButton.icon(
+                //     onPressed: () {},
+                //     icon: const Icon(Icons.apple, color: Colors.white),
+                //     label: const Text(
+                //       'Continue with Apple',
+                //       style: TextStyle(
+                //         fontSize: 16,
+                //         fontWeight: FontWeight.w500,
+                //       ),
+                //     ),
+                //     style: ElevatedButton.styleFrom(
+                //       backgroundColor: Colors.black,
+                //       foregroundColor: Colors.white,
+                //       shape: RoundedRectangleBorder(
+                //         borderRadius: BorderRadius.circular(12),
+                //       ),
+                //       elevation: 0,
+                //     ),
+                //   ),
+                // ),
 
-                const SizedBox(height: 32),
+                // const SizedBox(height: 32),
 
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -277,6 +278,10 @@ class _LoginPageState extends ConsumerState<LoginPage> {
       focusedErrorBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
         borderSide: const BorderSide(color: Colors.red, width: 2),
+      ),
+      contentPadding: const EdgeInsets.symmetric(
+        horizontal: 16,
+        vertical: 14,
       ),
     );
   }

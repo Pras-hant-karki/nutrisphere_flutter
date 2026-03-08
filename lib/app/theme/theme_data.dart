@@ -15,8 +15,6 @@ ThemeData getApplicationTheme() {
       onSecondary: AppColors.textPrimary,
       error: Colors.redAccent,
       onError: AppColors.textPrimary,
-      background: AppColors.background,
-      onBackground: AppColors.textPrimary,
       surface: AppColors.cardBackground,
       onSurface: AppColors.textPrimary,
     ),

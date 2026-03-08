@@ -55,15 +55,34 @@ class FitnessApiModel {
       return value as String?;
     }
 
+    // Handle backend response format
+    String? category;
+    String? media;
+    String? mediaType;
+
+    // Backend returns 'tags' as array, take first one as category
+    if (json['tags'] is List && (json['tags'] as List).isNotEmpty) {
+      category = (json['tags'] as List).first as String?;
+    }
+
+    // Backend returns 'image' or 'video', map to shared media fields.
+    if (json['image'] != null) {
+      media = json['image'] as String;
+      mediaType = 'image';
+    } else if (json['video'] != null) {
+      media = json['video'] as String;
+      mediaType = 'video';
+    }
+
     return FitnessApiModel(
       id: json['_id'] as String? ?? json['id'] as String?,
       title: json['title'] as String,
       description: json['description'] as String?,
-      category: json['category'] as String,
-      media: json['media'] as String?,
-      mediaType: json['mediaType'] as String?,
+      category: category,
+      media: media,
+      mediaType: mediaType,
       createdBy: extractId(json['createdBy']),
-      createdByName: extractName(json['createdBy']),
+      createdByName: json['adminName'] as String?, // Backend uses adminName
       duration: json['duration'] as int?,
       createdAt: json['createdAt'] != null
           ? DateTime.parse(json['createdAt'] as String)
